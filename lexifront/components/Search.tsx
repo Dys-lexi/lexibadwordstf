@@ -23,7 +23,7 @@ export default function Prettysearch({ classNameform, classNameinput, classnameb
   return (
     <>
      <form action={onSubmit} className={classNameform}>
-    <input name="user" className={classNameinput}/>
+    <input name="user" className={classNameinput} placeholder='enter somones profile uid, or a steamid'/>
     <button type="submit" className={classnamebutton}>Search</button>
       </form>
       </>

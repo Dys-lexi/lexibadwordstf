@@ -6,8 +6,8 @@ import vikeReact from "vike-react/config";
 
 const config: Config = {
   // https://vike.dev/head-tags
-  title: "My Vike App",
-  description: "Demo showcasing Vike",
+  title: "lexislurs",
+  description: "find bad words and mabye slurs sent by people in tf2",
 
   extends: [vikeReact],
 };

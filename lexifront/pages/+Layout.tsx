@@ -13,9 +13,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div
         className="mainthing"
       >
-        <div style={{ display: "flex", justifyContent: "center" }}>
+        <div style={{ display: "flex", justifyContent: "center", "gap":"10px" }}>
           <Logo />
-          <h1>lexislurs</h1>
+          <h1>lexislurs for team fortress 2</h1>
           
         </div>
 

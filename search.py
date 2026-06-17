@@ -53,6 +53,7 @@ def indexsomecoolmessages(todologs = []):
 
 @app.route("/user", methods=["POST"])
 def resolvename(userid = False):
+    now = time.time()
     if not userid:
         userid = request.get_json()["url"]
     print("meow")
@@ -90,6 +91,7 @@ def resolvename(userid = False):
     c.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
     output = c.fetchone()
     # int(steamid64) - STEAMID64_BASE
+
     if not output or not any(output) or output[1] < int(time.time()) - 3600:
         # print("pants")
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
@@ -101,8 +103,9 @@ def resolvename(userid = False):
         r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
         r.raise_for_status()
         soup = BeautifulSoup(r.text, "html.parser")
-
-        frame = soup.select_one(".playersection_avatar_frame img").get("src")
+        
+        frame = soup.select_one(".playersection_avatar_frame img")
+        if frame: frame = frame.get("src")
         
         c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame",(currentname,avatarurl,int(time.time()),steam64,frame))
         conn.commit()
@@ -119,6 +122,7 @@ def resolvename(userid = False):
     
     c.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
     output = list(map(lambda x: {"name":x[0],"timestamp":x[2],"message":x[1],"matchid":x[3]},c.fetchall()))
+
     return  {"currentusername":currentname,"nonowords":output,"avatarurl":avatarurl,"frame":frame} , 200
 
 

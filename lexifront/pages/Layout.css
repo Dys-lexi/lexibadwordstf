@@ -13,7 +13,7 @@ a {
 /* Reset */
 body {
   margin: 0;
- 
+  font-family:'OpenDyslexic', 'Whitney', sans-serif !important;
   color: #eee ;
   background-color: rgb(11,11,11);
 }
