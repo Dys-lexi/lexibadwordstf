@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: teamfort2db
+    restart: always
+    shm_size: '4gb'
+    command:
+      - "postgres"
+      - "-c"
+      - "max_parallel_workers_per_gather=6"
+      - "-c"
+      - "max_parallel_workers=6"
+      - "-c"
+      - "max_worker_processes=16"
+      - "-c"
+      - "parallel_setup_cost=100"
+      - "-c"
+      - "parallel_tuple_cost=0.01"
+      - "-c"
+      - "min_parallel_table_scan_size=8MB"
+      - "-c"
+      - "shared_buffers=2GB"  # Adjust based on available RAM
+      - "-c"
+      - "work_mem=1024MB"      # Helps with large sorts/regex
+      - "-c"
+      - "maintenance_work_mem=1GB"  # Helps with index creation
+    environment:
+      POSTGRES_USER: pguserm
+      POSTGRES_PASSWORD: hiddenpassword
+      POSTGRES_DB: realdb
+      PGPORT: 3452
+    ports:
+      - "3449:3452"
+    volumes:
+      # - /mnt/bigdrives/tflogs/db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
+      - /mnt/bigdrives/tflogs/logs.sql:/var/logs.sql
+
+  search:
+    build: ./
+    depends_on:
+        postgres:
+          condition: service_started
+    volumes:
+      - ./search.py:/app/search.py:ro
+
+  update:
+    build:
+      context: ./
+      dockerfile: ./dockerfileforupdates
+    depends_on:
+        postgres:
+          condition: service_started
+    volumes:
+      - ./update.py:/app/update.py:ro
+
