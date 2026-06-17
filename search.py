@@ -15,7 +15,9 @@ import os
 # [U:1:88677982]
 from steamid_converter import Converter
 from dotenv import load_dotenv
+from bs4 import BeautifulSoup
 load_dotenv()
+
 
 pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
 root = "https://logs.tf/api/v1"
@@ -85,30 +87,39 @@ def resolvename(userid = False):
             return resolvename(f"https://steamcommunity.com/id/{userid}")
             
     steam64 = Converter.to_steamID64(steam3)
-    c.execute("SELECT currentname,timestampcurrentname,avatar FROM currentthings WHERE steamid = %s",(steam64,))
+    c.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
     output = c.fetchone()
+    # int(steamid64) - STEAMID64_BASE
     if not output or not any(output) or output[1] < int(time.time()) - 3600:
+        # print("pants")
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
         r.raise_for_status()
         if not len(r.json()):
             return {}  , 404
         currentname = r.json()[0]["persona_name"]
         avatarurl = r.json()[0]["avatar_url"]
-        c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid) VALUES (%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar",(currentname,avatarurl,int(time.time()),steam64))
+        r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        frame = soup.select_one(".playersection_avatar_frame img").get("src")
+        
+        c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame",(currentname,avatarurl,int(time.time()),steam64,frame))
         conn.commit()
     else:
         currentname = output[0]
         avatarurl = output[2]
+        frame = output[3]
 
     if avatarurl.isdigit() and not int(avatar_url):
         avatarurl = "https://avatars.fastly.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
     else:
         avatarurl = f"https://avatars.steamstatic.com/{avatarurl}_full.jpg"
-
     
-    c.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time""",(steam3,Converter.to_steamID(steam3)))
+    
+    c.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
     output = list(map(lambda x: {"name":x[0],"timestamp":x[2],"message":x[1],"matchid":x[3]},c.fetchall()))
-    return  {"currentusername":currentname,"nonowords":output,"avatarurl":avatarurl} , 200
+    return  {"currentusername":currentname,"nonowords":output,"avatarurl":avatarurl,"frame":frame} , 200
 
 
 
@@ -139,6 +150,7 @@ def init():
             steamid BIGINT PRIMARY KEY,
 
             timestampcurrentname BIGINT,
+            frame TEXT,
             avatar TEXT,
             currentname TEXT
 
@@ -181,5 +193,6 @@ init()
 
 # indexsomecoolmessages()
 
+print(   Converter.to_steamID3(76561198807031128))
 CORS(app, resources={r"/*": {"origins": "*"}})
 serve(app, host="0.0.0.0", port=3440, threads=40, connection_limit=200)  

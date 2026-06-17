@@ -167,9 +167,23 @@ def init():
     cursor = conn.cursor()
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS vanityurls (
-            url TEXT,
-            steamid BIGINT,
-            PRIMARY KEY (steamid)
+            vanity TEXT PRIMARY KEY,
+
+            lastcheckedtimestamp BIGINT,
+            steamid BIGINT
+
+        )"""
+    )
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS currentthings (
+
+            steamid BIGINT PRIMARY KEY,
+
+            timestampcurrentname BIGINT,
+            frame TEXT,
+            avatar TEXT,
+            currentname TEXT
+
         )"""
     )
     cursor.execute(
