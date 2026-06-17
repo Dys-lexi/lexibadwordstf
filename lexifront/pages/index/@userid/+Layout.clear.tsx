@@ -21,7 +21,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <h1>lexislurs for team fortress 2</h1>
           
         </div>
-  <Search  classNameform = "littlesearchform" classNameinput = "littlesearchinput"  classnamebutton = "littlesearchbutton"  />
+        <div className="flexbox">
+  <Search  classNameform = "littlesearchform" classNameinput = "littlesearchinput"  classnamebutton = "littlesearchbutton"  /></div>
         <Content>{children}</Content>
       </div>
     </>

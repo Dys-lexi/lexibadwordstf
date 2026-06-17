@@ -1,19 +1,54 @@
 .littlesearchform{
   background-color: rgba(255,255,255,0.05);
    border-radius: 5px;
-   padding:5px
+   padding:0px;
+   min-width: 500px;
+   width: 60%;
+   height:40px;
+   display: flex;
+   gap: 10px;
+   align-items: center;
 }
 
 .littlesearchinput{
+
+
+    padding-left: 10px;
+    min-height: 100%;
+    flex-grow: 1;
+    background-color: rgba(200,200,255,0.0);
+    border:solid;
+    border-radius: 5px;
+    border-color: rgba(200,200,255,0.1);
+    color: #fff;
+    font-family:'OpenDyslexic', 'Whitney', sans-serif !important;
+}
+
+.littlesearchinput:focus{
     
 }
 
 .littlesearchbutton{
+    background-color: rgba(200,200,255,0.0);
 
+     color: #fff;
+      min-height: 100%;
+         border-radius: 5px;
+         border:solid;
+         border-color:  rgba(200,200,255,0.1);
+       font-family:'OpenDyslexic', 'Whitney', sans-serif !important;
+}
+
+.littlesearchbutton:hover{
+     background-color: rgba(200,200,255,0.05);
+}
+
+.littlesearchbutton:hover{
+     background-color: rgba(0,0,255,0.05);
 }
 
 .bigsearchform{
-  background-color: rgba(255,255,255,0.1);
+  background-color: rgba(255,255,255,0.05);
    border-radius: 5px;
    padding:0px;
    min-width: 500px;
@@ -25,6 +60,7 @@
 }
 
 .bigsearchinput{
+    padding-left: 10px;
     min-height: 100%;
     flex-grow: 1;
     background-color: rgba(200,200,255,0.1);
@@ -40,7 +76,7 @@
 }
 
 .bigsearchbutton{
-    background-color: rgba(200,200,255,0.1);
+    background-color: rgba(200,200,255,0.0);
 
      color: #fff;
       min-height: 100%;
