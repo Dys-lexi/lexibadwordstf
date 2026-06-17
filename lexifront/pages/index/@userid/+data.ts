@@ -1,0 +1,31 @@
+// https://vike.dev/data
+
+import type { PageContextServer } from "vike/types";
+import { useConfig } from "vike-react/useConfig";
+import type { Userdetails } from "../types.ts";
+
+export type Data = Awaited<ReturnType<typeof data>>;
+
+export async function data(pageContext: PageContextServer) {
+  // https://vike.dev/useConfig
+  const config = useConfig();
+
+  const response = await fetch(
+      `http://localhost:3440/user`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(pageContext.routeParams.userid) }) , headers: { "Content-Type": "application/json" }}
+  );
+    let personresults = {} as Userdetails
+    if (response.status == 200) {
+        personresults = (await response.json());
+          config({
+    // Set <title>
+    title: personresults.currentusername,
+  });
+    }
+  
+
+
+  // We remove data we don't need because the data is passed to
+  // the client; we should minimize what is sent over the network.
+
+  return { personresults, statuscode:response.status};
+}

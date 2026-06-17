@@ -1,9 +1,3 @@
-.env
-venv
-
-db
-chatfilters/*
-
 # MacOS
 .DS_Store
 
