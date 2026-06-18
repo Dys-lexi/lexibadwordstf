@@ -104,7 +104,6 @@ def resolvename(userid = False):
     print("pulling a user at",now)
 
 
-    print(output)
     if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
         vanity =(userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1]
         c.execute("SELECT vanity,steamid,lastcheckedtimestamp FROM vanityurls WHERE vanity = %s",(vanity,))
@@ -165,9 +164,19 @@ def resolvename(userid = False):
     
     
     c.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
+    
     output = list(map(lambda x: {"name":x[0],"timestamp":x[2],"message":x[1],"matchid":x[3]},c.fetchall()))
-
-    return  {"currentusername":currentname,"nonowords":output,"avatarurl":avatarurl,"frame":frame} , 200
+    reallogs = []
+    for log in output:
+        shouldreturn = False
+        for logdupe in reallogs:
+            if abs(log["timestamp"] - logdupe["timestamp"]) < 600 and abs(logdupe["matchid"] - log["matchid"]) < 10 and log["message"] == logdupe["message"] and logdupe["name"] == log["name"]:
+                shouldreturn = True
+                break
+        if shouldreturn:
+            continue
+        reallogs.append(log)
+    return  {"currentusername":currentname,"nonowords":reallogs,"avatarurl":avatarurl,"frame":frame} , 200
 
 
 
@@ -192,7 +201,7 @@ def init():
 
         )"""
     )
-    print("weee")
+    # print("weee")
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS currentthings (
 
@@ -229,19 +238,19 @@ def init():
         PRIMARY KEY (id, idwithinlogs)
     )"""
     )
-    print("teee")
+    # print("teee")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_id ON messages (id)")
-    print("a")
+    # print("a")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_id ON logs_raw (id)")
-    print("b")
+    # print("b")
     cursor.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS isduplicate BOOLEAN DEFAULT FALSE")
-    print("c")
+    # print("c")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_empty ON logs_raw (empty)")
-    print("d")
+    # print("d")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
-    print("e")
+    # print("e")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true;")
-    print("veee")
+    # print("veee")
     conn.commit()
 init()
 

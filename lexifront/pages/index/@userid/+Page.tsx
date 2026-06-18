@@ -22,6 +22,7 @@ export default function Page() {
           {personresults.nonowords != null && personresults.nonowords.length ?
             personresults.nonowords.map((badword, index) => (
               <div key={index} className="nonowordbox">
+                <a className="nonowordtimestamp loglink" target="_blank" href={`https://logs.tf/${badword.matchid}`}>log</a>
                 <div className="nonowordtimestamp">{new Date(badword.timestamp * 1000).toLocaleDateString()}</div>
                 <div className="nonowordmessage"> <div className="nonowordname">{badword.name}</div>: {badword.message}</div>
               </div>

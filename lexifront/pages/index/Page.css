@@ -2,7 +2,7 @@
   background-color: rgba(255,255,255,0.05);
    border-radius: 5px;
    padding:0px;
-   min-width: 500px;
+   min-width: 200px;
    width: 60%;
    height:40px;
    display: flex;
@@ -51,7 +51,7 @@
   background-color: rgba(255,255,255,0.05);
    border-radius: 5px;
    padding:0px;
-   min-width: 500px;
+   min-width: 200px;
    width: 60%;
    height:40px;
    display: flex;
@@ -96,7 +96,10 @@
 
 .statsholder{
     display: flex;
-    gap:10px
+    gap:10px;
+    flex-wrap: wrap;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 .statsname{
