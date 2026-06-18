@@ -64,8 +64,8 @@ services:
       dockerfile: ./dockerfile
       args:
         VITE_API_URL: http://search:3440                                                                                                                                                                                                                    
-    depends_on:                                                                                                                                                                                                                                   
-      - search                                                                                                                                                                                                                                    
+    # depends_on:                                                                                                                                                                                                                                   
+    #   - search                                                                                                                                                                                                                                    
     ports:                                                                                                                                                                                                                                        
       - "3000:3000"                                                                                                                                                                                                                               
     restart: always

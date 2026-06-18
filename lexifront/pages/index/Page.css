@@ -63,7 +63,7 @@
     padding-left: 10px;
     min-height: 100%;
     flex-grow: 1;
-    background-color: rgba(200,200,255,0.1);
+    background-color: rgba(200,200,255,0.0);
     border:solid;
     border-radius: 5px;
     border-color: rgba(200,200,255,0.1);
@@ -95,6 +95,7 @@
 }
 
 .statsholder{
+    justify-content: center;
     display: flex;
     gap:10px;
     flex-wrap: wrap;
