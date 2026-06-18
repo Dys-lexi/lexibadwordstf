@@ -16,6 +16,7 @@ import os
 from steamid_converter import Converter
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+import threading
 load_dotenv()
 
 
@@ -49,23 +50,63 @@ def indexsomecoolmessages(todologs = []):
     print("\n".join(output))
     
 
+def cachestats():
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    print("caching stats")
+    stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"flaggedplayers":0,"timestampcached":int(time.time())}
+    with open("./statscache.json", "w") as f:
+        f.write(json.dumps(stats,indent=4))
+    c.execute("SELECT COUNT(*) FROM logs_raw")
+    if output := c.fetchone():
+        stats["totalmatches"] = output[0]
+    c.execute("SELECT COUNT(*) FROM messages")
+    if output := c.fetchone():
+        stats["totalmessages"] = output[0]
+    c.execute("SELECT COUNT(*) FROM messages WHERE flagged = true")
+    if output := c.fetchone():
+        stats["badmessages"] = output[0]
+    c.execute("SELECT COUNT(DISTINCT sender) FROM messages")
+    if output := c.fetchone():
+        stats["uniquepeople"] = output[0]
+    c.execute("SELECT COUNT(DISTINCT sender) FROM messages WHERE flagged = true")
+    if output := c.fetchone():
+        stats["flaggedplayers"] = output[0]
+    with open("./statscache.json", "w") as f:
+        f.write(json.dumps(stats,indent=4))
 
+    
+
+@app.route("/stats",methods=["GET"])
+def stats():
+    now = int(time.time())
+    print("pulling stats at",now)
+    stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"timestampcached":0,"flaggedplayers":0}
+    if os.path.exists("./statscache.json"):
+        with open("./statscache.json", "r") as f:
+            stats = json.load(f)
+    if now - 3600 > stats["timestampcached"]:
+        threading.Thread(target=cachestats, daemon=True).start()
+    del(stats["timestampcached"])
+    return stats,200
+            
 
 @app.route("/user", methods=["POST"])
 def resolvename(userid = False):
-    now = time.time()
     if not userid:
         userid = request.get_json()["url"]
-    print("meow")
+    now = int(time.time())
     conn = pgpool.getconn()
     c = conn.cursor()
-    
+    print("pulling a user at",now)
 
+
+    print(output)
     if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
         vanity =(userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1]
         c.execute("SELECT vanity,steamid,lastcheckedtimestamp FROM vanityurls WHERE vanity = %s",(vanity,))
         output = c.fetchone()
-        if output and output[2] > int(time.time()) - 86400:
+        if output and output[2] > now - 86400:
             steam3 = Converter.to_steamID3(output[1])
         else:
             r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/",params = {"key":os.getenv("STEAMAPIKEY"),"vanityurl":vanity})
@@ -73,7 +114,7 @@ def resolvename(userid = False):
             if  r.json()["response"]["success"] != 1:
                 return {}, 404
             steam3 = Converter.to_steamID3(r.json()["response"]["steamid"]) 
-            c.execute("INSERT INTO vanityurls (vanity,steamid,lastcheckedtimestamp) VALUES (%s,%s,%s) ON CONFLICT (vanity) DO UPDATE SET steamid = EXCLUDED.steamid, lastcheckedtimestamp = EXCLUDED.lastcheckedtimestamp",(vanity,r.json()["response"]["steamid"],int(time.time())))
+            c.execute("INSERT INTO vanityurls (vanity,steamid,lastcheckedtimestamp) VALUES (%s,%s,%s) ON CONFLICT (vanity) DO UPDATE SET steamid = EXCLUDED.steamid, lastcheckedtimestamp = EXCLUDED.lastcheckedtimestamp",(vanity,r.json()["response"]["steamid"],now))
             conn.commit()
         
        
@@ -92,7 +133,7 @@ def resolvename(userid = False):
     output = c.fetchone()
     # int(steamid64) - STEAMID64_BASE
 
-    if not output or not any(output) or output[1] < int(time.time()) - 3600:
+    if not output or not any(output) or output[1] < now - 3600:
         # print("pants")
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
         r.raise_for_status()
@@ -107,7 +148,7 @@ def resolvename(userid = False):
         frame = soup.select_one(".playersection_avatar_frame img")
         if frame: frame = frame.get("src")
         
-        c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame",(currentname,avatarurl,int(time.time()),steam64,frame))
+        c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame",(currentname,avatarurl,now,steam64,frame))
         conn.commit()
     else:
         currentname = output[0]

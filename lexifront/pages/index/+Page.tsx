@@ -1,13 +1,37 @@
 import "./Page.css";
-import { navigate } from 'vike/client/router'
+import { useData } from "vike-react/useData";
+import { navigate } from "vike/client/router";
 import Search from "../../components/Search";
-
+import type { Data } from "./+data.js";
 export default function Page() {
+
+  const { stats, statuscode } = useData<Data>();
   return (
-    <div className="flexbox">
-       <Search  classNameform = "bigsearchform" classNameinput = "bigsearchinput"  classnamebutton = "bigsearchbutton"  />
-      
+    <div className="flexbox" style={{"gap":"30px"}}>
+      <Search
+        classNameform="bigsearchform"
+        classNameinput="bigsearchinput"
+        classnamebutton="bigsearchbutton"
+      />
+      <div className="statsholder">
+      {statuscode == 200 &&
+        Object.entries(stats).map(([stat, val], index) => (
+          <div key={index} className="stat">
+          <div className="statsname">  {getstatprettyname(stat)}: </div> <div className="statsstat"> {val.toLocaleString()} </div>
+          </div>
+        ))}</div>
     </div>
   );
 }
 
+function getstatprettyname(name: string): string {
+    const names: Record<string, string> = {
+      "uniquepeople": "Unique Players",
+      "totalmessages": "Total Messages",
+      "totalmatches": "Logs Searched",
+      "badmessages": "Flagged messages",
+      "flaggedplayers": "Flagged Players"
+    };
+
+    return names[name] || name; 
+  }

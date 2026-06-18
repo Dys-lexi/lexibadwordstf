@@ -11,3 +11,12 @@ export type Badmessage = {
     timestamp: number
     name: string
 }
+
+export type Stats = {
+    totalmatches: number
+    totalmessages: number
+    badmessages: number
+    uniquepeople: number
+    flaggedplayers: number
+}
+

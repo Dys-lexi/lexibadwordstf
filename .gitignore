@@ -156,3 +156,4 @@ dist
 # aws-cdk
 .cdk.staging
 cdk.out
+statscache.json
