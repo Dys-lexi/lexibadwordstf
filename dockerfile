@@ -25,7 +25,7 @@ ENV PATH="/venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
 
-
+EXPOSE 3440
 
 # Command to run the bot
 CMD ["python3", "search.py"]

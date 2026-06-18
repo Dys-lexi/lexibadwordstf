@@ -3,6 +3,7 @@
 import type { PageContextServer } from "vike/types";
 import { useConfig } from "vike-react/useConfig";
 import type { Stats } from "./types.ts";
+import { API_URL } from "../../components/config";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
@@ -11,7 +12,7 @@ export async function data(pageContext: PageContextServer) {
   const config = useConfig();
 
   const response = await fetch(
-      `http://localhost:3440/stats`
+      `${API_URL}/stats`
   );
     let stats = {} as Stats
     if (response.status == 200) {

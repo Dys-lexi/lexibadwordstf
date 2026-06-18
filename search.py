@@ -20,7 +20,10 @@ import threading
 load_dotenv()
 
 
-pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
+try:
+    pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
+except:
+    pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
 root = "https://logs.tf/api/v1"
 app = Flask(__name__)
 
@@ -85,7 +88,7 @@ def stats():
     if os.path.exists("./statscache.json"):
         with open("./statscache.json", "r") as f:
             stats = json.load(f)
-    if now - 3600 > stats["timestampcached"]:
+    if now - 21600 > stats["timestampcached"]:
         threading.Thread(target=cachestats, daemon=True).start()
     del(stats["timestampcached"])
     return stats,200
@@ -189,6 +192,7 @@ def init():
 
         )"""
     )
+    print("weee")
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS currentthings (
 
@@ -225,19 +229,25 @@ def init():
         PRIMARY KEY (id, idwithinlogs)
     )"""
     )
-
+    print("teee")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_id ON messages (id)")
+    print("a")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_id ON logs_raw (id)")
+    print("b")
     cursor.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS isduplicate BOOLEAN DEFAULT FALSE")
+    print("c")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_empty ON logs_raw (empty)")
+    print("d")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
+    print("e")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true;")
+    print("veee")
     conn.commit()
 init()
 
 
 # indexsomecoolmessages()
 
-print(   Converter.to_steamID3(76561198807031128))
+print("done!")
 CORS(app, resources={r"/*": {"origins": "*"}})
 serve(app, host="0.0.0.0", port=3440, threads=40, connection_limit=200)  

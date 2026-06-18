@@ -8,7 +8,7 @@ const config: Config = {
   // https://vike.dev/head-tags
   title: "lexislurs",
   description: "find bad words and mabye slurs sent by people in tf2",
-
+  server:true,
   extends: [vikeReact],
 };
 
