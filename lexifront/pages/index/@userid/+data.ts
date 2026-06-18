@@ -17,7 +17,10 @@ export async function data(pageContext: PageContextServer) {
     let personresults = {} as Userdetails
     if (response.status == 200) {
         personresults = (await response.json());
-          config({
+      config({
+        description: `${personresults.nonowords.length || "No" } Bad words sent`,
+            
+      image: personresults.avatarurl,
     // Set <title>
     title: personresults.currentusername,
   });

@@ -16,9 +16,16 @@ export async function data(pageContext: PageContextServer) {
   );
     let stats = {} as Stats
     if (response.status == 200) {
-        stats = (await response.json());
+      stats = (await response.json());
+      
+
+      config({
+        description: `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`
+      })
           
     }
+  
+  
   
 
 
