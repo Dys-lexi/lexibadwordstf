@@ -2,7 +2,6 @@ services:
   postgres:
     image: postgres:17
     container_name: teamfort2db
-    restart: always
     shm_size: '4gb'
     command:
       - "postgres"
@@ -35,7 +34,7 @@ services:
       # - /mnt/bigdrives/tflogs/db:/var/lib/postgresql/data
       - ./db:/var/lib/postgresql/data
       - /mnt/bigdrives/tflogs/logs.sql:/var/logs.sql
-
+    restart: unless-stopped
   search:
     build: ./
     depends_on:
@@ -43,9 +42,10 @@ services:
           condition: service_started
     volumes:
       - ./search.py:/app/search.py:ro
-      - ./statscache.json:/app/statscache.py:rw
+      - ./statscache.json:/app/statscache.json:rw
     ports:                                                                                                                                                                                                                                        
       - "3440:3440"    
+    restart: unless-stopped
 
 
   update:
@@ -58,6 +58,7 @@ services:
     volumes:
       - ./update.py:/app/update.py:ro
       - ./chatfilters:/app/chatfilters:ro
+    restart: unless-stopped
   lexifront:
     build:
       context: ./lexifront
@@ -68,4 +69,4 @@ services:
     #   - search                                                                                                                                                                                                                                    
     ports:                                                                                                                                                                                                                                        
       - "3000:3000"                                                                                                                                                                                                                               
-    restart: always
+    restart: unless-stopped

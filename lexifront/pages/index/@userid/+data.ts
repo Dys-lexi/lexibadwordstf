@@ -26,7 +26,12 @@ export async function data(pageContext: PageContextServer) {
   });
     }
   
-
+  // let personresults = {} as Userdetails
+  // personresults.avatarurl = "pants"
+  // personresults.nonowords = []
+  // personresults.currentusername = "underwear"
+  // personresults.frame = "wdqodwq"
+  // personresults.steamprofile = "wqdwqdq"
 
   // We remove data we don't need because the data is passed to
   // the client; we should minimize what is sent over the network.

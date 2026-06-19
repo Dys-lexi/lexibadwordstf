@@ -75,6 +75,7 @@ def cachestats():
     c.execute("SELECT COUNT(DISTINCT sender) FROM messages WHERE flagged = true")
     if output := c.fetchone():
         stats["flaggedplayers"] = output[0]
+    print("done caching stats")
     with open("./statscache.json", "w") as f:
         f.write(json.dumps(stats,indent=4))
 
@@ -83,6 +84,7 @@ def cachestats():
 @app.route("/stats",methods=["GET"])
 def stats():
     now = int(time.time())
+
     print("pulling stats at",now)
     stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"timestampcached":0,"flaggedplayers":0}
     if os.path.exists("./statscache.json"):
@@ -99,6 +101,7 @@ def resolvename(userid = False):
     if not userid:
         userid = request.get_json()["url"]
     now = int(time.time())
+    timer = time.time()
     conn = pgpool.getconn()
     c = conn.cursor()
     print("pulling a user at",now)
@@ -157,7 +160,7 @@ def resolvename(userid = False):
         avatarurl = output[2]
         frame = output[3]
 
-    if avatarurl.isdigit() and not int(avatar_url):
+    if avatarurl.isdigit() and not int(avatarurl):
         avatarurl = "https://avatars.fastly.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
     else:
         avatarurl = f"https://avatars.steamstatic.com/{avatarurl}_full.jpg"
@@ -176,7 +179,8 @@ def resolvename(userid = False):
         if shouldreturn:
             continue
         reallogs.append(log)
-    return  {"currentusername":currentname,"nonowords":reallogs,"avatarurl":avatarurl,"frame":frame} , 200
+    print("this took",time.time()-timer)
+    return  {"currentusername":currentname,"nonowords":reallogs,"avatarurl":avatarurl,"frame":frame,"steamprofile":f"https://steamcommunity.com/profiles/{steam64}"} , 200
 
 
 

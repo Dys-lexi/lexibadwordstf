@@ -2,7 +2,8 @@ export type Userdetails = {
     currentusername: string
     nonowords: Array<Badmessage>
     avatarurl: string
-    frame? :string
+    frame?: string
+    steamprofile: string
 };
 
 export type Badmessage = {

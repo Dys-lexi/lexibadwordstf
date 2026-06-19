@@ -6,10 +6,12 @@
     "preview": "vike build && vike preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "vike": "0.4.259",
-    "vike-react": "^0.6.24"
+    "vike-react": "^0.6.24",
+    "vike-react-query": "^0.1.13"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

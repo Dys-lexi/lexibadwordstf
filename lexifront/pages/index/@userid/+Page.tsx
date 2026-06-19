@@ -2,19 +2,21 @@ import { useData } from "vike-react/useData";
 import { usePageContext } from "vike-react/usePageContext";
 import type { Data } from "./+data.js";
 import "./Page.css";
+
 export default function Page() {
   const { personresults, statuscode } = useData<Data>();
   const pageContext = usePageContext();
   if (statuscode == 200) {
     return (
+
       <div className="nonoresultsholder">
-        <div className="nameholderbad">
+        <a className="nameholderbad"  href = {personresults.steamprofile}  target="_blank">
           <div className="nonowordavatarholder">
             <img src={personresults.frame} className="avatarholder" ></img>
           <img src={personresults.avatarurl} className="nonowordavatar" ></img>
           </div>
-          <div className="nonowordcurrentusername" > { personresults.currentusername}</div>
-        </div>
+          <div className="nonowordcurrentusername " > { personresults.currentusername}</div>
+        </a>
         {/* <p>{statuscode}</p> */}
         {/* <div>{JSON.stringify(personresults)}</div> */}
         {/* https://steamcommunity.com/id/thebv */}
@@ -28,7 +30,8 @@ export default function Page() {
               </div>
             )) : <h2>No bad words found for { personresults.currentusername}</h2>}
         </div>
-      </div>
+        </div>
+  
     );
   }
   else {
