@@ -187,7 +187,7 @@ def howlongodesthistake():
         if not i % 5000:
             print("done number",i)
             conn.commit()
-        for id,name in thing.items():
+        for id,name in thing[0].items():
 
             try:
                 id = Converter.to_steamID64(id)

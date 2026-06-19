@@ -23,8 +23,8 @@ export default function Page() {
             <div className="nonowordcurrentusername ">
               {" "}
               {personresults.currentusername}
-            </div>{personresults.nonowords.length == 1 &&
-              <div className="badwordcounter">1 bad word</div> || personresults.nonowords.length && <div className="badwordcounter">{ personresults.nonowords.length} bad words</div>  }
+            </div>{(personresults.nonowords.length == 1 &&
+              <div className="badwordcounter">1 bad word</div>) || (personresults.nonowords.length && <div className="badwordcounter">{ personresults.nonowords.length} bad words</div>)  || ""}
           </div>
         </a>
         {/* <p>{statuscode}</p> */}
