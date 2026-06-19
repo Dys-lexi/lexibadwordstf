@@ -186,14 +186,15 @@ def howlongodesthistake():
     for i,thing in enumerate(output):
         if not i % 5000:
             print("done number",i)
-        for id,name in output.items():
+            conn.commit()
+        for id,name in thing.items():
 
             try:
                 id = Converter.to_steamID64(id)
             except:
                 continue
             c.execute("INSERT INTO usernames (name,steamid) VALUES (%s,%s) ON CONFLICT (name,steamid) DO NOTHING",(name,id))
-    conn.commit()
+    
     print("done")
     pgpool.putconn(conn)
 
@@ -205,6 +206,6 @@ def howlongodesthistake():
 # indexsomecoolmessages()
 
 print("done!")
-# howlongodesthistake()
+howlongodesthistake()
 CORS(app, resources={r"/*": {"origins": "*"}})
 serve(app, host="0.0.0.0", port=3440, threads=40, connection_limit=200)  
