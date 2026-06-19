@@ -17,7 +17,7 @@ from steamid_converter import Converter
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import threading
-load_dotenv()
+import initsql
 
 
 try:
@@ -34,23 +34,6 @@ app = Flask(__name__)
 
 
 
-
-
-
-
-
-
-
-
-def indexsomecoolmessages(todologs = []):
-    print("e logs")
-    conn = pgpool.getconn()
-    cursor = conn.cursor()
-
-    cursor.execute("""SELECT name, message,time FROM messages WHERE sender = '[U:1:88677982]' AND flagged = true ORDER BY time""")
-
-    output = list(map(lambda x: f"{datetime.fromtimestamp(x[2], pants.UTC).strftime('%d-%m-%Y %H:%M:%S')} {x[0]}: {x[1]}",cursor.fetchall()))
-    print("\n".join(output))
     
 
 def cachestats():
@@ -76,6 +59,7 @@ def cachestats():
     if output := c.fetchone():
         stats["flaggedplayers"] = output[0]
     print("done caching stats")
+    pgpool.putconn(conn)
     with open("./statscache.json", "w") as f:
         f.write(json.dumps(stats,indent=4))
 
@@ -117,6 +101,7 @@ def resolvename(userid = False):
             r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/",params = {"key":os.getenv("STEAMAPIKEY"),"vanityurl":vanity})
             r.raise_for_status()
             if  r.json()["response"]["success"] != 1:
+                pgpool.putconn(conn)
                 return {}, 404
             steam3 = Converter.to_steamID3(r.json()["response"]["steamid"]) 
             c.execute("INSERT INTO vanityurls (vanity,steamid,lastcheckedtimestamp) VALUES (%s,%s,%s) ON CONFLICT (vanity) DO UPDATE SET steamid = EXCLUDED.steamid, lastcheckedtimestamp = EXCLUDED.lastcheckedtimestamp",(vanity,r.json()["response"]["steamid"],now))
@@ -131,6 +116,7 @@ def resolvename(userid = False):
         try:
             steam3 = Converter.to_steamID3(userid)
         except: 
+            pgpool.putconn(conn)
             return resolvename(f"https://steamcommunity.com/id/{userid}")
             
     steam64 = Converter.to_steamID64(steam3)
@@ -143,6 +129,7 @@ def resolvename(userid = False):
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
         r.raise_for_status()
         if not len(r.json()):
+            pgpool.putconn(conn)
             return {}  , 404
         currentname = r.json()[0]["persona_name"]
         avatarurl = r.json()[0]["avatar_url"]
@@ -180,87 +167,44 @@ def resolvename(userid = False):
             continue
         reallogs.append(log)
     print("this took",time.time()-timer)
+    pgpool.putconn(conn)
     return  {"currentusername":currentname,"nonowords":reallogs,"avatarurl":avatarurl,"frame":frame,"steamprofile":f"https://steamcommunity.com/profiles/{steam64}"} , 200
 
 
 
 
 
-
-
-
-
-
-def init():
-    print("init")
+def howlongodesthistake():
     conn = pgpool.getconn()
+    c = conn.cursor()
+    print("wee")
+    c.execute("SELECT json->'names' FROM logs_raw")
 
-    cursor = conn.cursor()
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS vanityurls (
-            vanity TEXT PRIMARY KEY,
 
-            lastcheckedtimestamp BIGINT,
-            steamid BIGINT
+    output = c.fetchall()
+    print("OUTPUTLEN",len(output))
+    for i,thing in enumerate(output):
+        if not i % 5000:
+            print("done number",i)
+        for id,name in output.items():
 
-        )"""
-    )
-    # print("weee")
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS currentthings (
-
-            steamid BIGINT PRIMARY KEY,
-
-            timestampcurrentname BIGINT,
-            frame TEXT,
-            avatar TEXT,
-            currentname TEXT
-
-        )"""
-    )
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER,
-            idwithinlogs INTEGER,
-            message TEXT,
-            sender TEXT,
-            time BIGINT,
-            name TEXT,
-            flagged BOOLEAN,
-            PRIMARY KEY (id, idwithinlogs)
-        )"""
-    )
-
-    cursor.execute(
-    """CREATE TABLE IF NOT EXISTS badmessages (
-        id INTEGER,
-        idwithinlogs INTEGER,
-        message TEXT,
-        sender TEXT,
-        time BIGINT,
-        name TEXT,
-        PRIMARY KEY (id, idwithinlogs)
-    )"""
-    )
-    # print("teee")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_id ON messages (id)")
-    # print("a")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_id ON logs_raw (id)")
-    # print("b")
-    cursor.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS isduplicate BOOLEAN DEFAULT FALSE")
-    # print("c")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_empty ON logs_raw (empty)")
-    # print("d")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
-    # print("e")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true;")
-    # print("veee")
+            try:
+                id = Converter.to_steamID64(id)
+            except:
+                continue
+            c.execute("INSERT INTO usernames (name,steamid) VALUES (%s,%s) ON CONFLICT (name,steamid) DO NOTHING",(name,id))
     conn.commit()
-init()
+    print("done")
+    pgpool.putconn(conn)
+
+
+
+
 
 
 # indexsomecoolmessages()
 
 print("done!")
+# howlongodesthistake()
 CORS(app, resources={r"/*": {"origins": "*"}})
 serve(app, host="0.0.0.0", port=3440, threads=40, connection_limit=200)  

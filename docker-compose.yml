@@ -6,6 +6,8 @@ services:
     command:
       - "postgres"
       - "-c"
+      - "max_connections=2000"
+      - "-c"
       - "max_parallel_workers_per_gather=6"
       - "-c"
       - "max_parallel_workers=6"
@@ -42,9 +44,10 @@ services:
           condition: service_started
     volumes:
       - ./search.py:/app/search.py:ro
+      - ./initsql.py:/app/initsql.py:ro
       - ./statscache.json:/app/statscache.json:rw
-    ports:                                                                                                                                                                                                                                        
-      - "3440:3440"    
+    env_file:
+      - ./.env
     restart: unless-stopped
 
 
@@ -57,6 +60,7 @@ services:
           condition: service_started
     volumes:
       - ./update.py:/app/update.py:ro
+      - ./initsql.py:/app/initsql.py:ro
       - ./chatfilters:/app/chatfilters:ro
     restart: unless-stopped
   lexifront:

@@ -26,8 +26,9 @@ export function Prettybackground() {
   const screenWidth = typeof window !== "undefined" ? window.innerWidth : 1920;
   const screenHeight =
     typeof window !== "undefined" ? window.innerHeight : 1080;
-  const tilesX = Math.ceil(screenWidth / size);
-  const tilesY = Math.ceil(screenHeight / size);
+  const modifier = 10000 as number
+  const tilesX = Math.ceil(screenWidth / (size*modifier));
+  const tilesY = Math.ceil(screenHeight / (size*modifier));
 
   const bigCanvas = document.createElement("canvas");
   bigCanvas.width = tilesX * size;

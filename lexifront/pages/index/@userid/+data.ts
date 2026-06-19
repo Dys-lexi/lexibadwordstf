@@ -10,22 +10,28 @@ export type Data = Awaited<ReturnType<typeof data>>;
 export async function data(pageContext: PageContextServer) {
   // https://vike.dev/useConfig
   const config = useConfig();
-
-  const response = await fetch(
-      `${API_URL}/user`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(pageContext.routeParams.userid) }) , headers: { "Content-Type": "application/json" }}
-  );
-    let personresults = {} as Userdetails
+  let personresults = {} as Userdetails
+  let response
+  try {
+     response = await fetch(
+      `${API_URL}/user`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(pageContext.routeParams.userid) }), headers: { "Content-Type": "application/json" } }
+    );
+    
     if (response.status == 200) {
-        personresults = (await response.json());
+      personresults = (await response.json());
       config({
-        description: `${personresults.nonowords.length || "No" } Bad words sent`,
+        description: `${personresults.nonowords.length || "No"} Bad words sent`,
             
-      image: personresults.avatarurl,
-    // Set <title>
-    title: personresults.currentusername,
-  });
+        image: personresults.avatarurl,
+        // Set <title>
+        title: personresults.currentusername,
+      });
     }
-  
+  }
+  catch {
+    return {personresults,statuscode:500}
+  }
+    
   // let personresults = {} as Userdetails
   // personresults.avatarurl = "pants"
   // personresults.nonowords = []

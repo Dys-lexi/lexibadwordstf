@@ -10,12 +10,14 @@ export type Data = Awaited<ReturnType<typeof data>>;
 export async function data(pageContext: PageContextServer) {
   // https://vike.dev/useConfig
   const config = useConfig();
-
-  const response = await fetch(
+  let response;
+  let stats = {} as Stats
+  try {
+     response = await fetch(
       `${API_URL}/stats`
-  );
-    let stats = {} as Stats
-    if (response.status == 200) {
+    );
+  
+    if (response && response.status == 200) {
       stats = (await response.json());
       
 
@@ -24,7 +26,10 @@ export async function data(pageContext: PageContextServer) {
       })
           
     }
-  
+  }
+  catch {
+    return {stats,statuscode:500}
+  }
   
   
 

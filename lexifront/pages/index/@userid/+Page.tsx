@@ -34,7 +34,10 @@ export default function Page() {
   
     );
   }
-  else {
+  else if (statuscode == 404) {
     return (<h2>could not find user "{ pageContext.routeParams.userid}"</h2>)
+  }
+  else {
+    return (<h2>the server broke (or is down), sorry :(</h2>)
   }
 }

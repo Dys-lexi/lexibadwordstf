@@ -14,12 +14,12 @@ export default function Page() {
         classnamebutton="bigsearchbutton"
       />
       <div className="statsholder">
-      {statuscode == 200 &&
+      {statuscode == 200 ?
         Object.entries(stats).map(([stat, val], index) => (
           <div key={index} className="stat">
           <div className="statsname">  {getstatprettyname(stat)}: </div> <div className="statsstat"> {val.toLocaleString()} </div>
           </div>
-        ))}</div>
+        )) : <div className="stat" style={{"color":"red"}}>Backend is probably down :(</div>}</div>
     </div>
   );
 }

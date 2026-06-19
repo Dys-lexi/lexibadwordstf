@@ -9,6 +9,8 @@ import threading
 import os
 import re
 import requests
+import initsql
+
 # from waitress import serve
 # from flask_cors import CORS
 # from flask import Flask, jsonify, request, send_from_directory, send_file
@@ -60,7 +62,9 @@ def occasionallyasknicelyiftherearenewlogs():
         c.execute("INSERT INTO logs_raw (id,json,time,empty) VALUES (%s, %s, to_timestamp(%s), %s)",(logid,json.dumps(log.json()),getpriority(log.json(),["info","date"]),not log.json()["success"]))
         conn.commit()
     # c.execute("INSERT INTO logs_raw (id,json,time) VALUES (%s, %s, to_timestamp(%s))",(6_000_000,json.dumps({"pants":"underwear"}),time.time()))
+    pgpool.putconn(conn)
     indexsomecoolmessages()
+    
     
 
 
@@ -68,7 +72,6 @@ def occasionallyasknicelyiftherearenewlogs():
 
 def generallyupdatethings():
     indexsomecoolmessages()
-    indexsomebadwords()
 
 
 
@@ -132,6 +135,7 @@ def indexsomecoolmessages(firsttime = False):
                     cursor.execute("INSERT INTO messages (id,idwithinlogs, message,sender,time,name,flagged) VALUES (%s, %s, %s, %s, %s, %s ,%s) ON CONFLICT DO NOTHING",(logid,idwithinlogs,message["msg"],message["steamid"],log_date,message["name"],bool(re.search(pattern, message["msg"], re.IGNORECASE))))
         conn.commit()
     print("Done index")
+    pgpool.putconn(conn)
     # print(f"that took {(time.time() - now):,} seconds")
 
 
@@ -160,65 +164,7 @@ def getpriority(ditionary, *priority, **kwargs):
 
 
 
-def init():
-    print("init")
-    conn = pgpool.getconn()
 
-    cursor = conn.cursor()
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS vanityurls (
-            vanity TEXT PRIMARY KEY,
-
-            lastcheckedtimestamp BIGINT,
-            steamid BIGINT
-
-        )"""
-    )
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS currentthings (
-
-            steamid BIGINT PRIMARY KEY,
-
-            timestampcurrentname BIGINT,
-            frame TEXT,
-            avatar TEXT,
-            currentname TEXT
-
-        )"""
-    )
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER,
-            idwithinlogs INTEGER,
-            message TEXT,
-            sender TEXT,
-            time BIGINT,
-            name TEXT,
-            flagged BOOLEAN,
-            PRIMARY KEY (id, idwithinlogs)
-        )"""
-    )
-
-    cursor.execute(
-    """CREATE TABLE IF NOT EXISTS badmessages (
-        id INTEGER,
-        idwithinlogs INTEGER,
-        message TEXT,
-        sender TEXT,
-        time BIGINT,
-        name TEXT,
-        PRIMARY KEY (id, idwithinlogs)
-    )"""
-    )
-
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_id ON messages (id)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_id ON logs_raw (id)")
-    cursor.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS isduplicate BOOLEAN DEFAULT FALSE")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_empty ON logs_raw (empty)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true;")
-    conn.commit()
-init()
 
 
 # threading.Thread(target=occasionallyrunsomething,daemon=True).start()
