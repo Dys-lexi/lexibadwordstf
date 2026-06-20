@@ -80,7 +80,7 @@ export default function Prettysearch({
             {matches.map(({ n, id, a, g }, index) => {
               return (
                 <a
-                  className="suggestion"
+                  className={`suggestion${!index ? " importantsuggestion" : ""}`}
                   onClick={() => {
                     onsuggest(id);
                   }}
