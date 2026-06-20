@@ -16,11 +16,11 @@ import os
 from steamid_converter import Converter
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
-import threading
 import initsql
 from cachetools import cached, LRUCache, TTLCache
-
-load_dotenv()  # Load environment variables from .env file
+from psycogreen.gevent import patch_psycopg
+patch_psycopg()
+load_dotenv() 
 
 try:
     pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
@@ -46,6 +46,10 @@ def cachestats():
     c = conn.cursor()
     print("caching stats")
     stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"flaggedplayers":0,"timestampcached":int(time.time())}
+    if os.path.exists("./statscache.json"):
+        with open("./statscache.json", "r") as f:
+            stats = json.load(f)
+    stats["timestampcached"] = int(time.time())
     with open("./statscache.json", "w") as f:
         f.write(json.dumps(stats,indent=4))
     c.execute("SELECT COUNT(*) FROM logs_raw")
@@ -72,6 +76,9 @@ def cachestats():
 
 @app.route("/stats",methods=["GET"])
 def stats():
+    return stats_cache()
+@cached(cache=TTLCache(maxsize=1024, ttl=600))
+def stats_cache():
     now = int(time.time())
     
     print("pulling stats at",now)
@@ -79,16 +86,20 @@ def stats():
     if os.path.exists("./statscache.json"):
         with open("./statscache.json", "r") as f:
             stats = json.load(f)
-    if now - 86400 > stats["timestampcached"]:
+    if not stats or now - 86400 > stats["timestampcached"]:
         threading.Thread(target=cachestats, daemon=True).start()
-    del(stats["timestampcached"])
-    return stats,200
-            
+    if not stats: return {}
+    if "timestampcached" in stats:
+        del(stats["timestampcached"])
+    return stats
 
 @app.route("/user", methods=["POST"])
-def resolvename(userid = False):
-    if not userid:
-        userid = request.get_json()["url"]
+def resolvename():
+    userid = request.get_json()["url"]
+    return resolvename_cache(userid)
+
+@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+def resolvename_cache(userid):
     now = int(time.time())
     print("pulling a user at",now)
     timer = time.time()
@@ -125,7 +136,7 @@ def resolvename(userid = False):
             steam3 = Converter.to_steamID3(userid)
         except: 
             pgpool.putconn(conn)
-            return resolvename(f"https://steamcommunity.com/id/{userid}")
+            return resolvename_cache(f"https://steamcommunity.com/id/{userid}")
             
     steam64 = Converter.to_steamID64(steam3)
     c.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
@@ -209,11 +220,11 @@ def handle_disconnect():
     print('Client disconnected')
 
 @socketio.on('n')
-def handle_search():
+def handle_search(data):
     now = time.time()
-    emit("m",defaultthing())
+    emit("m",[data,defaultthing()])
     print(time.time()-now)
-@cached(cache=TTLCache(maxsize=1024, ttl=600))
+@cached(cache=TTLCache(maxsize=1024, ttl=3600))
 def defaultthing():
     conn = pgpool.getconn()
     c = conn.cursor()
@@ -237,8 +248,9 @@ def defaultthing():
 @socketio.on('s')
 def handle_search(data):
     now = time.time()
-    emit("m",handle_search_helper(data))
-    print(time.time()-now)
+    # print("PANTS",data)
+    emit("m",[data[1],handle_search_helper(data[0])])
+    # print(data[0].ljust(10), time.time()-now)
 @cached(cache=TTLCache(maxsize=10000, ttl=3600))
 def handle_search_helper(data):
     conn = pgpool.getconn()
@@ -253,6 +265,10 @@ def handle_search_helper(data):
     c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped))
     
     output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: x["n"] == data, reverse = True)
+    if not output:
+        c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'%{escaped}%',escaped))
+        output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: x["n"] == data, reverse = True)
+
     # print(list(list(map(lambda x: x["id"],output))))
     # c.execute("SELECT steamid, avatar, timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output)),))
     # ids = list(filter(lambda x: x["timestampcurrentname"] > now - 604800, map(lambda x:{"id":x[0],"avatar":x[1],"timestampcurrentname":x[2]}, c.fetchall())))

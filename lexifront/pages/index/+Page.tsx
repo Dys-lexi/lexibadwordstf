@@ -22,7 +22,7 @@ export default function Page() {
           ))
         ) : (
           <div className="stat" style={{ color: "red" }}>
-            Backend is probably down :(
+            Backend is probably down :( {statuscode}
           </div>
         )}
       </div>

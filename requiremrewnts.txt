@@ -28,6 +28,7 @@ multidict==6.7.1
 packaging==26.2
 pillow==12.1.1
 propcache==0.4.1
+psycogreen==1.0.2
 psycopg2-binary==2.9.11
 py-cord==2.7.1
 python-dotenv==1.2.2

@@ -85,6 +85,7 @@ def init():
     c.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_usernames_name_trgm ON usernames USING GIN (name gin_trgm_ops)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_usernames_steamid ON usernames (steamid)")
     conn.commit()
     pgpool.putconn(conn)
 init()

@@ -5,6 +5,8 @@ import { io, Socket } from "socket.io-client";
 type wsstore = {
   socket: Socket | null;
   isConnected: boolean;
+  count: number;
+  mostrecentcount: number;
   matches: match[];
   connect: () => void;
   disconnect: () => void;
@@ -20,8 +22,10 @@ type match = {
 
 export const usewsstore = create<wsstore>()((set, get) => ({
   socket: null,
+  mostrecentcount:0 ,
   isConnected: false,
   isConnecting: false,
+  count: 0,
   matches: [],
   connect: () => {
     const SOCKETIOURL =
@@ -77,7 +81,9 @@ export const usewsstore = create<wsstore>()((set, get) => ({
       //     }
       //   } catch { }
       // }
-      set({ matches: data });
+      if (get().mostrecentcount < data[0]) {
+        set({ matches: data[1], mostrecentcount: data[0]});
+      }
     });
     // console.log("pants")
     set({ socket: newSocket });
@@ -89,13 +95,15 @@ export const usewsstore = create<wsstore>()((set, get) => ({
   },
 
   sendsearch: (query: string) => {
+   
     if (query.length > 0) {
-      get().socket?.emit("s", query);
+      get().socket?.emit("s", [query,get().count]);
 
     }
     else {
-       get().socket?.emit("n");
+       get().socket?.emit("n",get().count);
       //  set({ matches: [] });
     }
+      set({ count: get().count+1 });
   },
 }));

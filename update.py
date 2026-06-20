@@ -214,8 +214,10 @@ def slowlypullpeoplesavatars():
     laststatuses = 0
     while True:
         now = int(time.time())
-        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL or r.timestampcurrentname < %s ORDER BY cardinality(l.ids) DESC LIMIT 1",(604800*10,))
+        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
         output = list(map(lambda x: x[0], c.fetchall()))
+        if not output:
+            time.sleep(3600)
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
         if r.ok:
             laststatuses = 0

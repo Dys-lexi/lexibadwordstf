@@ -20,11 +20,12 @@ export async function data(pageContext: PageContextServer) {
     if (response && response.status == 200) {
       stats = (await response.json());
       
-
-      config({
-        description: `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`
-      })
+      if (stats.totalmessages) {
+        config({
+          description: `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`
+        })
           
+      }
     }
   }
   catch {

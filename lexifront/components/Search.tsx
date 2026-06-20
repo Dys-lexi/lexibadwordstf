@@ -72,6 +72,7 @@ export default function Prettysearch({
         {matches.length && isFocused ? (
           <div className="searchsuggestionholder">
             {" "}
+            <div className="logcounter suggestion">Log counts are grouped by username</div>
             {matches.map(({ n, id,a,g }, index) => {
               return (
                 <a
