@@ -34,8 +34,9 @@ export default function Prettysearch({
     await navigationPromise;
     console.log("The new page has finished rendering.");
   }
-  const { connect, disconnect, matches, sendsearch } =
+  const { connect, disconnect, matches, sendsearch , count} =
     usewsstore();
+
 
   function focused() {
     connect();
@@ -69,36 +70,36 @@ export default function Prettysearch({
         </button>
       </form>
       <div style={{ position: "relative", width: "100%" }}>
-        {matches.length && isFocused ? (
+        {isFocused  && matches.length ?  (
           <div className="searchsuggestionholder">
             {" "}
           
-            {matches.map(({ n, id,a,g }, index) => {
+            {matches.map(({ n, id, a, g }, index) => {
               return (
                 <a
-                    className="suggestion"
-                    onClick={() => {
-                      onsuggest(id);
+                  className="suggestion"
+                  onClick={() => {
+                    onsuggest(id);
                   }}
-                key = {index}
+                  key={index}
                 >
-                    <img style={{"height":"100%"}}
-                    src={`https://avatars.fastly.steamstatic.com/${a?  a : "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"}.jpg`}
+                  <img style={{ "height": "100%" }}
+                    src={`https://avatars.fastly.steamstatic.com/${a ? a : "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"}.jpg`}
                   ></img>
                   <div
                     
                   
                   >
-                    {n} 
+                    {n}
                   </div>
-                  <span className="logcounter">{ g == 1 ? "1 Log" : `${g} Logs`}</span>
+                  <span className="logcounter">{g == 1 ? "1 Log" : `${g} Logs`}</span>
                   {/* {" "} <span className="">{id}</span> */}
-                {" "}
+                  {" "}
                 </a>
               );
             })}{" "}  <div className="notice">Log counts are grouped by username</div>
           </div>
-        ) : (
+) : (
           ""
         )}
       </div>

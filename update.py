@@ -228,7 +228,7 @@ def slowlypullpeoplesavatars():
             print(r.status_code)
             if r.status_code == 429:
                 laststatuses += 1
-                time.sleep(laststatuses*10)
+                time.sleep(laststatuses*20)
         time.sleep(2)
 
 

@@ -22,7 +22,7 @@ type match = {
 
 export const usewsstore = create<wsstore>()((set, get) => ({
   socket: null,
-  mostrecentcount:0 ,
+  mostrecentcount:-1,
   isConnected: false,
   isConnecting: false,
   count: 0,
@@ -95,7 +95,7 @@ export const usewsstore = create<wsstore>()((set, get) => ({
   },
 
   sendsearch: (query: string) => {
-   
+    set({ count: get().count+1 });
     if (query.length > 0) {
       get().socket?.emit("s", [query,get().count]);
 
@@ -104,6 +104,6 @@ export const usewsstore = create<wsstore>()((set, get) => ({
        get().socket?.emit("n",get().count);
       //  set({ matches: [] });
     }
-      set({ count: get().count+1 });
+     
   },
 }));
