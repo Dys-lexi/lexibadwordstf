@@ -34,7 +34,8 @@ export default function Prettysearch({
     await navigationPromise;
     console.log("The new page has finished rendering.");
   }
-  const { connect, disconnect, matches, sendsearch,avatarstore } = usewsstore();
+  const { connect, disconnect, matches, sendsearch, avatarstore } =
+    usewsstore();
 
   function focused() {
     connect();
@@ -54,6 +55,7 @@ export default function Prettysearch({
           name="user"
           onFocus={focused}
           onChange={(e) => {
+            focused();
             sendsearch(e.target.value);
           }}
           className={classNameinput}
@@ -67,23 +69,30 @@ export default function Prettysearch({
         {matches.length && isFocused ? (
           <div className="searchsuggestionholder">
             {" "}
-            {matches.map(({ n, id }, index) => {
-             
-              
+            {matches.map(({ n, id,a,g }, index) => {
               return (
-              <div><a
-                className="suggestion"
-                onClick={() => {
-                  onsuggest(id.toString());
-                }}
-                key={index}
-              >
-                {n}
-              </a>
+                <a
+                    className="suggestion"
+                    onClick={() => {
+                      onsuggest(id);
+                  }}
+                key = {index}
+                >
+                    <img style={{"height":"100%"}}
+                    src={`https://avatars.fastly.steamstatic.com/${a?  a : "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"}.jpg`}
+                  ></img>
+                  <div
+                    
+                  
+                  >
+                    {n} {id}
+                  </div>
+                  <span className="logcounter">{ g == 1 ? "1 Log" : `${g} Logs`}</span>
                   {/* {" "} <span className="">{id}</span> */}
-               
-                    <img src={`https://avatars.fastly.steamstatic.com/ac96b731893601acb1f1e50b065abef55f76a025.jpg`} ></img>  </div>
-            )})}{" "}
+                {" "}
+                </a>
+              );
+            })}{" "}
           </div>
         ) : (
           ""

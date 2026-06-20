@@ -26,6 +26,7 @@ def init():
             name TEXT,
 
             steamid BIGINT,
+            ids INTEGER[],
             PRIMARY KEY (name, steamid)
 
         )"""

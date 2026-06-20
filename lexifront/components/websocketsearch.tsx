@@ -14,14 +14,16 @@ type wsstore = {
 
 type match = {
   n: string;
-  id: number;
-  avatar: string;
+  id: string;
+  a: string;
+  g: number;
 };
 
 export const usewsstore = create<wsstore>()((set, get) => ({
   avatarstore: {},
   socket: null,
   isConnected: false,
+  isConnecting: false,
   matches: [],
   connect: () => {
     const SOCKETIOURL =
@@ -30,16 +32,19 @@ export const usewsstore = create<wsstore>()((set, get) => ({
     const SOCKETIOURLpath =
       (import.meta.env.VITE_API_URL && `/api/socket.io/`) || "/socket.io/";
 
-    if (get().socket?.connected) return;
+    if (get().socket?.connected ) return;
+
+
     console.log("ws urL", SOCKETIOURL);
     const newSocket = io(SOCKETIOURL, { path: SOCKETIOURLpath });
 
     newSocket.on("connect", () => {
-      set({ isConnected: true });
+      console.log("CONNECTED")
+      set({ isConnected: true});
     });
 
     newSocket.on("disconnect", () => {
-      set({ isConnected: false });
+      set({ isConnected: false});
     });
     newSocket.on("m", async (data) => {
       // const todothings = data.filter((id: match) => !(id.id in get().avatarstore))
@@ -59,7 +64,7 @@ export const usewsstore = create<wsstore>()((set, get) => ({
       // }
       set({ matches: data });
     });
-
+    console.log("pants")
     set({ socket: newSocket });
   },
 
@@ -69,6 +74,26 @@ export const usewsstore = create<wsstore>()((set, get) => ({
   },
 
   sendsearch: (query: string) => {
-    get().socket?.emit("s", query);
+    if (query.length > 0) {
+      // if (!(get().socket)) {
+      //   console.log("the socket is not connected")
+        
+      // }
+      // else {
+      //   console.log("weee")
+      // }
+      // console.log("eee",query)
+      if (get().socket != null) {
+        console.log("WOAG")
+      }
+      else {
+        console.log("unwoag?")
+      }
+      get().socket?.emit("s", query);
+
+    }
+    else {
+       set({ matches: [] });
+    }
   },
 }));

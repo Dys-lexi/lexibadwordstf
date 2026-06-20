@@ -131,7 +131,7 @@ def indexsomecoolmessages(firsttime = False):
             log_date = log[2]
             for id,name in log[3].items():
                 try:
-                    cursor.execute("INSERT INTO usernames (name,steamid) VALUES (%s,%s) ON CONFLICT (name,steamid) DO NOTHING",(name,Converter.to_steamID64(id)))
+                    cursor.execute("INSERT INTO usernames (name,steamid,ids) VALUES (%s,%s,%s) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,Converter.to_steamID64(id),[logid],logid))
                 except Exception as e:
                     print("brokey",e)
                 
@@ -177,23 +177,32 @@ def howlongodesthistake():
     conn = pgpool.getconn()
     c = conn.cursor()
     print("wee")
-    c.execute("SELECT json->'names' FROM logs_raw WHERE empty = false AND id > 3955000 ORDER BY id")
 
+    last_id = 0
+    batch_num = 0
+    while True:
+        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s ORDER BY id LIMIT 5000", (last_id,))
+        output = c.fetchall()
 
-    output = c.fetchall()
-    print("OUTPUTLEN",len(output))
-    for i,thing in enumerate(output):
-        if not i % 5000:
-            print("done number",i)
-            conn.commit()
-        for id,name in thing[0].items():
+        if not output:
+            break
 
-            try:
-                id = Converter.to_steamID64(id)
-            except:
-                continue
-            c.execute("INSERT INTO usernames (name,steamid) VALUES (%s,%s) ON CONFLICT (name,steamid) DO NOTHING",(name,id))
-    conn.commit()
+        batch_num += 1
+        print(f"Processing batch {batch_num}, rows {len(output)}")
+
+        for thing in output:
+            logid = thing[0]
+            last_id = logid
+            for id,name in thing[1].items():
+                try:
+                    id = Converter.to_steamID64(id)
+                except:
+                    continue
+                c.execute("INSERT INTO usernames (name,steamid,ids) VALUES (%s,%s,%s) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,id,[logid],logid))
+
+        conn.commit()
+        print(f"Batch {batch_num} committed")
+
     print("done")
     pgpool.putconn(conn)
 
@@ -202,7 +211,7 @@ def howlongodesthistake():
 
 # indexsomecoolmessages(False)
 
-
+# howlongodesthistake()
 occasionallyrunsomething()
 # indexsomebadwords()
 

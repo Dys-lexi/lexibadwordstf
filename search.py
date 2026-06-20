@@ -104,6 +104,8 @@ def resolvename(userid = False):
             steam3 = Converter.to_steamID3(output[1])
         else:
             r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/",params = {"key":os.getenv("STEAMAPIKEY"),"vanityurl":vanity})
+            if r.status_code in [429]:
+                return {}, 429
             r.raise_for_status()
             if  r.json()["response"]["success"] != 1:
                 pgpool.putconn(conn)
@@ -131,22 +133,39 @@ def resolvename(userid = False):
 
     if not output or not all(output) or output[1] < now - 3600:
         # print("pants")
+        failed = False
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
-        r.raise_for_status()
-        if not len(r.json()):
-            pgpool.putconn(conn)
-            return {}  , 404
-        currentname = r.json()[0]["persona_name"]
-        avatarurl = r.json()[0]["avatar_url"]
+        if r.status_code in [429]:
+            currentname = "Unknown (server rate limited)"
+            avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
+            failed = True
+        else:
+            r.raise_for_status()
+            if not len(r.json()):
+                pgpool.putconn(conn)
+                return {}  , 404
+            currentname = r.json()[0]["persona_name"]
+            avatarurl = r.json()[0]["avatar_url"]
         r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
-        r.raise_for_status()
-        soup = BeautifulSoup(r.text, "html.parser")
-        
-        frame = soup.select_one(".playersection_avatar_frame img")
-        if frame: frame = frame.get("src")
-        
-        c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame",(currentname,avatarurl,now,steam64,frame))
-        conn.commit()
+        if r.status_code in [429]:
+            return {}, r.status_code
+            frame = None
+            failed = True
+        else:
+            r.raise_for_status()
+            soup = BeautifulSoup(r.text, "html.parser")
+            
+            frame = soup.select_one(".playersection_avatar_frame img")
+            if frame: frame = frame.get("src")
+        if not failed:
+            c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame",(currentname,avatarurl,now,steam64,frame))
+            conn.commit()
+        elif output:
+            print("I GOT RATE LIMITED")
+            currentname = output[0]
+            avatarurl = output[2]
+            frame = output[3]
+
     else:
         currentname = output[0]
         avatarurl = output[2]
@@ -192,24 +211,47 @@ def handle_disconnect():
 def handle_search(data):
     conn = pgpool.getconn()
     c = conn.cursor()
-    now = time.time()
+    now = int(time.time())
+    now2 = time.time()
+    # print("meow")
     if not data:
         emit("m",[])
         return 
     escaped = data.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
-    c.execute("SELECT name, steamid FROM usernames WHERE name ILIKE %s ORDER BY LENGTH(name) LIMIT 10", (f'{escaped}%',))
+    c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped))
     
-    output = sorted(map(lambda x: {"n":x[0],"id":x[1]}, c.fetchall()), key = lambda x: x["n"] == data, reverse = True)
-    c.execute("SELECT avatar timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output))))
-    print(str(time.time()-now).ljust(20),data)
+    output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: x["n"] == data, reverse = True)
+    # print(list(list(map(lambda x: x["id"],output))))
+    # c.execute("SELECT steamid, avatar, timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output)),))
+    # ids = list(filter(lambda x: x["timestampcurrentname"] > now - 604800, map(lambda x:{"id":x[0],"avatar":x[1],"timestampcurrentname":x[2]}, c.fetchall())))
+    # requeststomake = list(filter(lambda x: x not in list(map(lambda x: x["id"],ids)), list(map(lambda x: x["id"] , output))))
+    # r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,requeststomake)))})
+    # if r.ok:
+    #     avatarstore = {}
+    #     for thing in r.json():
+
+    #         c.execute("INSERT INTO currentthings (steamid, timestampcurrentname,avatar,currentname) VALUES (%s, %s, %s, %s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar",(int(thing["steamid"]),now,thing["avatar_url"],thing["persona_name"]))
+    #         conn.commit()
+    #         avatarstore[int(thing["steamid"])] = {"avatar":thing["avatar_url"],"currentname":thing["persona_name"]}
+    #     output = list(map(lambda x: {**x,**avatarstore[x]},output))
+    # else:
+    #     print(r.status_code)
+
+    c.execute("SELECT steamid, avatar FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: int(x["id"]) , output)),))
+    avatars = dict(c.fetchall() )
+    # print(avatars)
+    output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
+    # print(list(map(lambda x: (x["id"], x["n"]) , output)))
     pgpool.putconn(conn)
-    emit("m",)
+    # print(output)
+    print(time.time() - now2)
+    emit("m",output)
 
 
 
 
 # indexsomecoolmessages()
-
+# gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 --bind 0.0.0.0:3440 search:app
 print("done!")
 
 CORS(app, resources={r"/*": {"origins": "*"}})

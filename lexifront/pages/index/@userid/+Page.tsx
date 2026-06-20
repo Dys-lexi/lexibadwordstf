@@ -60,7 +60,11 @@ export default function Page() {
     );
   } else if (statuscode == 404) {
     return <h2>could not find user "{pageContext.routeParams.userid}"</h2>;
-  } else {
+  
+  } else if (statuscode == 429) {
+    return <h2>the server is being rate limited by steam, don't search by vanity url atm :(</h2>;
+  }
+  else {
     return <h2>the server broke (or is down), sorry :(</h2>;
   }
 }
