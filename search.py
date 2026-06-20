@@ -8,7 +8,7 @@ import functools
 import time
 import threading
 import requests
-from waitress import serve
+from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from flask import Flask, jsonify, request, send_from_directory, send_file
 import os
@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 import threading
 import initsql
 
+load_dotenv()  # Load environment variables from .env file
 
 try:
     pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
@@ -26,6 +27,9 @@ except:
     pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
 root = "https://logs.tf/api/v1"
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
+
+
 
 
 
@@ -68,13 +72,13 @@ def cachestats():
 @app.route("/stats",methods=["GET"])
 def stats():
     now = int(time.time())
-
+    
     print("pulling stats at",now)
     stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"timestampcached":0,"flaggedplayers":0}
     if os.path.exists("./statscache.json"):
         with open("./statscache.json", "r") as f:
             stats = json.load(f)
-    if now - 21600 > stats["timestampcached"]:
+    if now - 86400 > stats["timestampcached"]:
         threading.Thread(target=cachestats, daemon=True).start()
     del(stats["timestampcached"])
     return stats,200
@@ -85,10 +89,11 @@ def resolvename(userid = False):
     if not userid:
         userid = request.get_json()["url"]
     now = int(time.time())
+    print("pulling a user at",now)
     timer = time.time()
     conn = pgpool.getconn()
     c = conn.cursor()
-    print("pulling a user at",now)
+    
 
 
     if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
@@ -124,7 +129,7 @@ def resolvename(userid = False):
     output = c.fetchone()
     # int(steamid64) - STEAMID64_BASE
 
-    if not output or not any(output) or output[1] < now - 3600:
+    if not output or not all(output) or output[1] < now - 3600:
         # print("pants")
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
         r.raise_for_status()
@@ -174,31 +179,31 @@ def resolvename(userid = False):
 
 
 
-def howlongodesthistake():
+
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
+
+@socketio.on('s')
+def handle_search(data):
     conn = pgpool.getconn()
     c = conn.cursor()
-    print("wee")
-    c.execute("SELECT json->'names' FROM logs_raw")
-
-
-    output = c.fetchall()
-    print("OUTPUTLEN",len(output))
-    for i,thing in enumerate(output):
-        if not i % 5000:
-            print("done number",i)
-            conn.commit()
-        for id,name in thing[0].items():
-
-            try:
-                id = Converter.to_steamID64(id)
-            except:
-                continue
-            c.execute("INSERT INTO usernames (name,steamid) VALUES (%s,%s) ON CONFLICT (name,steamid) DO NOTHING",(name,id))
+    now = time.time()
+    if not data:
+        emit("m",[])
+        return 
+    escaped = data.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    c.execute("SELECT name, steamid FROM usernames WHERE name ILIKE %s ORDER BY LENGTH(name) LIMIT 10", (f'{escaped}%',))
     
-    print("done")
+    output = sorted(map(lambda x: {"n":x[0],"id":x[1]}, c.fetchall()), key = lambda x: x["n"] == data, reverse = True)
+    c.execute("SELECT avatar timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output))))
+    print(str(time.time()-now).ljust(20),data)
     pgpool.putconn(conn)
-
-
+    emit("m",)
 
 
 
@@ -206,6 +211,9 @@ def howlongodesthistake():
 # indexsomecoolmessages()
 
 print("done!")
-howlongodesthistake()
+
 CORS(app, resources={r"/*": {"origins": "*"}})
-serve(app, host="0.0.0.0", port=3440, threads=40, connection_limit=200)  
+
+
+if __name__ == '__main__':
+    socketio.run(app, host="0.0.0.0", port=3440, debug=False, allow_unsafe_werkzeug=True)

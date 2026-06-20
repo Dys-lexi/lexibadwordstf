@@ -2,6 +2,7 @@ import type { Config } from "vike/types";
 import vikeReact from "vike-react/config";
 
 import vikeReactQuery from 'vike-react-query/config'
+import vikeReactZustand from 'vike-react-zustand/config'
 // Default config (can be overridden by pages)
 // https://vike.dev/config
 
@@ -11,7 +12,8 @@ const config: Config = {
   image: "https://lexi.tf/logo.png",
   description: "find bad words and mabye slurs sent by people in tf2",
   server:true,
-  extends: [vikeReact,vikeReactQuery],
+  extends: [vikeReact, vikeReactQuery, vikeReactZustand],
+  clientRouting: true
 };
 
 export default config;

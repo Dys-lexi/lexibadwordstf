@@ -28,4 +28,5 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 3440
 
 # Command to run the bot
-CMD ["python3", "search.py"]
+CMD ["gunicorn", "--worker-class", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w", "1", "--bind", "0.0.0.0:3440", "search:app"]
+# CMD ["python3", "search.py"]

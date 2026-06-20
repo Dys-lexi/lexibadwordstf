@@ -80,7 +80,10 @@ def init():
     # print("e")
     c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true;")
     # print("veee")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_usernames_name ON usernames (name)")
+
+    c.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_usernames_name_trgm ON usernames USING GIN (name gin_trgm_ops)")
     conn.commit()
     pgpool.putconn(conn)
 init()

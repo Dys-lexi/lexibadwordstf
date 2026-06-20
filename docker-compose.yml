@@ -70,7 +70,17 @@ services:
       args:
         VITE_API_URL: http://search:3440                                                                                                                                                                                                                    
     # depends_on:                                                                                                                                                                                                                                   
-    #   - search                                                                                                                                                                                                                                    
-    ports:                                                                                                                                                                                                                                        
-      - "3000:3000"                                                                                                                                                                                                                               
+    #   - search                                                                                                                                                                                                                                                                                                                                                                                                                                                                
     restart: unless-stopped
+
+    
+  nginx:
+    restart: always
+    image: nginx:1-alpine
+    depends_on:
+      - lexifront
+      - search
+    ports:
+      - 3000:80
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf

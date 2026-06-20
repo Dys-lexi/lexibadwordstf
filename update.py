@@ -9,6 +9,7 @@ import threading
 import os
 import re
 import requests
+from steamid_converter import Converter
 import initsql
 
 # from waitress import serve
@@ -105,6 +106,7 @@ def indexsomecoolmessages(firsttime = False):
     if firsttime:
         cursor.execute("UPDATE logs_raw SET empty = TRUE where (json->'success')::BOOLEAN = FALSE OR jsonb_array_length(json->'chat') = 0")
         conn.commit()
+        howlongodesthistake()
     
     
         
@@ -122,11 +124,18 @@ def indexsomecoolmessages(firsttime = False):
     # now = time.time()
     for i,block in enumerate(todologs):
         print(f"indexing block {i+1:,} out of {len(todologs):,}")
-        cursor.execute("SELECT id, json->'chat' as chat_array, json->'info'->'date' as log_date FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
+        cursor.execute("SELECT id, json->'chat' as chat_array, json->'info'->'date' as log_date,  json->'names' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
         for log in cursor.fetchall():
             logid = log[0]
             chatarray = log[1]
             log_date = log[2]
+            for id,name in log[3].items():
+                try:
+                    cursor.execute("INSERT INTO usernames (name,steamid) VALUES (%s,%s) ON CONFLICT (name,steamid) DO NOTHING",(name,Converter.to_steamID64(id)))
+                except Exception as e:
+                    print("brokey",e)
+                
+
             if chatarray:
                 # print("indexing",logid)
                 for idwithinlogs, message in enumerate(chatarray):
@@ -164,12 +173,37 @@ def getpriority(ditionary, *priority, **kwargs):
 
 
 
+def howlongodesthistake():
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    print("wee")
+    c.execute("SELECT json->'names' FROM logs_raw WHERE empty = false AND id > 3955000 ORDER BY id")
 
+
+    output = c.fetchall()
+    print("OUTPUTLEN",len(output))
+    for i,thing in enumerate(output):
+        if not i % 5000:
+            print("done number",i)
+            conn.commit()
+        for id,name in thing[0].items():
+
+            try:
+                id = Converter.to_steamID64(id)
+            except:
+                continue
+            c.execute("INSERT INTO usernames (name,steamid) VALUES (%s,%s) ON CONFLICT (name,steamid) DO NOTHING",(name,id))
+    conn.commit()
+    print("done")
+    pgpool.putconn(conn)
 
 
 # threading.Thread(target=occasionallyrunsomething,daemon=True).start()
 
 # indexsomecoolmessages(False)
+
+
 occasionallyrunsomething()
 # indexsomebadwords()
+
 # debug_indexsomebadwords()
