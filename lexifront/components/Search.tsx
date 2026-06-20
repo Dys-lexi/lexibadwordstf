@@ -20,8 +20,11 @@ export default function Prettysearch({
 
   async function onSubmit(formData: FormData) {
     disconnect();
+    const username = formData.get("user") as string;
+    const match = matches.find(({ n }) => n.toLocaleLowerCase() === username.toLocaleLowerCase());
+    const id = match ? match.id : username;
     const navigationPromise = navigate(
-      `/${encodeURIComponent(formData.get("user") as string)}`,
+      `/${encodeURIComponent(id)}`,
     );
     console.log("The URL changed but the new page hasn't rendered yet.");
     await navigationPromise;
