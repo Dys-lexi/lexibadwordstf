@@ -93,6 +93,10 @@ body.page-transition #page-content {
   top: 0px;
   left: 0px;
   padding-bottom: 10px;
+  /* border:solid;
+  border-color: rgba(255,255,255,0.5);
+  border-width: 2px; */
+
 }
 
 .suggestion {

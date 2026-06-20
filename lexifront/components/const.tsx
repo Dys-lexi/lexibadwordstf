@@ -58,12 +58,15 @@ export function Prettybackground() {
   return (
     <div
       style={{
-        backgroundImage: `url(${backgroundImage})`,
+        // backgroundImage: `url(${backgroundImage})`,
         backgroundRepeat: "repeat",
         // imageRendering: "pixelated",
+        
         zIndex:"-1",
         minHeight: "100vh",
-        minWidth:"100vw",
+        maxWidth: "100vw",
+        minWidth: "100vh",
+        maxHeight: "100vh",
         position: "absolute",
       }}
     >

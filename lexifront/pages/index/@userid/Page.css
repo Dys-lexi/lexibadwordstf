@@ -36,7 +36,7 @@
 .nonowordsholder{
     display: flex;
     flex-direction:column;
-    
+
   
     gap:5px
 }
@@ -87,12 +87,14 @@ background-color: rgba(200,200,255,0.05);
 }
 
 .nonowordcurrentusername{
-    font-family: "Motiva Sans", fantasy, sans-serif !important;
+    /* font-family: "Motiva Sans", fantasy, sans-serif !important; */
     color: rgb(100,100,200);
+     text-decoration: underline;
 }
 
 .loglink{
     color: rgb(100,100,200);
+     text-decoration: underline;    
 
 }
 

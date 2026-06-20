@@ -241,7 +241,7 @@ def defaultthing():
             avatars[steamid] = avatarurl
     output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
     pgpool.putconn(conn)
-
+    print(output)
     return output
 
 
@@ -259,13 +259,11 @@ def handle_search_helper(data):
 
     # print("meow")
     if not data or data.startswith("https://"):
-        emit("m",[])
+        # emit("m",[])
         return 
     escaped = data.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
     #  bv said no to searching by exact match -> popularity, now we only have popularity :(   c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s   AND LENGTH(name) >= LENGTH(%s) ORDER BY  (LOWER(name) = LOWER(%s)) DESC,  cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped,escaped))
     c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',))
-    # c.execute("SELECT array_agg(DISTINCT name), steamid, COUNT(DISTINCT x) FROM usernames CROSS JOIN LATERAL unnest(ids) as x WHERE name ILIKE %s GROUP BY steamid ORDER BY COUNT(DISTINCT x) DESC LIMIT 10", (f'{escaped}%',))
-    # c.execute("SELECT array_agg(name ORDER BY max_log DESC), steamid, (SELECT COUNT(DISTINCT x) FROM usernames u2, unnest(u2.ids) x WHERE u2.steamid = sub.steamid) as total FROM (SELECT steamid, name, MAX(x) as max_log FROM usernames, unnest(ids) x WHERE name ILIKE %s GROUP BY steamid, name) sub GROUP BY steamid ORDER BY total DESC LIMIT 10", (f'{escaped}%',))
 
     output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#x["n"] == data, reverse = True)
     if not output:

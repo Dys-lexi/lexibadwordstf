@@ -20,11 +20,14 @@ export default function Prettysearch({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   async function onSubmit(formData: FormData) {
+    console.log("pants")
     inputRef.current?.blur();
     disconnect();
     const username = formData.get("user") as string;
     const match = matches.length && matches[0].n.includes(username)
-    const id = matches[0].id ? match : username;
+    // console.log("match",match)
+    const id = match ? matches[0].id : username;
+    // console.log("id",id)
     const navigationPromise = navigate(
       `/${encodeURIComponent(id)}`,
     );
@@ -33,6 +36,7 @@ export default function Prettysearch({
     console.log("The new page has finished rendering.");
   }
   async function onsuggest(formData: string) {
+    // console.log("HERE")
     disconnect();
     const navigationPromise = navigate(`/${encodeURIComponent(formData)}`);
     console.log("The URL changed but the new page hasn't rendered yet.");

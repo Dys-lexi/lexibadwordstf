@@ -23,8 +23,16 @@ export default function Page() {
             <div className="nonowordcurrentusername ">
               {" "}
               {personresults.currentusername}
-            </div>{(personresults.nonowords.length == 1 &&
-              <div className="badwordcounter">1 bad word</div>) || (personresults.nonowords.length && <div className="badwordcounter">{ personresults.nonowords.length} bad words</div>)  || ""}
+            </div>
+            {(personresults.nonowords.length == 1 && (
+              <div className="badwordcounter">1 bad word</div>
+            )) ||
+              (personresults.nonowords.length && (
+                <div className="badwordcounter">
+                  {personresults.nonowords.length} bad words
+                </div>
+              )) ||
+              ""}
           </div>
         </a>
         {/* <p>{statuscode}</p> */}
@@ -42,8 +50,10 @@ export default function Page() {
                   log
                 </a>
                 <div className="nonowordtimestamp">
-                  {new Date(badword.timestamp * 1000).toLocaleDateString()}{" "}<div className="nonowordname">
-                  {new Date(badword.timestamp * 1000).toLocaleTimeString()}</div>
+                  {new Date(badword.timestamp * 1000).toLocaleDateString()}{" "}
+                  <div className="nonowordname">
+                    {new Date(badword.timestamp * 1000).toLocaleTimeString()}
+                  </div>
                 </div>
                 <div className="nonowordmessage">
                   {" "}
@@ -51,6 +61,7 @@ export default function Page() {
                   {badword.message}
                 </div>
               </div>
+     
             ))
           ) : (
             <h2>No bad words found for {personresults.currentusername}</h2>
@@ -60,11 +71,14 @@ export default function Page() {
     );
   } else if (statuscode == 404) {
     return <h2>could not find user "{pageContext.routeParams.userid}"</h2>;
-  
   } else if (statuscode == 429) {
-    return <h2>the server is being rate limited by steam, don't search by vanity url atm :(</h2>;
-  }
-  else {
+    return (
+      <h2>
+        the server is being rate limited by steam, don't search by vanity url
+        atm :(
+      </h2>
+    );
+  } else {
     return <h2>the server broke (or is down), sorry :(</h2>;
   }
 }
