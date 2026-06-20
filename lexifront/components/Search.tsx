@@ -43,7 +43,7 @@ export default function Prettysearch({
   }
 
   function blurred() {
-    // setTimeout(() => setIsFocused(false), 200);
+    setTimeout(() => setIsFocused(false), 200);
   }
   return (
     <div className="flexstuff" onBlur={blurred}>
@@ -85,7 +85,7 @@ export default function Prettysearch({
                     
                   
                   >
-                    {n} {id}
+                    {n} 
                   </div>
                   <span className="logcounter">{ g == 1 ? "1 Log" : `${g} Logs`}</span>
                   {/* {" "} <span className="">{id}</span> */}

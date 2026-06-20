@@ -36,16 +36,33 @@ export const usewsstore = create<wsstore>()((set, get) => ({
 
 
     console.log("ws urL", SOCKETIOURL);
-    const newSocket = io(SOCKETIOURL, { path: SOCKETIOURLpath });
+    const newSocket = io(SOCKETIOURL, {
+      path: SOCKETIOURLpath,
+      transports: ['websocket', 'polling']
+    });
 
     newSocket.on("connect", () => {
       console.log("CONNECTED")
       set({ isConnected: true});
     });
 
-    newSocket.on("disconnect", () => {
+    newSocket.on("disconnect", (reason) => {
+      console.log("DISCONNECTED", reason);
       set({ isConnected: false});
     });
+
+    newSocket.on("connect_error", (error) => {
+      console.log("CONNECTION ERROR", error);
+    });
+
+    newSocket.io.on("error", (error) => {
+      console.log("IO ERROR", error);
+    });
+
+    newSocket.io.on("reconnect", (attempt) => {
+      console.log("RECONNECTED after", attempt, "attempts");
+    });
+
     newSocket.on("m", async (data) => {
       // const todothings = data.filter((id: match) => !(id.id in get().avatarstore))
       // if (todothings.length) {
@@ -64,7 +81,7 @@ export const usewsstore = create<wsstore>()((set, get) => ({
       // }
       set({ matches: data });
     });
-    console.log("pants")
+    // console.log("pants")
     set({ socket: newSocket });
   },
 
@@ -83,12 +100,12 @@ export const usewsstore = create<wsstore>()((set, get) => ({
       //   console.log("weee")
       // }
       // console.log("eee",query)
-      if (get().socket != null) {
-        console.log("WOAG")
-      }
-      else {
-        console.log("unwoag?")
-      }
+      // if (get().socket != null) {
+      //   console.log("WOAG")
+      // }
+      // else {
+      //   console.log("unwoag?")
+      // }
       get().socket?.emit("s", query);
 
     }

@@ -11,6 +11,7 @@ import re
 import requests
 from steamid_converter import Converter
 import initsql
+import threading
 
 # from waitress import serve
 # from flask_cors import CORS
@@ -207,12 +208,39 @@ def howlongodesthistake():
     pgpool.putconn(conn)
 
 
+def slowlypullpeoplesavatars():
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    laststatuses = 0
+    while True:
+        now = int(time.time())
+        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL or r.timestampcurrentname < %s ORDER BY cardinality(l.ids) DESC LIMIT 1",(604800*2,))
+        output = list(map(lambda x: x[0], c.fetchall()))
+        r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))})
+        if r.ok:
+            laststatuses = 0
+            print("pulled avatar for",r.json()[0]["persona_name"])
+            c.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname) VALUES (%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"]))
+            conn.commit()
+        else:
+            print(r.status_code)
+            if r.status_code == 429:
+                laststatuses += 1
+                time.sleep(laststatuses*10)
+        time.sleep(2)
+
+
 # threading.Thread(target=occasionallyrunsomething,daemon=True).start()
 
 # indexsomecoolmessages(False)
 
 # howlongodesthistake()
-occasionallyrunsomething()
-# indexsomebadwords()
 
+
+
+# threading.Thread(target=occasionallyrunsomething, daemon=True).start()
+threading.Thread(target=slowlypullpeoplesavatars, daemon=True).start()
+# indexsomebadwords()
+occasionallyrunsomething()
 # debug_indexsomebadwords()
+# slowlypullpeoplesavatars()

@@ -240,11 +240,15 @@ def handle_search(data):
     c.execute("SELECT steamid, avatar FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: int(x["id"]) , output)),))
     avatars = dict(c.fetchall() )
     # print(avatars)
+    for steamid ,avatarurl in avatars.items():
+        if avatarurl.isdigit() and not int(avatarurl):
+            avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
+            avatars[steamid] = avatarurl
     output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
     # print(list(map(lambda x: (x["id"], x["n"]) , output)))
     pgpool.putconn(conn)
     # print(output)
-    print(time.time() - now2)
+    print(data,time.time() - now2)
     emit("m",output)
 
 
