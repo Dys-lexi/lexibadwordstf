@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import threading
 import initsql
+from cachetools import cached, LRUCache, TTLCache
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -207,12 +208,43 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+@socketio.on('n')
+def handle_search():
+    now = time.time()
+    emit("m",defaultthing())
+    print(time.time()-now)
+@cached(cache=TTLCache(maxsize=1024, ttl=600))
+def defaultthing():
+    conn = pgpool.getconn()
+    c = conn.cursor()
+
+
+    c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames  ORDER BY cardinality(ids) DESC LIMIT 10" )
+    
+    output = list(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()))
+    c.execute("SELECT steamid, avatar FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: int(x["id"]) , output)),))
+    avatars = dict(c.fetchall() )
+    for steamid ,avatarurl in avatars.items():
+        if avatarurl.isdigit() and not int(avatarurl):
+            avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
+            avatars[steamid] = avatarurl
+    output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
+    pgpool.putconn(conn)
+
+    return output
+
+
 @socketio.on('s')
 def handle_search(data):
+    now = time.time()
+    emit("m",handle_search_helper(data))
+    print(time.time()-now)
+@cached(cache=TTLCache(maxsize=10000, ttl=3600))
+def handle_search_helper(data):
     conn = pgpool.getconn()
     c = conn.cursor()
     now = int(time.time())
-    now2 = time.time()
+
     # print("meow")
     if not data:
         emit("m",[])
@@ -248,8 +280,7 @@ def handle_search(data):
     # print(list(map(lambda x: (x["id"], x["n"]) , output)))
     pgpool.putconn(conn)
     # print(output)
-    print(data,time.time() - now2)
-    emit("m",output)
+    return output
 
 
 

@@ -6,7 +6,6 @@ type wsstore = {
   socket: Socket | null;
   isConnected: boolean;
   matches: match[];
-  avatarstore: Record<number, string>;
   connect: () => void;
   disconnect: () => void;
   sendsearch: (query: string) => void;
@@ -20,7 +19,6 @@ type match = {
 };
 
 export const usewsstore = create<wsstore>()((set, get) => ({
-  avatarstore: {},
   socket: null,
   isConnected: false,
   isConnecting: false,
@@ -92,25 +90,12 @@ export const usewsstore = create<wsstore>()((set, get) => ({
 
   sendsearch: (query: string) => {
     if (query.length > 0) {
-      // if (!(get().socket)) {
-      //   console.log("the socket is not connected")
-        
-      // }
-      // else {
-      //   console.log("weee")
-      // }
-      // console.log("eee",query)
-      // if (get().socket != null) {
-      //   console.log("WOAG")
-      // }
-      // else {
-      //   console.log("unwoag?")
-      // }
       get().socket?.emit("s", query);
 
     }
     else {
-       set({ matches: [] });
+       get().socket?.emit("n");
+      //  set({ matches: [] });
     }
   },
 }));

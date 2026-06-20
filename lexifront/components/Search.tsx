@@ -34,7 +34,7 @@ export default function Prettysearch({
     await navigationPromise;
     console.log("The new page has finished rendering.");
   }
-  const { connect, disconnect, matches, sendsearch, avatarstore } =
+  const { connect, disconnect, matches, sendsearch } =
     usewsstore();
 
   function focused() {
@@ -53,7 +53,10 @@ export default function Prettysearch({
           spellCheck="false"
           autoComplete="off"
           name="user"
-          onFocus={focused}
+          onFocus={(e) => {
+            focused();
+            sendsearch(e.target.value);
+          }}
           onChange={(e) => {
             focused();
             sendsearch(e.target.value);

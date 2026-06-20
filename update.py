@@ -29,7 +29,7 @@ print("pants")
 def occasionallyrunsomething():
     print("loopies")
     while True:
-
+        time.sleep(3600)
         occasionallyasknicelyiftherearenewlogs()
         time.sleep(3600)
 
@@ -214,9 +214,9 @@ def slowlypullpeoplesavatars():
     laststatuses = 0
     while True:
         now = int(time.time())
-        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL or r.timestampcurrentname < %s ORDER BY cardinality(l.ids) DESC LIMIT 1",(604800*2,))
+        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL or r.timestampcurrentname < %s ORDER BY cardinality(l.ids) DESC LIMIT 1",(604800*10,))
         output = list(map(lambda x: x[0], c.fetchall()))
-        r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))})
+        r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
         if r.ok:
             laststatuses = 0
             print("pulled avatar for",r.json()[0]["persona_name"])
