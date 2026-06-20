@@ -148,7 +148,7 @@ def resolvename_cache(userid):
         failed = False
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
         if r.status_code in [429]:
-            currentname = "Unknown (server rate limited)"
+            currentname = "Unknown (server rate limited) - cannot resolve vanity url for this request" 
             avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
             failed = True
         else:

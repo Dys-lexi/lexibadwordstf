@@ -30,7 +30,7 @@ export const usewsstore = create<wsstore>()((set, get) => ({
   connect: () => {
     const SOCKETIOURL =
       (import.meta.env.VITE_API_URL && `${window.location.origin}`) ||
-      "http://localhost:3440";
+      "http://192.168.1.39:3440";
     const SOCKETIOURLpath =
       (import.meta.env.VITE_API_URL && `/api/socket.io/`) || "/socket.io/";
 
