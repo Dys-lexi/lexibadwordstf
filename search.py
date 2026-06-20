@@ -148,7 +148,7 @@ def resolvename_cache(userid):
         failed = False
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
         if r.status_code in [429]:
-            currentname = "Unknown (server rate limited) - cannot resolve vanity url for this request" 
+            currentname = "Unknown (server rate limited) - cannot resolve user pfp or currentname for this request" 
             avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
             failed = True
         else:
@@ -250,7 +250,7 @@ def handle_search(data):
     now = time.time()
     # print("PANTS",data)
     emit("m",[data[1],handle_search_helper(data[0])])
-    # print(data[0].ljust(10), time.time()-now)
+    print(data[0].ljust(10), time.time()-now)
 @cached(cache=TTLCache(maxsize=10000, ttl=3600))
 def handle_search_helper(data):
     conn = pgpool.getconn()
@@ -258,16 +258,19 @@ def handle_search_helper(data):
     now = int(time.time())
 
     # print("meow")
-    if not data:
+    if not data or data.startswith("https://"):
         emit("m",[])
         return 
     escaped = data.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
-    c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped))
-    
-    output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: x["n"] == data, reverse = True)
+    #  bv said no to searching by exact match -> popularity, now we only have popularity :(   c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s   AND LENGTH(name) >= LENGTH(%s) ORDER BY  (LOWER(name) = LOWER(%s)) DESC,  cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped,escaped))
+    c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',))
+    # c.execute("SELECT array_agg(DISTINCT name), steamid, COUNT(DISTINCT x) FROM usernames CROSS JOIN LATERAL unnest(ids) as x WHERE name ILIKE %s GROUP BY steamid ORDER BY COUNT(DISTINCT x) DESC LIMIT 10", (f'{escaped}%',))
+    # c.execute("SELECT array_agg(name ORDER BY max_log DESC), steamid, (SELECT COUNT(DISTINCT x) FROM usernames u2, unnest(u2.ids) x WHERE u2.steamid = sub.steamid) as total FROM (SELECT steamid, name, MAX(x) as max_log FROM usernames, unnest(ids) x WHERE name ILIKE %s GROUP BY steamid, name) sub GROUP BY steamid ORDER BY total DESC LIMIT 10", (f'{escaped}%',))
+
+    output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#x["n"] == data, reverse = True)
     if not output:
         c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'%{escaped}%',escaped))
-        output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: x["n"] == data, reverse = True)
+        output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#, reverse = True)
 
     # print(list(list(map(lambda x: x["id"],output))))
     # c.execute("SELECT steamid, avatar, timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output)),))

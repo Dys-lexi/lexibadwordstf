@@ -17,12 +17,14 @@ export default function Prettysearch({
   classnamebutton,
 }: testProps) {
   const [isFocused, setIsFocused] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   async function onSubmit(formData: FormData) {
+    inputRef.current?.blur();
     disconnect();
     const username = formData.get("user") as string;
-    const match = matches.find(({ n }) => n.toLocaleLowerCase() === username.toLocaleLowerCase());
-    const id = match ? match.id : username;
+    const match = matches.length && matches[0].n.includes(username)
+    const id = matches[0].id ? match : username;
     const navigationPromise = navigate(
       `/${encodeURIComponent(id)}`,
     );
@@ -53,6 +55,7 @@ export default function Prettysearch({
     <div className="flexstuff" onBlur={blurred}>
       <form action={onSubmit} className={classNameform}>
         <input
+          ref={inputRef}
           autoCorrect="off"
           spellCheck="false"
           autoComplete="off"
