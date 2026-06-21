@@ -55,13 +55,15 @@ export default function Page() {
                     {new Date(badword.timestamp * 1000).toLocaleTimeString()}
                   </div>
                 </div>
-                <div className="nonowordmessage">
+               
                   {" "}
-                  <div className="nonowordname">{badword.name}</div>:{" "}
+                  <div className="nonowordname">
+                    {badword.name}
+                    <span style={{ color: "#eee" }}>:</span>
+                  </div>{" "} <div className="nonowordmessage">
                   {badword.message}
                 </div>
               </div>
-     
             ))
           ) : (
             <h2>No bad words found for {personresults.currentusername}</h2>

@@ -224,15 +224,22 @@ def handle_search(data):
     now = time.time()
     emit("m",[data,defaultthing()])
     print(time.time()-now)
-@cached(cache=TTLCache(maxsize=1024, ttl=3600))
+@cached(cache=TTLCache(maxsize=1024, ttl=86400))
 def defaultthing():
     conn = pgpool.getconn()
     c = conn.cursor()
-
-
+    query = ("""
+        SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1:3] ,steamid,  SUM(cardinality(ids))  as pants
+        FROM usernames
+       -- WHERE name ILIKE %s
+        GROUP BY steamid
+        ORDER BY pants DESC
+        LIMIT 10;
+        """)    
+        
     c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames  ORDER BY cardinality(ids) DESC LIMIT 10" )
-    
-    output = list(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()))
+    # c.execute(query)
+    output = list(map(lambda x: {"n":x[0] if isinstance(x[0],list) else [x[0]],"id":str(x[1]),"g":x[2]}, c.fetchall()))
     c.execute("SELECT steamid, avatar FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: int(x["id"]) , output)),))
     avatars = dict(c.fetchall() )
     for steamid ,avatarurl in avatars.items():
@@ -241,7 +248,7 @@ def defaultthing():
             avatars[steamid] = avatarurl
     output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
     pgpool.putconn(conn)
-    print(output)
+    # print(output)
     return output
 
 
@@ -263,11 +270,43 @@ def handle_search_helper(data):
         return 
     escaped = data.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
     #  bv said no to searching by exact match -> popularity, now we only have popularity :(   c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s   AND LENGTH(name) >= LENGTH(%s) ORDER BY  (LOWER(name) = LOWER(%s)) DESC,  cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped,escaped))
-    c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',))
+    # c.execute("""
+    # WITH steamids AS (
+    #     SELECT steamid FROM usernames 
 
+    #     WHERE name ILIKE %s
+    # ),
+    #  occurences AS (
+    # SELECT steamid, name, cardinality(ids) AS amount
+    #     FROM usernames
+    #     WHERE steamid IN (SELECT steamid FROM steamids)
+    # )
+    # SELECT 
+    #     array_agg(name ORDER BY amount DESC) AS names,
+    #     steamid,
+    #     SUM(amount) AS total_amount,
+    #      (array_agg(name ORDER BY LENGTH(name), name) FILTER (WHERE name ILIKE %s))[1]
+        
+        
+    # FROM occurences
+    # GROUP BY steamid ORDER BY total_amount DESC LIMIT 10""",(f'{escaped}%',f'{escaped}%'))
+
+    # print(json.dumps(list(map(lambda x: {"steamid":x[0],"names":x[1],"count":x[2]} ,c.fetchall())),indent=4))
+    # things = c.fetchall()
+    query = ("""
+    SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1:3] ,steamid,  SUM(cardinality(ids))  as pants
+    FROM usernames
+    WHERE name ILIKE %s
+    GROUP BY steamid
+    ORDER BY pants DESC
+    LIMIT 10;
+    """)
+    c.execute(query, (f"{escaped}%",))
+    # c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',))
     output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#x["n"] == data, reverse = True)
     if not output:
-        c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'%{escaped}%',escaped))
+        # c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'%{escaped}%',escaped))
+        c.execute(query, (f"%{escaped}%",))
         output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#, reverse = True)
 
     # print(list(list(map(lambda x: x["id"],output))))
@@ -311,3 +350,14 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=3440, debug=False, allow_unsafe_werkzeug=True)
+
+
+# WITH occurences AS (
+#     SELECT steamid, name, cardinality(ids) AS amount
+#     FROM usernames
+# )
+# SELECT steamid,
+#        string_agg(name, ', ' ORDER BY amount DESC) AS names,
+#        SUM(amount) AS total_amount
+# FROM occurences
+# GROUP BY steamid;

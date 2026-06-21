@@ -20,7 +20,7 @@ export default function Prettysearch({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   async function onSubmit(formData: FormData) {
-    console.log("pants")
+    // console.log("pants")
     inputRef.current?.blur();
     disconnect();
     const username = formData.get("user") as string;
@@ -96,18 +96,18 @@ export default function Prettysearch({
                   <img style={{ "height": "100%" }}
                     src={`https://avatars.fastly.steamstatic.com/${a ? a : "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"}.jpg`}
                   ></img>
-                  <div
+                  <div className="suggestionname"
                     
                   
                   >
-                    {n}
+                    {n[0]} {n.slice(1).map((name, index) => (<span className={`subsuggestionname${index}`} key={index}>{name}</span>))}
                   </div>
                   <span className="logcounter">{g == 1 ? "1 Log" : `${g} Logs`}</span>
                   {/* {" "} <span className="">{id}</span> */}
                   {" "}
                 </a>
               );
-            })}{" "}  <div className="notice">Log counts are grouped by username</div>
+            })}{" "}  <div className="notice">Log counts are only for usernames that match the search</div>
           </div>
 ) : (
           ""
@@ -116,3 +116,5 @@ export default function Prettysearch({
     </div>
   );
 }
+
+

@@ -14,7 +14,7 @@ type wsstore = {
 };
 
 type match = {
-  n: string;
+  n: Array<string>;
   id: string;
   a: string;
   g: number;

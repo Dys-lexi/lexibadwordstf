@@ -30,7 +30,7 @@ export default function Page() {
         Made by{" "}
         <u style={{ textDecorationColor: "rgba(255,180,200,0.8)" }}>
           <a
-            href="https://discord.lexi.tf"
+            href="https://discord.gg/uR7KwhedfK"
             target="_blank"
             style={{ color: "rgba(255,180,200,1)" }}
           >
