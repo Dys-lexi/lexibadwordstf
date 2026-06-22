@@ -208,6 +208,17 @@ def howlongodesthistake():
     pgpool.putconn(conn)
 
 
+def biglogsdedupe():
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    c.execute("""
+    WITH logdata AS 
+    (SELECT id, json->'info'->'date' AS timestamp, json->'info'->'map' AS map, json->'info'->'total_length' AS total_length AS total_length FROM logs_raw)
+    
+
+
+    SELECT array_agg(id) FROM logs_raw""")
+
 def slowlypullpeoplesavatars():
     conn = pgpool.getconn()
     c = conn.cursor()

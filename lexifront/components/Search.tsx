@@ -24,7 +24,7 @@ export default function Prettysearch({
     inputRef.current?.blur();
     disconnect();
     const username = formData.get("user") as string;
-    const match = matches.length && matches[0].n.includes(username)
+    const match = matches.length && matches[0].n[0].toLocaleLowerCase().includes(username.toLocaleLowerCase())
     // console.log("match",match)
     const id = match ? matches[0].id : username;
     // console.log("id",id)
