@@ -27,6 +27,7 @@ def init():
 
             steamid BIGINT,
             ids INTEGER[],
+            deletedaccount BOOLEAN,
             PRIMARY KEY (name, steamid)
 
         )"""
@@ -73,8 +74,11 @@ def init():
     # print("a")
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_id ON logs_raw (id)")
     # print("b")
-    c.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS isduplicate BOOLEAN DEFAULT FALSE")
+    c.execute("ALTER TABLE currentthings ADD COLUMN IF NOT EXISTS vanity TEXT")
+    # c.execute("UPDATE logs_raw SET isduplicate = NULL")
     # print("c")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
+
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_empty ON logs_raw (empty)")
     # print("d")
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")

@@ -73,7 +73,7 @@ export default function Prettysearch({
             sendsearch(e.target.value);
           }}
           className={classNameinput}
-          placeholder="Enter somones profile link, or a steamid"
+          placeholder="Enter somones profile link, Steamid or Name"
         />
         <button type="submit" className={classnamebutton}>
           Search
@@ -102,7 +102,8 @@ export default function Prettysearch({
                   >
                     {n[0]} {n.slice(1).map((name, index) => (<span className={`subsuggestionname${index}`} key={index}>{name}</span>))}
                   </div>
-                  <span className="logcounter">{g == 1 ? "1 Log" : `${g} Logs`}</span>
+                  {g != 0 && (<span className="logcounter">{g == 1 ? "1 Log" : `${g} Logs`}</span>)}
+                  
                   {/* {" "} <span className="">{id}</span> */}
                   {" "}
                 </a>

@@ -158,6 +158,7 @@ def resolvename_cache(userid):
                 return {}  , 404
             currentname = r.json()[0]["persona_name"]
             avatarurl = r.json()[0]["avatar_url"]
+            profilevanity = r.json()[0]["avatar_url"]
         r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
         if r.status_code in [429]:
             return {}, r.status_code
@@ -170,7 +171,7 @@ def resolvename_cache(userid):
             frame = soup.select_one(".playersection_avatar_frame img")
             if frame: frame = frame.get("src")
         if not failed:
-            c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame) VALUES (%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame",(currentname,avatarurl,now,steam64,frame))
+            c.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame,vanity) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame, vanity = EXCLUDED.vanity",(currentname,avatarurl,now,steam64,frame,profilevanity or None))
             conn.commit()
         elif output:
             print("I GOT RATE LIMITED")
@@ -265,9 +266,9 @@ def handle_search_helper(data):
     now = int(time.time())
 
     # print("meow")
-    if not data or data.startswith("https://"):
-        # emit("m",[])
-        return 
+
+    if not data:
+        return
     escaped = data.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
     #  bv said no to searching by exact match -> popularity, now we only have popularity :(   c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s   AND LENGTH(name) >= LENGTH(%s) ORDER BY  (LOWER(name) = LOWER(%s)) DESC,  cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped,escaped))
     # c.execute("""
@@ -308,7 +309,25 @@ def handle_search_helper(data):
         # c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'%{escaped}%',escaped))
         c.execute(query, (f"%{escaped}%",))
         output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#, reverse = True)
+    if not output: #avatarurl
+        try:
+            steam64 = f"{Converter.to_steamID64((escaped.endswith("/") and escaped[:-1] or escaped).replace("https://steamcommunity.com/profiles/",""))}"
+        except:
+            steam64 = False
+        # finally:
+        # c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s AND LENGTH(name) >= LENGTH(%s) ORDER BY cardinality(ids) DESC LIMIT 10", (f'%{escaped}%',escaped))
+        if steam64:
+            c.execute(query.replace("name ILIKE %s","steamid = %s"), (steam64,))
+            output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#, reverse = True)
+    if not output: #vanityurl
+        c.execute("SELECT steamid FROM currentthings WHERE vanity = %s LIMIT 1", (f"{(escaped.endswith("/") and escaped[:-1] or escaped).replace("https://steamcommunity.com/id/","")}",))
+        # c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',))
+        steamid = c.fetchone()
+        if steamid:
+            c.execute(query.replace("name ILIKE %s","steamid = %s"), (f"{(steamid[0])}",))
 
+            output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#x["n"] == data, reverse = True)
+  
     # print(list(list(map(lambda x: x["id"],output))))
     # c.execute("SELECT steamid, avatar, timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output)),))
     # ids = list(filter(lambda x: x["timestampcurrentname"] > now - 604800, map(lambda x:{"id":x[0],"avatar":x[1],"timestampcurrentname":x[2]}, c.fetchall())))
@@ -335,6 +354,7 @@ def handle_search_helper(data):
     output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
     # print(list(map(lambda x: (x["id"], x["n"]) , output)))
     pgpool.putconn(conn)
+    
     # print(output)
     return output
 

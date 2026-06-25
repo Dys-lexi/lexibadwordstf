@@ -12,6 +12,7 @@ import requests
 from steamid_converter import Converter
 import initsql
 import threading
+import itertools
 
 # from waitress import serve
 # from flask_cors import CORS
@@ -61,7 +62,7 @@ def occasionallyasknicelyiftherearenewlogs():
             continue
         # print(getpriority(log.json(),["info","date"]))
 
-        c.execute("INSERT INTO logs_raw (id,json,time,empty) VALUES (%s, %s, to_timestamp(%s), %s)",(logid,json.dumps(log.json()),getpriority(log.json(),["info","date"]),not log.json()["success"]))
+        c.execute("INSERT INTO logs_raw (id,json,time,empty,isduplicate) VALUES (%s, %s, to_timestamp(%s), %s, NULL)",(logid,json.dumps(log.json()),getpriority(log.json(),["info","date"]),not log.json()["success"]))
         conn.commit()
     # c.execute("INSERT INTO logs_raw (id,json,time) VALUES (%s, %s, to_timestamp(%s))",(6_000_000,json.dumps({"pants":"underwear"}),time.time()))
     pgpool.putconn(conn)
@@ -132,7 +133,7 @@ def indexsomecoolmessages(firsttime = False):
             log_date = log[2]
             for id,name in log[3].items():
                 try:
-                    cursor.execute("INSERT INTO usernames (name,steamid,ids) VALUES (%s,%s,%s) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,Converter.to_steamID64(id),[logid],logid))
+                    cursor.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,Converter.to_steamID64(id),[logid],logid))
                 except Exception as e:
                     print("brokey",e)
                 
@@ -199,7 +200,7 @@ def howlongodesthistake():
                     id = Converter.to_steamID64(id)
                 except:
                     continue
-                c.execute("INSERT INTO usernames (name,steamid,ids) VALUES (%s,%s,%s) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,id,[logid],logid))
+                c.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,id,[logid],logid))
 
         conn.commit()
         print(f"Batch {batch_num} committed")
@@ -208,32 +209,79 @@ def howlongodesthistake():
     pgpool.putconn(conn)
 
 
-def biglogsdedupe():
+def biglogsdedupe(all = True):
     conn = pgpool.getconn()
     c = conn.cursor()
-    c.execute("""
-    WITH logdata AS 
-    (SELECT id, json->'info'->'date' AS timestamp, json->'info'->'map' AS map, json->'info'->'total_length' AS total_length AS total_length FROM logs_raw)
+    print("deduping")
+    c.execute(f"""
+    WITH logdata AS (
+        SELECT
+            id,
+            (json->'info'->>'date')::BIGINT          AS timestamp,
+            json->'info'->'map'                      AS map,
+            (json->'info'->>'total_length')::INTEGER AS total_length
+        FROM logs_raw WHERE empty = FALSE {"AND id >= COALESCE((SELECT id FROM logs_raw WHERE isduplicate = FALSE ORDER BY id DESC LIMIT 1),0)" if not all else ""}
+    ),
+    flagged AS (
+        -- 1 = starts a new group, 0 = belongs to the previous row's group
+        SELECT *,
+            CASE
+                WHEN timestamp - LAG(timestamp) OVER w <= 120 THEN 0
+                ELSE 1
+            END AS is_new_group
+        FROM logdata
+        WINDOW w AS (PARTITION BY map, total_length ORDER BY timestamp)
+    ),
+    grouped AS (
+        SELECT *,
+            SUM(is_new_group) OVER (PARTITION BY map, total_length ORDER BY timestamp) AS grp
+        FROM flagged
+    )
+    SELECT array_agg(id ORDER BY timestamp) AS duplicate_ids
+    FROM grouped
+    GROUP BY map, total_length, grp
+    HAVING COUNT(*) > 1""")
+    output = c.fetchall()
+    print(f"found {len(output)} dupes")
+    duplicate_groups = [row[0] for row in output]
     
+    c.execute("UPDATE logs_raw SET isduplicate = true WHERE id = ANY(%s) AND isduplicate IS NULL",(list(itertools.chain.from_iterable(list(map(lambda x: x[1:],(duplicate_groups))))),))
+    c.execute("UPDATE logs_raw SET isduplicate = false WHERE id = ANY(%s) AND isduplicate IS NULL",(list(map(lambda x: x[0],duplicate_groups)),))
+    conn.commit()
+    pgpool.putconn(conn)
+    print("set dupes")
+    # print("\n".join(list(map(str,duplicate_groups))))
+    print(len(duplicate_groups),"duplicates found")
 
-
-    SELECT array_agg(id) FROM logs_raw""")
-
-def slowlypullpeoplesavatars():
+def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WITHOUT IT (also the steam api no support)
     conn = pgpool.getconn()
     c = conn.cursor()
     laststatuses = 0
     while True:
         now = int(time.time())
-        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
+        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE deletedaccount = false AND r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
         output = list(map(lambda x: x[0], c.fetchall()))
+        output = [output[0],]
         if not output:
+            print("pulling names thinks it is done")
+            c.execute("SELECT * FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
+            print(c.fetchall())
             time.sleep(3600)
+            continue
+        print("pulling",output)
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
         if r.ok:
             laststatuses = 0
-            print("pulled avatar for",r.json()[0]["persona_name"])
-            c.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname) VALUES (%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"]))
+            if not r.json():
+                print("could not find profile for",output)
+                c.execute("UPDATE usernames SET deletedaccount = true WHERE steamid = %s",(output[0],))
+                continue
+            print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
+            if not r.json()[0].get("persona_name"):
+                print(json.dumps(r.json(),indent = 4))
+                print("COULD NOT FIND PERSONA NAME")
+                continue
+            c.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname,vanity) VALUES (%s,%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"],r.json()[0]["profile_url"] or None ))
             conn.commit()
         else:
             print(r.status_code)
@@ -249,11 +297,12 @@ def slowlypullpeoplesavatars():
 
 # howlongodesthistake()
 
-
+# biglogsdedupe()
 
 # threading.Thread(target=occasionallyrunsomething, daemon=True).start()
 threading.Thread(target=slowlypullpeoplesavatars, daemon=True).start()
 # indexsomebadwords()
 occasionallyrunsomething()
 # debug_indexsomebadwords()
+
 # slowlypullpeoplesavatars()

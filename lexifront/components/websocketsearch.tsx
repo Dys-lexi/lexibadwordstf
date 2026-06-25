@@ -95,8 +95,11 @@ export const usewsstore = create<wsstore>()((set, get) => ({
   },
 
   sendsearch: (query: string) => {
-    set({ count: get().count+1 });
-    if (query.length > 0) {
+    set({ count: get().count + 1 });
+    if (query.startsWith("https://steamcommunity.com/") && false) {
+      set({ matches: [{ n:["URL search"],id:"pants",g:0,a:"https://store.steampowered.com/favicon.ico"}] });
+    }
+    else if (query.length > 0) {
       get().socket?.emit("s", [query,get().count]);
 
     }
