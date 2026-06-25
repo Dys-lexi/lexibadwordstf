@@ -66,7 +66,7 @@ def occasionallyasknicelyiftherearenewlogs():
         conn.commit()
     # c.execute("INSERT INTO logs_raw (id,json,time) VALUES (%s, %s, to_timestamp(%s))",(6_000_000,json.dumps({"pants":"underwear"}),time.time()))
     pgpool.putconn(conn)
-    indexsomecoolmessages()
+    generallyupdatethings()
     
     
 
@@ -74,7 +74,9 @@ def occasionallyasknicelyiftherearenewlogs():
 
 
 def generallyupdatethings():
+    biglogsdedupe(False) 
     indexsomecoolmessages()
+    
 
 
 
@@ -126,7 +128,7 @@ def indexsomecoolmessages(firsttime = False):
     # now = time.time()
     for i,block in enumerate(todologs):
         print(f"indexing block {i+1:,} out of {len(todologs):,}")
-        cursor.execute("SELECT id, json->'chat' as chat_array, json->'info'->'date' as log_date,  json->'names' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
+        cursor.execute("SELECT id, json->'chat' as chat_array, json->'info'->'date' as log_date,  json->'names' FROM logs_raw WHERE id = ANY(%s) AND isduplicate != false ORDER BY id",(block,))
         for log in cursor.fetchall():
             logid = log[0]
             chatarray = log[1]
@@ -183,7 +185,7 @@ def howlongodesthistake():
     last_id = 0
     batch_num = 0
     while True:
-        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s ORDER BY id LIMIT 5000", (last_id,))
+        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s AND isduplicate != false ORDER BY id LIMIT 5000", (last_id,))
         output = c.fetchall()
 
         if not output:
@@ -220,7 +222,7 @@ def biglogsdedupe(all = True):
             (json->'info'->>'date')::BIGINT          AS timestamp,
             json->'info'->'map'                      AS map,
             (json->'info'->>'total_length')::INTEGER AS total_length
-        FROM logs_raw WHERE empty = FALSE {"AND id >= COALESCE((SELECT id FROM logs_raw WHERE isduplicate = FALSE ORDER BY id DESC LIMIT 1),0)" if not all else ""}
+        FROM logs_raw WHERE empty = FALSE AND (json->'success')::BOOLEAN = TRUE {"AND id >= COALESCE((SELECT id FROM logs_raw WHERE isduplicate = FALSE ORDER BY id DESC LIMIT 1),0)" if not all else ""}
     ),
     flagged AS (
         -- 1 = starts a new group, 0 = belongs to the previous row's group
@@ -252,6 +254,33 @@ def biglogsdedupe(all = True):
     print("set dupes")
     # print("\n".join(list(map(str,duplicate_groups))))
     print(len(duplicate_groups),"duplicates found")
+
+
+def removedupesfromusernames():
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    print("removing duplicate ids from usernames")
+    c.execute("""
+        UPDATE usernames u
+        SET ids = ARRAY(
+            SELECT x
+            FROM unnest(u.ids) AS x
+            WHERE NOT EXISTS (
+                SELECT 1 FROM logs_raw l WHERE l.id = x AND l.isduplicate IS TRUE
+            )
+        )
+        WHERE EXISTS (
+            SELECT 1
+            FROM unnest(u.ids) AS x
+            JOIN logs_raw l ON l.id = x
+            WHERE l.isduplicate IS TRUE
+        )
+    """)
+    print(f"updated {c.rowcount} username rows")
+    conn.commit()
+    pgpool.putconn(conn)
+    print("done")
+
 
 def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WITHOUT IT (also the steam api no support)
     conn = pgpool.getconn()
@@ -298,6 +327,8 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
 # howlongodesthistake()
 
 # biglogsdedupe()
+# removedupesfromusernames()
+# time.sleep(1214)
 
 # threading.Thread(target=occasionallyrunsomething, daemon=True).start()
 threading.Thread(target=slowlypullpeoplesavatars, daemon=True).start()

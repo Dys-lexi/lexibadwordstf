@@ -158,7 +158,7 @@ def resolvename_cache(userid):
                 return {}  , 404
             currentname = r.json()[0]["persona_name"]
             avatarurl = r.json()[0]["avatar_url"]
-            profilevanity = r.json()[0]["avatar_url"]
+            profilevanity = r.json()[0]["profile_url"]
         r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
         if r.status_code in [429]:
             return {}, r.status_code
@@ -319,10 +319,13 @@ def handle_search_helper(data):
         if steam64:
             c.execute(query.replace("name ILIKE %s","steamid = %s"), (steam64,))
             output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, c.fetchall()), key = lambda x: 1)#, reverse = True)
+    # print(output,"pants")
     if not output: #vanityurl
         c.execute("SELECT steamid FROM currentthings WHERE vanity = %s LIMIT 1", (f"{(escaped.endswith("/") and escaped[:-1] or escaped).replace("https://steamcommunity.com/id/","")}",))
         # c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',))
+        
         steamid = c.fetchone()
+        # print("HERE",steamid)
         if steamid:
             c.execute(query.replace("name ILIKE %s","steamid = %s"), (f"{(steamid[0])}",))
 
