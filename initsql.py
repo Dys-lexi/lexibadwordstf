@@ -32,6 +32,19 @@ def init():
 
         )"""
     )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS playedwith (
+
+            steamid BIGINT,
+            steamid2 BIGINT,
+            ids INTEGER[],
+            sameteam BOOLEAN,
+            UNIQUE NULLS NOT DISTINCT (steamid, steamid2, sameteam)
+            
+            
+
+        )"""
+    )
     # print("weee")
     c.execute(
         """CREATE TABLE IF NOT EXISTS currentthings (

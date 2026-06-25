@@ -119,25 +119,28 @@ def indexsomecoolmessages(firsttime = False):
         SELECT l.id
         FROM logs_raw l
         LEFT JOIN (SELECT DISTINCT id FROM messages) m ON l.id = m.id
-        WHERE m.id IS NULL AND l.empty IS FALSE
+        WHERE m.id IS NULL AND l.empty IS FALSE AND l.isduplicate != true
         ORDER BY l.id""")
 
     todologs = list(map(lambda x: x[0], cursor.fetchall()))
     print(f"Indexing {len(todologs):,} logs")
     todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 500 else [*a,[b]] ,todologs,[])
+    initplayedwith(todologs)
     # now = time.time()
     for i,block in enumerate(todologs):
         print(f"indexing block {i+1:,} out of {len(todologs):,}")
-        cursor.execute("SELECT id, json->'chat' as chat_array, json->'info'->'date' as log_date,  json->'names' FROM logs_raw WHERE id = ANY(%s) AND isduplicate != false ORDER BY id",(block,))
+        cursor.execute("SELECT id, json->'chat' as chat_array, json->'info'->'date' as log_date,  json->'names' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
         for log in cursor.fetchall():
             logid = log[0]
             chatarray = log[1]
             log_date = log[2]
+
             for id,name in log[3].items():
                 try:
-                    cursor.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,Converter.to_steamID64(id),[logid],logid))
+                    cursor.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s) WHERE NOT (usernames.ids @> ARRAY[%s])",(name,Converter.to_steamID64(id),[logid],logid,logid))
                 except Exception as e:
                     print("brokey",e)
+
                 
 
             if chatarray:
@@ -153,9 +156,67 @@ def indexsomecoolmessages(firsttime = False):
 
 
 
+def initplayedwith(todologs = False):
+    print("Updating people played with")
+    conn = pgpool.getconn()
+    cursor = conn.cursor()
+    if not todologs:
+        cursor.execute(f"""
+            SELECT id FROM logs_raw WHERE empty = false AND isduplicate != true  ORDER BY id""")
+        todologs = list(map(lambda x: x[0], cursor.fetchall()))
+        todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 500 else [*a,[b]] ,todologs,[])
+
+    for i,block in enumerate(todologs):
+        print(f"doing played with for block {i+1:,} out of {len(todologs):,}")
+        cursor.execute("SELECT id,  json->'players' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
+        for log in cursor.fetchall():
+            setplayedwith(log[0],[{"players":log[1],"length":1}] )
+        # cursor.execute("SELECT id,  json->'rounds', json->'info'->'rounds' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
+        # for log in cursor.fetchall():
+        #     setplayedwith(log[0],log[1] or log[2])
+
+    pgpool.putconn(conn)
 
 
 
+def setplayedwith(id,rounds):
+    # print(rounds)
+    conn = pgpool.getconn()
+    cursor = conn.cursor()
+    trueteams = {}
+    for round in rounds:
+        length = round["length"]
+        for player,data in round["players"].items():
+            trueteams.setdefault(data.get("team",None),{}).setdefault(player,0) 
+            trueteams[data.get("team",None)][player] += length
+    truerteams = {}
+    for person in functools.reduce(lambda a,b: list({*a,*list(map(lambda x: x,b[1].keys()))}) ,trueteams.items(),[]):
+        counter = (0,0)
+        for team, data in trueteams.items():
+            if data.get(person,0) > counter[1]:
+                counter = [team,data.get(person,0)]
+        truerteams[person] = counter[0]
+    namesdone = []
+    for person,team in truerteams.items():
+        namesdone.append(person)
+        try:
+            person = Converter.to_steamID64(person)
+        except:
+            continue
+        for person2, team2 in filter(lambda x: x[0] not in namesdone,truerteams.items()):
+
+            try:
+                person2 = Converter.to_steamID64(person2)
+            except:
+                continue
+            if person == person2:
+                print("ono")
+                break
+
+            cursor.execute("INSERT INTO playedwith (steamid,steamid2,ids,sameteam) VALUES (%s,%s,%s,%s) ON CONFLICT (steamid,steamid2,sameteam) DO UPDATE SET ids = array_append(playedwith.ids, %s) WHERE NOT (playedwith.ids @> ARRAY[%s])",(*sorted([person,person2]),[id],team and (team == team2) ,id,id))
+
+    conn.commit()
+    pgpool.putconn(conn)
 
 
 
@@ -185,7 +246,7 @@ def howlongodesthistake():
     last_id = 0
     batch_num = 0
     while True:
-        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s AND isduplicate != false ORDER BY id LIMIT 5000", (last_id,))
+        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s AND isduplicate != true ORDER BY id LIMIT 5000", (last_id,))
         output = c.fetchall()
 
         if not output:
@@ -202,7 +263,7 @@ def howlongodesthistake():
                     id = Converter.to_steamID64(id)
                 except:
                     continue
-                c.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s)",(name,id,[logid],logid))
+                c.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s) WHERE NOT (usernames.ids @> ARRAY[%s])",(name,id,[logid],logid,logid))
 
         conn.commit()
         print(f"Batch {batch_num} committed")
@@ -320,19 +381,19 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
         time.sleep(2)
 
 
-# threading.Thread(target=occasionallyrunsomething,daemon=True).start()
 
-# indexsomecoolmessages(False)
+if False: # first time stuff, otherwise is incremental (but tbh incremental will get it)
+    biglogsdedupe()
+    indexsomecoolmessages(True)
+    removedupesfromusernames() #not needed
+    initplayedwith()
 
-# howlongodesthistake()
-
-# biglogsdedupe()
-# removedupesfromusernames()
-# time.sleep(1214)
-
+initplayedwith()
+time.sleep(8640000)
 # threading.Thread(target=occasionallyrunsomething, daemon=True).start()
 threading.Thread(target=slowlypullpeoplesavatars, daemon=True).start()
 # indexsomebadwords()
+
 occasionallyrunsomething()
 # debug_indexsomebadwords()
 
