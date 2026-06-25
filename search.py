@@ -107,7 +107,13 @@ def resolvename_cache(userid):
     c = conn.cursor()
     
 
+    # if userid.startswith("https:/steamcommunity.com/id/") or userid.startswith ("https:/steamcommunity.com/profiles/"):
+    #     # stupid fucking workaround
+    #     userid.replace("https:/","https://")
 
+    # for i in userid:
+    #     print("ABC:",i)
+    print(userid)
     if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
         vanity =(userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1]
         c.execute("SELECT vanity,steamid,lastcheckedtimestamp FROM vanityurls WHERE vanity = %s",(vanity,))
@@ -132,6 +138,7 @@ def resolvename_cache(userid):
         steam3 =  Converter.to_steamID3((userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1])
         
     else:
+        # print(userid,"pants")
         try:
             steam3 = Converter.to_steamID3(userid)
         except: 
@@ -214,11 +221,13 @@ def resolvename_cache(userid):
 
 @socketio.on('connect')
 def handle_connect():
-    print('Client connected')
+    pass
+    # print('Client connected')
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print('Client disconnected')
+    pass
+    # print('Client disconnected')
 
 @socketio.on('n')
 def handle_search(data):

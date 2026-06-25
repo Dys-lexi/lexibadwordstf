@@ -12,6 +12,7 @@ export async function data(pageContext: PageContextServer) {
   const config = useConfig();
   let personresults = {} as Userdetails
   let response
+  // console.log("HWUNQ",decodeURIComponent(pageContext.routeParams.userid))
   try {
      response = await fetch(
       `${API_URL}/user`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(pageContext.routeParams.userid) }), headers: { "Content-Type": "application/json" } }
