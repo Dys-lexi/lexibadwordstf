@@ -160,7 +160,7 @@ def initplayedwith(todologs = False):
     print("Updating people played with")
     conn = pgpool.getconn()
     cursor = conn.cursor()
-    if not todologs:
+    if  todologs == False:
         cursor.execute(f"""
             SELECT id FROM logs_raw WHERE empty = false AND isduplicate != true  ORDER BY id""")
         todologs = list(map(lambda x: x[0], cursor.fetchall()))
