@@ -49,25 +49,43 @@
 				@dyslexi
 			</a>
 		</u>
-		on discord
+		on discord 
 	</div>
+	<div class="whomadethisshowthingy">
+	Support on
+	<u style="text-decoration-color: rgba(255,180,200,0.8)">
+			<a
+				href="https://ko-fi.com/dyslexi"
+				target="_blank"
+				rel="noopener noreferrer"
+				style="color: rgba(255,150,150,1)"
+			>
+				Ko-fi
+			</a>
+		</u>
+		</div>
 </div>
 
       <svelte:head>
 	<title>LexiSlurs</title>
   <link rel="icon" href={faviconUrl} />
+  {#if statuscode == 200}
   <meta name="description" content={  `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`} />
-
+	{/if}
   <meta property="og:type" content="website" />
   <meta property="og:url" content={page.url.href} />
   <meta property="og:title" content="LexiSlurs" />
+  {#if statuscode == 200}
   <meta property="og:description" content={  `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`} />
+ 	{/if} 
   <meta property="og:image" content={`${page.url.origin}/logo.png`} />
   <meta property="og:image:width" content="960" />
   <meta property="og:image:height" content="960" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="LexiSlurs" />
+  {#if statuscode == 200}
   <meta name="twitter:description" content={  `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`} />
+ 	{/if}
   <meta name="twitter:image" content={`${page.url.origin}/logo.png`} />
 </svelte:head>

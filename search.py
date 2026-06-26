@@ -93,6 +93,19 @@ def stats_cache():
         del(stats["timestampcached"])
     return stats
 
+
+@app.route("/playedwith",methods=["POST"])
+def playedwithwrapper():
+    steam64 = request.get_json()["steam64"]
+    return playedwith(steam64)
+
+@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+def playedwith(steam64):
+    conn = pgpool.getconn()
+    c = conn.cursor()
+
+    c.execute("SELECT steamid2, steamid, COALESCE(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam = true",(steam64,steam64))
+    # playedwith = list(map(lambda x: ,c.fetchall()))
 @app.route("/user", methods=["POST"])
 def resolvename():
     userid = request.get_json()["url"]
@@ -212,7 +225,7 @@ def resolvename_cache(userid):
         reallogs.append(log)
     print("this took",time.time()-timer)
     pgpool.putconn(conn)
-    return  {"currentusername":currentname,"nonowords":reallogs,"avatarurl":avatarurl,"frame":frame,"steamprofile":f"https://steamcommunity.com/profiles/{steam64}"} , 200
+    return  {"currentusername":currentname,"nonowords":reallogs,"avatarurl":avatarurl,"frame":frame,"steamprofile":f"https://steamcommunity.com/profiles/{steam64}","steam64":str(steam64)} , 200
 
 
 

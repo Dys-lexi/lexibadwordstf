@@ -51,7 +51,7 @@ function blurred(event: FocusEvent) {
 
 </script>
 <div class = "flexstuff" style = "width:100%">
-<div class="flexstuff" onfocusout={blurred}>
+<div class="flexstuff flexsearchthing" onfocusout={blurred}>
   <form class={classNameform} onsubmit={onSubmit}   bind:this={form}>
     <input
       bind:this={inputRef}

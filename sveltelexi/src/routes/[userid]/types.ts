@@ -4,6 +4,7 @@ export type Userdetails = {
     avatarurl: string
     frame?: string
     steamprofile: string
+    steam64: string
 };
 
 export type Badmessage = {

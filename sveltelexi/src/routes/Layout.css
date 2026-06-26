@@ -54,6 +54,7 @@ body.page-transition #page-content {
     cursor: pointer;
   }
 .titlebar{
+  margin:10px;
    display: flex; justify-content: center ; gap:10px ;
    align-items: center;
 }
@@ -93,7 +94,11 @@ body.page-transition #page-content {
   flex-direction: column;
 
   min-width: fit-content;
-  width: 60%;
+}
+
+.flexsearchthing{
+width: max(60%, 450px);
+max-width: 100%;
 }
 
 .searchsuggestionholder {
