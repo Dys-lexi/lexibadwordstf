@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
   lexifront:
     build:
-      context: ./lexifront
+      context: ./sveltelexi
       dockerfile: ./dockerfile
       args:
         VITE_API_URL: http://search:3440                                                                                                                                                                                                                    

@@ -1,0 +1,109 @@
+
+
+/* form {
+ background-color: red;
+ border-radius: 50px;   
+} */
+
+.nonowordbox{
+    display: flex;
+    /* flex-direction: column; */
+    padding:5px;
+    background-color: rgba(255,255,255,0.05);
+    border-radius: 5px;
+    gap:5px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.nonowordmessage{
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+}
+.nonowordtimestamp{
+   background-color: rgba(255,255,255,0.05);
+   border-radius: 5px;
+   padding:5px;
+   display: flex;
+   gap:5px
+}
+
+
+
+.nonowordsholder{
+    display: flex;
+    flex-direction:column;
+
+  
+    gap:5px
+}
+
+.nonowordname{
+   /* background-color: rgba(255,255,255,0.05);
+   border-radius: 5px; */
+   /* padding:5px; */
+   color: #aaa;
+   /* min-width: 100px; */
+}
+
+.nameholderbad{
+    padding: 10px;
+     background-color: rgba(255,255,255,0.05);
+    display: flex;
+    align-items: flex-start;
+    height: 70px;
+    gap:10px;
+    width: fit-content;
+    border-radius: 5px;
+}
+.nameholderbad:hover{
+background-color: rgba(200,200,255,0.05);
+}
+.nonowordavatarholder{
+    position: relative;
+    height: 100%;
+    max-width: 100%;
+}
+.avatarholder {
+    transform: scale(1.23);
+    position: absolute;
+
+    height:100%;
+    pointer-events: none;
+}
+.nonowordavatar{
+    height: 100%;
+    object-fit: contain;
+}
+
+.nonoresultsholder{
+    display: flex;
+    flex-direction: column;
+    gap:15px;
+    padding:15px;
+}
+
+.nonowordcurrentusername{
+    /* font-family: "Motiva Sans", fantasy, sans-serif !important; */
+    color: rgb(100,100,200);
+     text-decoration: underline;
+}
+
+.loglink{
+    color: rgb(100,100,200);
+     text-decoration: underline;    
+
+}
+
+.loglink:hover{
+    
+    background-color: rgba(200,200,255,0.05);
+}
+
+.badwordcounter{
+     color: #aaa ;
+       font-family: 'Whitney', sans-serif !important;
+}

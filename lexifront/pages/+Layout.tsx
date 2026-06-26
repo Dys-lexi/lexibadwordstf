@@ -1,6 +1,6 @@
 import "./Layout.css";
 
-import { Link } from "../components/Link";
+
 import { ClientOnly } from "vike-react/ClientOnly";
 // import Search from "../components/Search";
 import { Prettybackground,Content,Logo } from "../components/const";

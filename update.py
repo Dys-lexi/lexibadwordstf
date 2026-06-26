@@ -358,7 +358,7 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
             print(c.fetchall())
             time.sleep(3600)
             continue
-        print("pulling",output)
+        # print("pulling",output)
         r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
         if r.ok:
             laststatuses = 0
@@ -366,7 +366,7 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
                 print("could not find profile for",output)
                 c.execute("UPDATE usernames SET deletedaccount = true WHERE steamid = %s",(output[0],))
                 continue
-            print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
+            # print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
             if not r.json()[0].get("persona_name"):
                 print(json.dumps(r.json(),indent = 4))
                 print("COULD NOT FIND PERSONA NAME")
@@ -374,7 +374,7 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
             c.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname,vanity) VALUES (%s,%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"],r.json()[0]["profile_url"] or None ))
             conn.commit()
         else:
-            print(r.status_code)
+            # print(r.status_code)
             if r.status_code == 429:
                 laststatuses += 1
                 time.sleep(laststatuses*20)
@@ -388,8 +388,8 @@ if False: # first time stuff, otherwise is incremental (but tbh incremental will
     removedupesfromusernames() #not needed
     initplayedwith()
 
-initplayedwith()
-time.sleep(8640000)
+# initplayedwith()
+# time.sleep(8640000)
 # threading.Thread(target=occasionallyrunsomething, daemon=True).start()
 threading.Thread(target=slowlypullpeoplesavatars, daemon=True).start()
 # indexsomebadwords()

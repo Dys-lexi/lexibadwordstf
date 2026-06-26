@@ -10,7 +10,7 @@ def init():
     conn = pgpool.getconn()
 
     c = conn.cursor()
-    c.execute(
+    c.execute( # barely used, as overshadowed by currentname
         """CREATE TABLE IF NOT EXISTS vanityurls (
             vanity TEXT PRIMARY KEY,
 
@@ -54,7 +54,8 @@ def init():
             timestampcurrentname BIGINT,
             frame TEXT,
             avatar TEXT,
-            currentname TEXT
+            currentname TEXT,
+            vanity TEXT
 
         )"""
     )

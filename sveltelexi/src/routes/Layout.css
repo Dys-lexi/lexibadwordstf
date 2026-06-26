@@ -1,0 +1,261 @@
+/* Links */
+a {
+  text-decoration: none;
+}
+#sidebar a {
+  padding: 2px 10px;
+  margin-left: -10px;
+}
+#sidebar a.is-active {
+  background-color: #eee;
+}
+
+/* Reset */
+body {
+  margin: 0;
+  font-family: "Whitney", sans-serif !important;
+  color: #eee;
+  background-color: rgb(11, 11, 11);
+}
+* {
+  box-sizing: border-box;
+}
+
+/* Page Transition Animation */
+/* #page-content {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+} */
+body.page-transition #page-content {
+  opacity: 0;
+}
+
+.flexbox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.mainthing {
+   font-family: "Whitney", sans-serif !important;
+  color: #eee;
+  display: flex;
+  flex-direction: column;
+  /* align-items: center; */
+}
+
+ button {
+    font: inherit;        /* take the page's font instead of the UA font */
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+.titlebar{
+   display: flex; justify-content: center ; gap:10px ;
+   align-items: center;
+}
+
+/* @font-face {
+    font-family: 'OpenDyslexic';
+    src: url('https://discordstyles.github.io/discord-dyslexia/src/font/OpenDyslexic-Regular.woff');
+    font-style: normal;
+    font-weight: normal;
+}
+
+@font-face {
+	font-family: 'OpenDyslexic';
+	src: url('https://discordstyles.github.io/discord-dyslexia/src/font/OpenDyslexic-Italic.woff');
+	font-style: italic;
+	font-weight: normal;
+}
+
+@font-face {
+	font-family: 'OpenDyslexic';
+	src: url('https://discordstyles.github.io/discord-dyslexia/src/font/OpenDyslexic-Bold.woff');
+	font-weight: bold;
+	font-style: normal;
+} 
+
+@font-face {
+	font-family: 'OpenDyslexic';
+	src: url('https://discordstyles.github.io/discord-dyslexia/src/font/OpenDyslexic-BoldItalic.woff');
+	font-weight: bold;
+	font-style: italic;
+} */
+
+.flexstuff {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+  min-width: fit-content;
+  width: 60%;
+}
+
+.searchsuggestionholder {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: rgb(22, 22, 22);
+  top: 0px;
+  left: 0px;
+  padding-bottom: 10px;
+  z-index: 10;
+  /* border:solid;
+  border-color: rgba(255,255,255,0.5);
+  border-width: 2px; */
+
+}
+
+.suggestion {
+
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  max-height: 20px;
+  height: 20px;
+  border-radius: 0px 5px 5px 0px;
+  padding-right: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.importantsuggestion{
+  background-color: rgba(100,100 , 100, 0.4);
+  /* box-shadow: 1px 0px 0px 1px rgba(100,100 , 100, 1) ; */
+  color: #55f;
+}
+
+.suggestionname{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  gap: 5px;
+
+}
+.subsuggestionname0{
+  color: #889;
+}
+
+.subsuggestionname1{
+  color: #666;
+}
+
+.suggestion:hover {
+  color: #88f;
+  text-decoration: underline;
+
+  /* text-decoration; */
+}
+
+.importantsuggestion:hover{
+  color: #33f;
+}
+.logcounter:hover {
+  color: #88f;
+  text-decoration: underline;
+  /* text-decoration; */
+}
+
+.notice {
+  color: #666;
+    overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.logcounter {
+  color: #aaa;
+}
+
+
+
+
+.bigsearchform{
+  background-color: rgba(255,255,255,0.05);
+   border-radius: 5px;
+   padding:0px;
+    width:100%;
+   height:40px;
+   display: flex;
+   gap: 10px;
+   align-items: center;
+   z-index: 9;
+}
+
+.bigsearchinput{
+    padding-left: 10px;
+    min-height: 100%;
+    flex-grow: 1;
+    background-color: rgba(200,200,255,0.0);
+    border:solid;
+    border-radius: 5px;
+    border-color: rgba(200,200,255,0.1);
+    color: #fff;
+    font-family:'OpenDyslexic', 'Whitney', sans-serif !important;
+}
+
+
+
+.bigsearchbutton{
+    background-color: rgba(200,200,255,0.0);
+
+     color: #fff;
+      min-height: 100%;
+         border-radius: 5px;
+         border:solid;
+         border-color:  rgba(200,200,255,0.1);
+       font-family:'OpenDyslexic', 'Whitney', sans-serif !important;
+}
+
+.bigsearchbutton:hover{
+     background-color: rgba(200,200,255,0.05);
+}
+
+.bigsearchbutton:hover{
+     background-color: rgba(0,0,255,0.05);
+}
+
+.statsholder{
+    justify-content: center;
+    display: flex;
+    gap:10px;
+    flex-wrap: wrap;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.statsname{
+     color: #aaa;
+}
+
+/* .statsstat{
+    font-family: 'Courier New', Courier, monospace;
+} */
+
+.stat{
+       border-radius: 5px;
+         border:none    ;
+         border-color:  rgba(200,200,255,0.1);
+         display: flex;
+         gap:5px;
+}
+
+.whomadethisshowthingy{
+   background-color: rgba(255,255,255,0.05);
+   border-radius: 5px;
+   padding:5px;
+   display: flex;
+   gap:5px
+}

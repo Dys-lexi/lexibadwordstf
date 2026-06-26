@@ -26,7 +26,7 @@ export default function Page() {
           </div>
         )}
       </div>
-      <div className="nonowordtimestamp loglink">
+      <div className="whomadethisshowthingy">
         Made by{" "}
         <u style={{ textDecorationColor: "rgba(255,180,200,0.8)" }}>
           <a
