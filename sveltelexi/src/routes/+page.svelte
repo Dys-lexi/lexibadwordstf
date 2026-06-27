@@ -22,13 +22,12 @@
 </script>
 
 <div class="flexbox" style="gap: 30px; margin-top: 30px">
-
 	<div class="statsholder">
 		{#if statuscode == 200}
 			{#each Object.entries(stats) as [stat, val]}
 				<div class="stat">
-					<div class="statsname"> {getstatprettyname(stat)}: </div>
-					<div class="statsstat"> {val.toLocaleString()} </div>
+					<div class="statsname">{getstatprettyname(stat)}:</div>
+					<div class="statsstat">{val.toLocaleString()}</div>
 				</div>
 			{/each}
 		{:else}
@@ -49,11 +48,11 @@
 				@dyslexi
 			</a>
 		</u>
-		on discord 
+		on discord
 	</div>
 	<div class="whomadethisshowthingy">
-	Support on
-	<u style="text-decoration-color: rgba(255,180,200,0.8)">
+		Support on
+		<u style="text-decoration-color: rgba(255,180,200,0.8)">
 			<a
 				href="https://ko-fi.com/dyslexi"
 				target="_blank"
@@ -63,29 +62,56 @@
 				Ko-fi
 			</a>
 		</u>
-		</div>
+	</div>
 </div>
-
-      <svelte:head>
+<svelte:head>
 	<title>LexiSlurs</title>
-  <link rel="icon" href={faviconUrl} />
-  {#if statuscode == 200}
-  <meta name="description" content={  `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`} />
-	{/if}
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content={page.url.href} />
-  <meta property="og:title" content="LexiSlurs" />
-  {#if statuscode == 200}
-  <meta property="og:description" content={  `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`} />
- 	{/if} 
-  <meta property="og:image" content={`${page.url.origin}/logo.png`} />
-  <meta property="og:image:width" content="960" />
-  <meta property="og:image:height" content="960" />
 
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="LexiSlurs" />
-  {#if statuscode == 200}
-  <meta name="twitter:description" content={  `Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`} />
- 	{/if}
-  <meta name="twitter:image" content={`${page.url.origin}/logo.png`} />
+	<link rel="icon" href={faviconUrl} />
+
+	{#if statuscode == 200}
+		<meta
+			name="description"
+			content={`Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`}
+		/>
+	{:else}
+		<meta name="description" content="Find bad words and maybe slurs sent by people in TF2" />
+	{/if}
+
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={page.url.href} />
+	<meta property="og:title" content="LexiSlurs" />
+
+	{#if statuscode == 200}
+		<meta
+			property="og:description"
+			content={`Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`}
+		/>
+	{:else}
+		<meta
+			property="og:description"
+			content="Find bad words and maybe slurs sent by people in TF2"
+		/>
+	{/if}
+
+	<meta property="og:image" content={`${page.url.origin}/logo.png`} />
+	<meta property="og:image:width" content="960" />
+	<meta property="og:image:height" content="960" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="LexiSlurs" />
+
+	{#if statuscode == 200}
+		<meta
+			name="twitter:description"
+			content={`Tracking bad words in ${stats.totalmessages.toLocaleString()} messages`}
+		/>
+	{:else}
+		<meta
+			name="twitter:description"
+			content="Find bad words and maybe slurs sent by people in TF2"
+		/>
+	{/if}
+
+	<meta name="twitter:image" content={`${page.url.origin}/logo.png`} />
 </svelte:head>

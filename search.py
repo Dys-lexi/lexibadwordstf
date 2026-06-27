@@ -94,22 +94,31 @@ def stats_cache():
     return stats
 
 
-@app.route("/playedwith",methods=["POST"])
+@app.route("/playedwith",methods=["POST","GET"])
 def playedwithwrapper():
-    steam64 = request.get_json()["steam64"]
-    return playedwith(steam64)
+    return playedwith(76561198088735927 or int(request.get_json()["steam64"]))
 
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
 def playedwith(steam64):
+    
     conn = pgpool.getconn()
     c = conn.cursor()
 
-    c.execute("SELECT steamid2, steamid, COALESCE(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam = true",(steam64,steam64))
-    # playedwith = list(map(lambda x: ,c.fetchall()))
+    c.execute("SELECT steamid2, steamid, cardinality(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
+    playedwith = dict(sorted((map(lambda x: (x[0] == steam64 and x[1] or x[0],x[2]),c.fetchall())),key = lambda x: x[1], reverse = False))
+    c.execute("SELECT  steamid ,(array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = ANY(%s) GROUP BY steamid",(list(playedwith.keys()),))
+    output = dict(c.fetchall())
+    playedwith = dict(map(lambda x: (x[0],{"recentname":x[1]}) ,playedwith.items()))
+    
+
+    print(json.dumps(playedwith,indent=4))
+    return json.dumps(playedwith,indent=4)
+
+
+
 @app.route("/user", methods=["POST"])
 def resolvename():
-    userid = request.get_json()["url"]
-    return resolvename_cache(userid)
+    return resolvename_cache(request.get_json()["url"])
 
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
 def resolvename_cache(userid):

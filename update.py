@@ -119,7 +119,7 @@ def indexsomecoolmessages(firsttime = False):
         SELECT l.id
         FROM logs_raw l
         LEFT JOIN (SELECT DISTINCT id FROM messages) m ON l.id = m.id
-        WHERE m.id IS NULL AND l.empty IS FALSE AND l.isduplicate != true
+        WHERE m.id IS NULL AND l.empty IS FALSE AND l.isduplicate IS NOT TRUE
         ORDER BY l.id""")
 
     todologs = list(map(lambda x: x[0], cursor.fetchall()))
@@ -160,13 +160,14 @@ def initplayedwith(todologs = False):
     print("Updating people played with")
     conn = pgpool.getconn()
     cursor = conn.cursor()
+    # todologs = [[4073632]]
     if  todologs == False:
         cursor.execute(f"""
-            SELECT id FROM logs_raw WHERE empty = false AND isduplicate != true  ORDER BY id""")
+            SELECT id FROM logs_raw WHERE empty = false AND isduplicate IS NOT TRUE  ORDER BY id DESC""")
         todologs = list(map(lambda x: x[0], cursor.fetchall()))
         todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 500 else [*a,[b]] ,todologs,[])
 
-    for i,block in enumerate(todologs):
+    for i,block in enumerate(todologs[1097:]):
         print(f"doing played with for block {i+1:,} out of {len(todologs):,}")
         cursor.execute("SELECT id,  json->'players' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
         for log in cursor.fetchall():
@@ -246,7 +247,7 @@ def howlongodesthistake():
     last_id = 0
     batch_num = 0
     while True:
-        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s AND isduplicate != true ORDER BY id LIMIT 5000", (last_id,))
+        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s AND isduplicate IS NOT true ORDER BY id LIMIT 5000", (last_id,))
         output = c.fetchall()
 
         if not output:
@@ -388,8 +389,8 @@ if False: # first time stuff, otherwise is incremental (but tbh incremental will
     removedupesfromusernames() #not needed
     initplayedwith()
 
-# initplayedwith()
-# time.sleep(8640000)
+initplayedwith()
+time.sleep(8640000)
 # threading.Thread(target=occasionallyrunsomething, daemon=True).start()
 threading.Thread(target=slowlypullpeoplesavatars, daemon=True).start()
 # indexsomebadwords()

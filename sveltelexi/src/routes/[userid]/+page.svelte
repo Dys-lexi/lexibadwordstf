@@ -80,30 +80,47 @@
 	<h2>realy weird error loading data: {error.message}</h2>
 {/await}
 
-
 <svelte:head>
-	<title>{personresults.currentusername}</title>
+	<title>{statuscode === 200 ? personresults.currentusername : "LexiSlurs"}</title>
 
-    {#if statuscode == 200}
-  <meta name="description" content={`${personresults.currentusername} has ${personresults.nonowords.length || "No"} Bad words sent`} />
+	{#if statuscode === 200}
+		<meta
+			name="description"
+			content={`${personresults.currentusername} has ${personresults.nonowords.length || "No"} Bad words sent`}
+		/>
+		<meta
+			property="og:description"
+			content={`${personresults.currentusername} has ${personresults.nonowords.length || "No"} Bad words sent`}
+		/>
+		<meta property="og:image" content={personresults.avatarurl} />
+		<meta
+			name="twitter:description"
+			content={`${personresults.currentusername} has ${personresults.nonowords.length || "No"} Bad words sent`}
+		/>
+		<meta name="twitter:image" content={personresults.avatarurl} />
+
+	{:else if statuscode === 404}
+		<meta name="description" content="User not found." />
+		<meta property="og:description" content="User not found." />
+		<meta property="og:image" content={`${page.url.origin}/logo.png`} />
+		<meta name="twitter:description" content="User not found." />
+		<meta name="twitter:image" content={`${page.url.origin}/logo.png`} />
+
+	{:else}
+		<meta name="description" content="An error occurred." />
+		<meta property="og:description" content="An error occurred." />
+		<meta property="og:image" content={`${page.url.origin}/logo.png`} />
+		<meta name="twitter:description" content="An error occurred." />
+		<meta name="twitter:image" content={`${page.url.origin}/logo.png`} />
 	{/if}
-  <meta property="og:type" content="website" />
-  {#if statuscode == 200}
-  <meta property="og:url" content={personresults.avatarurl} />
-  {/if}
-  <meta property="og:title" content="LexiSlurs" />
-   {#if statuscode == 200}
-  <meta property="og:description" content={`${personresults.currentusername} has ${personresults.nonowords.length || "No"} Bad words sent`} />
 
-  <meta property="og:image" content={personresults.avatarurl} />
-  {/if}
-  <meta property="og:image:width" content="184" />
-  <meta property="og:image:height" content="184" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={page.url.href} />
+	<meta property="og:title" content="LexiSlurs" />
 
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="LexiSlurs" />
-   {#if statuscode == 200}
-  <meta name="twitter:description" content={`${personresults.currentusername} has ${personresults.nonowords.length || "No"} Bad words sent`} />
-  <meta name="twitter:image" content={personresults.avatarurl} />
-  {/if}
+	<meta property="og:image:width" content="184" />
+	<meta property="og:image:height" content="184" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="LexiSlurs" />
 </svelte:head>

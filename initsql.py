@@ -94,6 +94,10 @@ def init():
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_empty ON logs_raw (empty)")
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_playedwith_steamid ON playedwith (steamid)")
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_playedwith_steamid2 ON playedwith (steamid2)")
     # print("d")
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
     # print("e")
