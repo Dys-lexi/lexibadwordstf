@@ -30,9 +30,9 @@ print("pants")
 def occasionallyrunsomething():
     print("loopies")
     while True:
-        time.sleep(3600)
+        # time.sleep(3600)
         occasionallyasknicelyiftherearenewlogs()
-        time.sleep(3600)
+        time.sleep(7200)
 
 def occasionallyasknicelyiftherearenewlogs():
     conn = pgpool.getconn()
@@ -68,12 +68,23 @@ def occasionallyasknicelyiftherearenewlogs():
     pgpool.putconn(conn)
     generallyupdatethings()
     
-    
 
-
+def redothatmaterialview():
+    print("removing logs from less reputable places")
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    c.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY uploadercounter")
+    c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids)  LIMIT 50")
+    # print(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]))
+    c.execute("UPDATE logs_raw SET isreuputable = TRUE where id = ANY(%s)",(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]),))
+    c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids) DESC OFFSET 50")
+    c.execute("UPDATE logs_raw SET isreuputable = FALSE where id = ANY(%s)",(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]),))
+    conn.commit()
+    pgpool.putconn(conn)
 
 
 def generallyupdatethings():
+    redothatmaterialview()
     biglogsdedupe(False) 
     indexsomecoolmessages()
     
@@ -94,17 +105,6 @@ def indexsomecoolmessages(firsttime = False):
     conn = pgpool.getconn()
     cursor = conn.cursor()
     print("Indexing logs")
-    files = os.listdir(chatfilterroot)
-    wordslist = []
-    for file in files:
-        with open(f"{chatfilterroot}{file}","r") as fing:
-            for line in fing.readlines():
-                stripped = line.strip()
-                if stripped and not stripped.startswith("###") and len(stripped):
-                    wordslist.append(stripped)
-    pattern = r'\b(' + '|'.join([re.escape(w) for w in [word.replace('\x00', '') for word in wordslist if word.replace('\x00', '') not in  ['%', '_', '']]]) + r')\b'
-
-
 
 
     if firsttime:
@@ -119,67 +119,38 @@ def indexsomecoolmessages(firsttime = False):
         SELECT l.id
         FROM logs_raw l
         LEFT JOIN (SELECT DISTINCT id FROM messages) m ON l.id = m.id
-        WHERE m.id IS NULL AND l.empty IS FALSE AND l.isduplicate IS NOT TRUE
+        WHERE m.id IS NULL AND l.empty IS FALSE AND l.isduplicate IS NOT TRUE AND isreuputable IS TRUE
         ORDER BY l.id""")
 
     todologs = list(map(lambda x: x[0], cursor.fetchall()))
     print(f"Indexing {len(todologs):,} logs")
     todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 500 else [*a,[b]] ,todologs,[])
     initplayedwith(todologs)
-    # now = time.time()
-    for i,block in enumerate(todologs):
-        print(f"indexing block {i+1:,} out of {len(todologs):,}")
-        cursor.execute("SELECT id, json->'chat' as chat_array, json->'info'->'date' as log_date,  json->'names' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
-        for log in cursor.fetchall():
-            logid = log[0]
-            chatarray = log[1]
-            log_date = log[2]
-
-            for id,name in log[3].items():
-                try:
-                    cursor.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s) WHERE NOT (usernames.ids @> ARRAY[%s])",(name,Converter.to_steamID64(id),[logid],logid,logid))
-                except Exception as e:
-                    print("brokey",e)
-
-                
-
-            if chatarray:
-                # print("indexing",logid)
-                for idwithinlogs, message in enumerate(chatarray):
-                    if re.search(pattern, message["msg"], re.IGNORECASE):
-                        print("found a bad word",message["msg"])
-                    cursor.execute("INSERT INTO messages (id,idwithinlogs, message,sender,time,name,flagged) VALUES (%s, %s, %s, %s, %s, %s ,%s) ON CONFLICT DO NOTHING",(logid,idwithinlogs,message["msg"],message["steamid"],log_date,message["name"],bool(re.search(pattern, message["msg"], re.IGNORECASE))))
-        conn.commit()
-    print("Done index")
-    pgpool.putconn(conn)
-    # print(f"that took {(time.time() - now):,} seconds")
+    usernamesync(todologs)
+    messagesync(todologs)
+    print("done!")
 
 
 
-def initplayedwith(todologs = False):
-    print("Updating people played with")
+
+def coolfunctionthatreturnslotsoids(thingtoreturn,todologs = None):
     conn = pgpool.getconn()
     cursor = conn.cursor()
-    # todologs = [[4073632]]
-    if  todologs == False:
-        cursor.execute(f"""
-            SELECT id FROM logs_raw WHERE empty = false AND isduplicate IS NOT TRUE  ORDER BY id DESC""")
+    if todologs == None: 
+        cursor.execute(f"""SELECT id FROM logs_raw WHERE empty = false AND isduplicate IS NOT TRUE AND  isreuputable IS TRUE ORDER BY id DESC""")
         todologs = list(map(lambda x: x[0], cursor.fetchall()))
-        todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 500 else [*a,[b]] ,todologs,[])
-
-    for i,block in enumerate(todologs[1097:]):
-        print(f"doing played with for block {i+1:,} out of {len(todologs):,}")
-        cursor.execute("SELECT id,  json->'players' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
+        todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 5000 else [*a,[b]] ,todologs,[])
+    for i,block in enumerate(todologs):
+        cursor.execute(f"SELECT id,  {thingtoreturn} FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
         for log in cursor.fetchall():
-            setplayedwith(log[0],[{"players":log[1],"length":1}] )
-        # cursor.execute("SELECT id,  json->'rounds', json->'info'->'rounds' FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
-        # for log in cursor.fetchall():
-        #     setplayedwith(log[0],log[1] or log[2])
-
+            yield {"log":log[0],"data":log[1:]}
     pgpool.putconn(conn)
 
+def initplayedwith(todologs = None):
+    print("Updating people played with")
 
-
+    for log in coolfunctionthatreturnslotsoids("json->'players'", todologs):
+        setplayedwith(log["log"],[{"players":log["data"][0],"length":1}] )
 def setplayedwith(id,rounds):
     # print(rounds)
     conn = pgpool.getconn()
@@ -234,49 +205,54 @@ def getpriority(ditionary, *priority, **kwargs):
     return kwargs.get("nofind", None)
 
 
-
-
-
-
-
-def howlongodesthistake():
+def messagesync(todologs = None):
+    print("Updating messages")
+    files = os.listdir(chatfilterroot)
+    wordslist = []
+    for file in files:
+        with open(f"{chatfilterroot}{file}","r") as fing:
+            for line in fing.readlines():
+                stripped = line.strip()
+                if stripped and not stripped.startswith("###") and len(stripped):
+                    wordslist.append(stripped)
+    pattern = r'\b(' + '|'.join([re.escape(w) for w in [word.replace('\x00', '') for word in wordslist if word.replace('\x00', '') not in  ['%', '_', '']]]) + r')\b'
     conn = pgpool.getconn()
     c = conn.cursor()
-    print("wee")
+    for log in coolfunctionthatreturnslotsoids("json->'chat' as chat_array, json->'info'->'date' as log_date", todologs):
+        logid = log["log"]
+        chatarray = log["data"][0]
+        log_date = log["data"][1]
+        for idwithinlogs, message in enumerate(chatarray):
+            if re.search(pattern, message["msg"], re.IGNORECASE):
+                print("found a bad word",message["msg"])
+            cursor.execute("INSERT INTO messages (id,idwithinlogs, message,sender,time,name,flagged) VALUES (%s, %s, %s, %s, %s, %s ,%s) ON CONFLICT DO NOTHING",(logid,idwithinlogs,message["msg"],message["steamid"],log_date,message["name"],bool(re.search(pattern, message["msg"], re.IGNORECASE))))
 
-    last_id = 0
-    batch_num = 0
-    while True:
-        c.execute("SELECT id, json->'names' FROM logs_raw WHERE empty = false AND id > %s AND isduplicate IS NOT true ORDER BY id LIMIT 5000", (last_id,))
-        output = c.fetchall()
 
-        if not output:
-            break
 
-        batch_num += 1
-        print(f"Processing batch {batch_num}, rows {len(output)}")
 
-        for thing in output:
-            logid = thing[0]
-            last_id = logid
-            for id,name in thing[1].items():
-                try:
-                    id = Converter.to_steamID64(id)
-                except:
-                    continue
-                c.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s) WHERE NOT (usernames.ids @> ARRAY[%s])",(name,id,[logid],logid,logid))
 
-        conn.commit()
-        print(f"Batch {batch_num} committed")
+def usernamesync(todologs = None):
+    print("Updating usernames")
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    for log in coolfunctionthatreturnslotsoids("json->'names'", todologs):
+        for id,name in log["data"][0].items():
+            try:
+                id = Converter.to_steamID64(id)
+            except:
+                continue
+            c.execute("INSERT INTO usernames (name,steamid,ids,deletedaccount) VALUES (%s,%s,%s,false) ON CONFLICT (name,steamid) DO UPDATE SET ids = array_append(usernames.ids, %s) WHERE NOT (usernames.ids @> ARRAY[%s])",(name,id,[log["log"]],log["log"],log["log"]))
 
-    print("done")
+
+    conn.commit()
     pgpool.putconn(conn)
+
 
 
 def biglogsdedupe(all = True):
     conn = pgpool.getconn()
     c = conn.cursor()
-    print("deduping")
+    print("deduping logs")
     c.execute(f"""
     WITH logdata AS (
         SELECT
@@ -318,30 +294,30 @@ def biglogsdedupe(all = True):
     print(len(duplicate_groups),"duplicates found")
 
 
-def removedupesfromusernames():
-    conn = pgpool.getconn()
-    c = conn.cursor()
-    print("removing duplicate ids from usernames")
-    c.execute("""
-        UPDATE usernames u
-        SET ids = ARRAY(
-            SELECT x
-            FROM unnest(u.ids) AS x
-            WHERE NOT EXISTS (
-                SELECT 1 FROM logs_raw l WHERE l.id = x AND l.isduplicate IS TRUE
-            )
-        )
-        WHERE EXISTS (
-            SELECT 1
-            FROM unnest(u.ids) AS x
-            JOIN logs_raw l ON l.id = x
-            WHERE l.isduplicate IS TRUE
-        )
-    """)
-    print(f"updated {c.rowcount} username rows")
-    conn.commit()
-    pgpool.putconn(conn)
-    print("done")
+# def removedupesfromusernames():
+#     conn = pgpool.getconn()
+#     c = conn.cursor()
+#     print("removing duplicate ids from usernames")
+#     c.execute("""
+#         UPDATE usernames u
+#         SET ids = ARRAY(
+#             SELECT x
+#             FROM unnest(u.ids) AS x
+#             WHERE NOT EXISTS (
+#                 SELECT 1 FROM logs_raw l WHERE l.id = x AND l.isduplicate IS TRUE
+#             )
+#         )
+#         WHERE EXISTS (
+#             SELECT 1
+#             FROM unnest(u.ids) AS x
+#             JOIN logs_raw l ON l.id = x
+#             WHERE l.isduplicate IS TRUE
+#         )
+#     """)
+#     print(f"updated {c.rowcount} username rows")
+#     conn.commit()
+#     pgpool.putconn(conn)
+#     print("done")
 
 
 def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WITHOUT IT (also the steam api no support)
@@ -350,36 +326,38 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
     laststatuses = 0
     while True:
         now = int(time.time())
-        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE deletedaccount = false AND r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
-        output = list(map(lambda x: x[0], c.fetchall()))
-        output = [output[0],]
-        if not output:
+        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE deletedaccount = false AND r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 100",(604800*10,))
+        output1 = list(map(lambda x: x[0], c.fetchall()))
+        if not output1:
             print("pulling names thinks it is done")
             c.execute("SELECT * FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
             print(c.fetchall())
             time.sleep(3600)
             continue
-        # print("pulling",output)
-        r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
-        if r.ok:
-            laststatuses = 0
-            if not r.json():
-                print("could not find profile for",output)
-                c.execute("UPDATE usernames SET deletedaccount = true WHERE steamid = %s",(output[0],))
-                continue
-            # print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
-            if not r.json()[0].get("persona_name"):
-                print(json.dumps(r.json(),indent = 4))
-                print("COULD NOT FIND PERSONA NAME")
-                continue
-            c.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname,vanity) VALUES (%s,%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"],r.json()[0]["profile_url"] or None ))
-            conn.commit()
-        else:
-            # print(r.status_code)
-            if r.status_code == 429:
-                laststatuses += 1
-                time.sleep(laststatuses*20)
-        time.sleep(2)
+        for output in output1:
+            output = [output,]
+
+            # print("pulling",output)
+            r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
+            if r.ok:
+                laststatuses = 0
+                if not r.json():
+                    print("could not find profile for",output)
+                    c.execute("UPDATE usernames SET deletedaccount = true WHERE steamid = %s",(output[0],))
+                    continue
+                # print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
+                if not r.json()[0].get("persona_name"):
+                    print(json.dumps(r.json(),indent = 4))
+                    print("COULD NOT FIND PERSONA NAME")
+                    continue
+                c.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname,vanity) VALUES (%s,%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"],r.json()[0]["profile_url"] or None ))
+                conn.commit()
+            else:
+                # print(r.status_code)
+                if r.status_code == 429:
+                    laststatuses += 1
+                    time.sleep(laststatuses*20)
+            time.sleep(2)
 
 
 
@@ -389,8 +367,8 @@ if False: # first time stuff, otherwise is incremental (but tbh incremental will
     removedupesfromusernames() #not needed
     initplayedwith()
 
-initplayedwith()
-time.sleep(8640000)
+# initplayedwith()
+# time.sleep(8640000)
 # threading.Thread(target=occasionallyrunsomething, daemon=True).start()
 threading.Thread(target=slowlypullpeoplesavatars, daemon=True).start()
 # indexsomebadwords()

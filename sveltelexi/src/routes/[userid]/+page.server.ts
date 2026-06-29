@@ -2,7 +2,7 @@
 
 // import type { PageContextServer } from "vike/types";
 // import { useConfig } from "vike-react/useConfig";
-import type { Userdetails } from "./types.ts";
+import type { Userdetails,playedwithitem } from "./types.ts";
 import { API_URL } from "$lib/morestuff/config";
 import type { PageServerLoad } from './$types';
 
@@ -29,5 +29,30 @@ async function funcyfunc(
   return { personresults, statuscode:response.status};
 }
 
-export const load: PageServerLoad = ({ params, fetch }) => funcyfunc(params.userid, fetch );
+async function playedwith(
+    steamid: string,
+    f: (input: RequestInfo, init?: RequestInit) => Promise<Response>
+) {
+  let response
+     try {
+     response = await fetch(
+      `${API_URL}/playedwith`, { method: "POST", body: JSON.stringify({ "steam64": decodeURIComponent(steamid) }), headers: { "Content-Type": "application/json" } }
+     );
+
+    if (response.status == 200) {
+      return  (await response.json());
+    }
+  }
+  catch {
+    return null
+  }
+  return null
+}
+
+export const load: PageServerLoad = async ({ params, fetch }) => {
+  const results = await funcyfunc(params.userid, fetch )
+  results.personresults.playedwith = playedwith(results.personresults.steam64,fetch)
+  return results 
+  
+};
 

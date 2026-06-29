@@ -5,13 +5,26 @@ export type Userdetails = {
     frame?: string
     steamprofile: string
     steam64: string
+    playedwith: Promise<Record<string, playedwithitem>>
+
 };
+
+
 
 export type Badmessage = {
     matchid: number
     message: string
     timestamp: number
     name: string
+}
+
+export type playedwithitem = {
+    commonmatches: number
+    currentname: string
+    avatar: string
+    frame: string | null
+    backupusername: string
+
 }
 
 export type Stats = {

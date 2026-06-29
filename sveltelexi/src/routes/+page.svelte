@@ -50,7 +50,7 @@
 		</u>
 		on discord
 	</div>
-	<div class="whomadethisshowthingy">
+	<!-- <div class="whomadethisshowthingy">
 		Support on
 		<u style="text-decoration-color: rgba(255,180,200,0.8)">
 			<a
@@ -62,7 +62,7 @@
 				Ko-fi
 			</a>
 		</u>
-	</div>
+	</div> -->
 </div>
 <svelte:head>
 	<title>LexiSlurs</title>

@@ -96,9 +96,9 @@ def stats_cache():
 
 @app.route("/playedwith",methods=["POST","GET"])
 def playedwithwrapper():
-    return playedwith(76561198088735927 or int(request.get_json()["steam64"]))
+    return playedwith(int(request.get_json()["steam64"]))
 
-@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+@cached(cache=TTLCache(maxsize=10, ttl=1800))
 def playedwith(steam64):
     
     conn = pgpool.getconn()
@@ -107,12 +107,18 @@ def playedwith(steam64):
     c.execute("SELECT steamid2, steamid, cardinality(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
     playedwith = dict(sorted((map(lambda x: (x[0] == steam64 and x[1] or x[0],x[2]),c.fetchall())),key = lambda x: x[1], reverse = False))
     c.execute("SELECT  steamid ,(array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = ANY(%s) GROUP BY steamid",(list(playedwith.keys()),))
-    output = dict(c.fetchall())
-    playedwith = dict(map(lambda x: (x[0],{"recentname":x[1]}) ,playedwith.items()))
+    logname = dict(c.fetchall())
+    c.execute("SELECT steamid,currentname,avatar,frame FROM currentthings WHERE steamid = ANY(%s)",(list(playedwith.keys()),))
+    logsteamdetails = c.fetchall()
+    logsteamdetails = dict(map(lambda x: (x[0],x[1:]),logsteamdetails))
+    # print(logsteamdetails)
+    playedwith = dict(map(lambda x: (x[0],{"commonmatches":x[1],"currentname":logsteamdetails.get(x[0],[logname[x[0]]])[0],"avatar":(  "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb" if (not logsteamdetails.get(x[0],[None] * 2)[1]) or ( logsteamdetails.get(x[0],[None] * 2)[1].isdigit() and not int(logsteamdetails.get(x[0],[None] * 2)[1])) else logsteamdetails.get(x[0],[None] * 2)[1]),"frame":logsteamdetails.get(x[0],[None]*3)[2],"backupusername":logname[x[0]]}) ,playedwith.items()))
+
+
     
 
-    print(json.dumps(playedwith,indent=4))
-    return json.dumps(playedwith,indent=4)
+    # return (json.dumps(playedwith,indent=4))
+    return playedwith
 
 
 
@@ -387,6 +393,7 @@ def handle_search_helper(data):
             avatars[steamid] = avatarurl
     output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
     # print(list(map(lambda x: (x["id"], x["n"]) , output)))
+    conn.rollback()
     pgpool.putconn(conn)
     
     # print(output)

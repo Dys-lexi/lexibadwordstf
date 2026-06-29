@@ -83,18 +83,38 @@ def init():
         PRIMARY KEY (id, idwithinlogs)
     )"""
     )
+    # c.execute("DROP MATERIALIZED VIEW uploadercounter")
+    c.execute(
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS uploadercounter AS
+        SELECT
+            (json->'info'->'uploader'->'id')::TEXT AS uploaderid,
+            ARRAY_AGG(DISTINCT id) AS ids
+        FROM logs_raw
+        GROUP BY (json->'info'->'uploader'->'id')::TEXT;
+        """
+    )
+
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS name ON uploadercounter(uploaderid);")
+
+
     # print("teee")
     c.execute("CREATE INDEX IF NOT EXISTS idx_messages_id ON messages (id)")
     # print("a")
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_id ON logs_raw (id)")
     # print("b")
     c.execute("ALTER TABLE currentthings ADD COLUMN IF NOT EXISTS vanity TEXT")
+
+    c.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS empty BOOLEAN")
+    c.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS isduplicate BOOLEAN")
+    c.execute("ALTER TABLE logs_raw ADD COLUMN IF NOT EXISTS isreuputable BOOLEAN")
     # c.execute("UPDATE logs_raw SET isduplicate = NULL")
     # print("c")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isreuputable ON logs_raw (isreuputable)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_empty ON logs_raw (empty)")
-
+    c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isreuputable ON logs_raw (isreuputable)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_playedwith_steamid ON playedwith (steamid)")
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_playedwith_steamid2 ON playedwith (steamid2)")
