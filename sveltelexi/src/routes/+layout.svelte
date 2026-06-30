@@ -27,16 +27,17 @@
         {@render children()}
       </div>
  
-    <div class="Iwantthisinthetopright">
+  
       				{#await temp}
  {" "}
 				{:then temp}
         {#if temp.statuscode == 200}
-        It is {temp.temp.toLocaleString()}°C in Allusive's room
+        <a class="Iwantthisinthetopright" href = "https://sans.xixya.com">
+        It is {temp.temp.toLocaleString()}°C in Allusive's room</a>
         {/if}
         	{:catch error}
           {" "}
 				{/await}
 
-    </div>
+
   

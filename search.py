@@ -70,7 +70,7 @@ def temp():
     return tempreading()
 @cached(cache=TTLCache(maxsize=1024, ttl=60))
 def tempreading():
-    re = requests.get("https://allusive.me/temp/",timeout = 10)
+    re = requests.get("https://allusive.me/temp/",timeout = 3)
     if re.ok:
         return f"{float(re.text):.2f}",200
     else:
@@ -103,7 +103,7 @@ def playedwithwrapper():
 
 @cached(cache=TTLCache(maxsize=10, ttl=1800))
 def playedwith(steam64,expand):
-    offset = 100
+    offset = 250
     with querywrapper() as query:
         if not expand:
             query.execute(f"SELECT steamid2, steamid, cardinality(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false ORDER BY cardinality(ids) DESC  LIMIT {offset}",(steam64,steam64))

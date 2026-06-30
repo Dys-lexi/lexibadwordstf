@@ -266,10 +266,13 @@ max-width: 100%;
 }
 
 
+
 .Iwantthisinthetopright{
   position: absolute;
   color: rgba(255,255,255,0.3);
   font-size: xx-small;
+text-decoration: none;
+  text-decoration-line: none;
   top:0;
   right:0;
 }
