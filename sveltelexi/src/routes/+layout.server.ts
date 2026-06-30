@@ -1,6 +1,6 @@
 
 import { API_URL } from "$lib/morestuff/config";
-import type { PageServerLoad } from './$types';
+import type { LayoutServerLoad } from './$types';
 import type { temp } from "./types.ts";
 
 
@@ -27,7 +27,10 @@ export const load = ({ fetch }) => {
   let tempw = {} as temp
        tempw.statuscode = 444
     tempw.temp = "bleh"
-    return {
-      temp: tempw
+    // return {
+    //   temp: tempw
+    // };
+  return {
+      temp: temp(fetch)
     };
   };
