@@ -7,16 +7,9 @@
 	let { personresults, statuscode } = $derived(data);
 </script>
 
-{#await personresults.playedwith}
-	Loading comments...
-{:then}
-
-	weee
-{:catch error}
-	<h2>realy weird error loading data: {error.message}</h2>
-{/await}
-	{#if statuscode == 200}
-		<div class="nonoresultsholder">
+{#if statuscode == 200}
+	<div class="nonoresultsholder">
+		<div class="expandednameholder">
 			<a class="nameholderbad" href={personresults.steamprofile} target="_blank">
 				<div class="nonowordavatarholder">
 					<img src={personresults.frame} class="avatarholder" alt="" />
@@ -37,47 +30,83 @@
 					{/if}
 				</div>
 			</a>
-			<div class="nonowordsholder">
-				{#if personresults.nonowords != null && personresults.nonowords.length}
-					{#each personresults.nonowords as badword, index (index)}
-						<div class="nonowordbox">
-							<a
-								class="nonowordtimestamp loglink"
-								target="_blank"
-								href={`https://logs.tf/${badword.matchid}`}
-							>
-								log
-							</a>
-							<div class="nonowordtimestamp">
-								{new Date(badword.timestamp * 1000).toLocaleDateString()}{' '}
-								<div class="nonowordname">
-									{new Date(badword.timestamp * 1000).toLocaleTimeString()}
-								</div>
+			<div class="playedwithholder">
+			<!-- <div class="playedwithperson playedwithpersonpersonal">
+							
+								<img
+									class="playedwithphoto"
+									src={personresults.avatarurl}
+									alt="avatar"
+								/>
+								<div class = "playedwithname" >Plays With</div>
+							</div> -->
+				{#await personresults.playedwith}
+					Loading playedwith data
+				{:then playedwith}
+					{#each playedwith as data, index (index)}
+						<a href={`/${data.steam64}`}>
+							<div class="playedwithperson">
+							
+								<img
+									class="playedwithphoto"
+									src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
+									alt="avatar"
+								/>
+								<div class = "playedwithname" >{data.currentname}</div>
 							</div>
-
-							{' '}
-							<div class="nonowordname">
-								{badword.name}<span style="color: #eee">:</span>
-							</div>
-							{' '}
-							<div class="nonowordmessage">
-								{badword.message}
-							</div>
-						</div>
+						</a>
 					{/each}
-				{:else}
-					<h2>No bad words found for {personresults.currentusername}</h2>
-				{/if}
+				{:catch error}
+					<h2>realy weird error loading data: {error.message}</h2>
+				{/await}
 			</div>
 		</div>
-	{:else if statuscode == 404}
-		<h2>could not find user "{page.params.userid}"</h2>
-	{:else if statuscode == 429}
-		<h2>the server is being rate limited by steam, don't search by vanity url atm :(</h2>
-	{:else}
-		<h2>the server broke (or is down), sorry :(</h2>
-	{/if}
+		<div class="externalwebsiteholder">
+			<a class = "externalwebsite loglink" href = {`https://etf2l.org/search/${personresults.steam64}/`} target="_blank">ETF2L</a>
+			<a class = "externalwebsite loglink" href = {`https://tf2center.com/profile/${personresults.steam64}/`} target="_blank">TF2Center</a>
+			<a class = "externalwebsite loglink" href = {`https://ozfortress.com/users/steam_id/${personresults.steam64}/`} target="_blank">OZFortress</a>
+			<a class = "externalwebsite loglink" href = {`https://rgl.gg/Public/PlayerProfile?p=${personresults.steam64}/`} target="_blank">RGL</a>
+		</div>
+		<div class="nonowordsholder">
+			{#if personresults.nonowords != null && personresults.nonowords.length}
+				{#each personresults.nonowords as badword, index (index)}
+					<div class="nonowordbox">
+						<a
+							class="nonowordtimestamp loglink"
+							target="_blank"
+							href={`https://logs.tf/${badword.matchid}`}
+						>
+							log
+						</a>
+						<div class="nonowordtimestamp">
+							{new Date(badword.timestamp * 1000).toLocaleDateString()}{' '}
+							<div class="nonowordname">
+								{new Date(badword.timestamp * 1000).toLocaleTimeString()}
+							</div>
+						</div>
 
+						{' '}
+						<div class="nonowordname">
+							{badword.name}<span style="color: #eee">:</span>
+						</div>
+						{' '}
+						<div class="nonowordmessage">
+							{badword.message}
+						</div>
+					</div>
+				{/each}
+			{:else}
+				<h2>No bad words found for {personresults.currentusername}</h2>
+			{/if}
+		</div>
+	</div>
+{:else if statuscode == 404}
+	<h2>could not find user "{page.params.userid}"</h2>
+{:else if statuscode == 429}
+	<h2>the server is being rate limited by steam, don't search by vanity url atm :(</h2>
+{:else}
+	<h2>the server broke (or is down), sorry :(</h2>
+{/if}
 
 <svelte:head>
 	<title>{statuscode === 200 ? personresults.currentusername : 'LexiSlurs'}</title>

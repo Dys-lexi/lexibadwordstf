@@ -2,11 +2,14 @@
   import { goto } from '$app/navigation';
   import { usewsstore } from './websocketsearch';
   import '../../routes/Layout.css';
+	import { onMount } from 'svelte';
 
   let { classNameform = '', classNameinput = '', classnamebutton = '' } = $props();
 
   const { connect, disconnect, sendsearch } = usewsstore.getState();
-
+  onMount(() => {
+  connect()
+  })
   let isFocused = $state(false);
   let matches = $state(usewsstore.getState().matches);
   let inputRef: HTMLInputElement;

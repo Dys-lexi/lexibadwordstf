@@ -1,9 +1,52 @@
+from contextvars import ContextVar
 from psycopg2 import pool
 
 try:
-    pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
+    pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
 except:
-    pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
+    pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
+
+class querywrapper:
+    def __init__(self):
+        self.pool = pgpool
+        self.conn = pgpool.getconn()
+        self.c = self.conn.cursor()
+
+    def __enter__(self):
+        return self
+
+    def execute(self, *query):
+        self.c.execute(*query)
+
+    def fetchall(self):
+        return self.c.fetchall()
+
+    def fetchone(self):
+        return self.c.fetchone()
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.conn.rollback()
+        else:
+            self.conn.commit()
+        self.cleanup()
+        return False  # important: don't suppress exceptions
+
+    def cleanup(self):
+        try:
+            self.c.close()
+            self.pool.putconn(self.conn)
+        except Exception as e:
+            print("error when closing conn", e)
+
+
+
 
 def init():
     print("init")

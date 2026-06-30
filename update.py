@@ -19,9 +19,9 @@ import itertools
 # from flask import Flask, jsonify, request, send_from_directory, send_file
 # [U:1:88677982]
 try:
-    pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
+    pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
 except:
-    pgpool = pool.ThreadedConnectionPool(20, 200, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
+    pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
 root = "https://logs.tf/api/v1"
 chatfilterroot = "./chatfilters/"
 print("pants")
@@ -30,7 +30,7 @@ print("pants")
 def occasionallyrunsomething():
     print("loopies")
     while True:
-        # time.sleep(3600)
+        time.sleep(3600)
         occasionallyasknicelyiftherearenewlogs()
         time.sleep(7200)
 
@@ -66,28 +66,104 @@ def occasionallyasknicelyiftherearenewlogs():
         conn.commit()
     # c.execute("INSERT INTO logs_raw (id,json,time) VALUES (%s, %s, to_timestamp(%s))",(6_000_000,json.dumps({"pants":"underwear"}),time.time()))
     pgpool.putconn(conn)
-    generallyupdatethings()
+    indexsomecoolmessages()
     
 
-def redothatmaterialview():
-    print("removing logs from less reputable places")
+
+def dumploadsofthings():
     conn = pgpool.getconn()
     c = conn.cursor()
-    c.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY uploadercounter")
-    c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids)  LIMIT 50")
-    # print(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]))
-    c.execute("UPDATE logs_raw SET isreuputable = TRUE where id = ANY(%s)",(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]),))
+    print("weee")
     c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids) DESC OFFSET 50")
-    c.execute("UPDATE logs_raw SET isreuputable = FALSE where id = ANY(%s)",(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]),))
+    print("teee")
+    deleteids = (functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]),)
+    c.execute("DELETE FROM messages WHERE id = ANY(%s)",deleteids)
+    print("meee")
     conn.commit()
     pgpool.putconn(conn)
 
 
-def generallyupdatethings():
-    redothatmaterialview()
-    biglogsdedupe(False) 
-    indexsomecoolmessages()
-    
+# dumploadsofthings()
+def redothatmaterialview():
+
+    print("removing logs from less reputable places")
+
+    conn = pgpool.getconn()
+
+    c = conn.cursor()
+
+    try:
+        c.execute("SELECT COUNT(*) FROM logs_raw WHERE isreuputable IS NULL")
+        null_count = c.fetchone()[0]
+
+        if null_count >= 10000:
+
+            c.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY uploadercounter")
+
+            c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids)  LIMIT 50")
+
+            # print(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]))
+
+            c.execute("UPDATE logs_raw SET isreuputable = TRUE where id = ANY(%s)",(
+                functools.reduce(lambda a,b:  [*a,*b[0]], c.fetchall(), []),
+            ))
+
+            c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids) DESC OFFSET 50")
+
+            c.execute("UPDATE logs_raw SET isreuputable = FALSE where id = ANY(%s)",(
+                functools.reduce(lambda a,b:  [*a,*b[0]], c.fetchall(), []),
+            ))
+
+        else:
+            print(f"only {null_count} unprocessed logs, skipping materialized view refresh")
+
+
+            c.execute("""
+                SELECT uploaderid
+                FROM uploadercounter
+                ORDER BY cardinality(ids)
+                LIMIT 50
+            """)
+
+            reputable_uploaders = {row[0] for row in c.fetchall()}
+
+            c.execute("""
+                SELECT
+                    id,
+                    (json->'info'->'uploader'->'id')::TEXT AS uploaderid
+                FROM logs_raw
+                WHERE isreuputable IS NULL
+            """)
+
+            reputable_ids = []
+            less_reputable_ids = []
+
+            for log_id, uploaderid in c.fetchall():
+                if uploaderid in reputable_uploaders:
+                    reputable_ids.append(log_id)
+                else:
+                    less_reputable_ids.append(log_id)
+
+            if reputable_ids:
+                c.execute(
+                    "UPDATE logs_raw SET isreuputable = TRUE WHERE id = ANY(%s)",
+                    (reputable_ids,)
+                )
+
+            if less_reputable_ids:
+                c.execute(
+                    "UPDATE logs_raw SET isreuputable = FALSE WHERE id = ANY(%s)",
+                    (less_reputable_ids,)
+                )
+
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        pgpool.putconn(conn)
 
 
 
@@ -101,7 +177,8 @@ def generallyupdatethings():
 
 
 def indexsomecoolmessages(firsttime = False):
-
+    redothatmaterialview()
+    biglogsdedupe(False) 
     conn = pgpool.getconn()
     cursor = conn.cursor()
     print("Indexing logs")

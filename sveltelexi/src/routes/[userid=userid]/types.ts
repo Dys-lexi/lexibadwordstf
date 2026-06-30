@@ -5,7 +5,7 @@ export type Userdetails = {
     frame?: string
     steamprofile: string
     steam64: string
-    playedwith: Promise<Record<string, playedwithitem>>
+    playedwith: Promise<Array< playedwithitem>>
 
 };
 
@@ -21,9 +21,10 @@ export type Badmessage = {
 export type playedwithitem = {
     commonmatches: number
     currentname: string
-    avatar: string
+    avatar: string | null
     frame: string | null
     backupusername: string
+    steam64: string
 
 }
 

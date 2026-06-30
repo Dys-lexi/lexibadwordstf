@@ -50,8 +50,12 @@ async function playedwith(
 }
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
-  const results = await funcyfunc(params.userid, fetch )
-  results.personresults.playedwith = playedwith(results.personresults.steam64,fetch)
+  // console.log("wqdqwd",params.userid)
+  const results = await funcyfunc(params.userid, fetch)
+  // console.log("weee",results)
+  if (results.statuscode == 200) {
+    results.personresults.playedwith = playedwith(results.personresults.steam64, fetch)
+  }
   return results 
   
 };
