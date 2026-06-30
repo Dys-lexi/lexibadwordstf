@@ -268,8 +268,8 @@ max-width: 100%;
 
 .Iwantthisinthetopright{
   position: absolute;
-  color: rgba(255,255,255,0.5);
-  font-size: small;
+  color: rgba(255,255,255,0.3);
+  font-size: xx-small;
   top:0;
   right:0;
 }

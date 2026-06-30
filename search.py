@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_all()
+
 import json
 import sys
 from datetime import datetime
@@ -62,12 +65,12 @@ def cachestats():
 @app.route("/temp",methods=["GET"])
 def temp():
     print("getting temp")
-    # time.sleep(10)
+    # time.sleep(2)  
 
     return tempreading()
-@cached(cache=TTLCache(maxsize=1024, ttl=10))
+@cached(cache=TTLCache(maxsize=1024, ttl=60))
 def tempreading():
-    re = requests.get("https://allusive.me/temp/",timeout = 2)
+    re = requests.get("https://allusive.me/temp/",timeout = 10)
     if re.ok:
         return f"{float(re.text):.2f}",200
     else:

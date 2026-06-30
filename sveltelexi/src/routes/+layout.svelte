@@ -16,7 +16,7 @@
 </style>
     <div class="Iwantthisinthetopright">
       				{#await temp}
-				{" "}
+				<!-- {"wwwwww "} -->
 				{:then temp}
         {#if temp.temp.statuscode == 200}
         It is {temp.temp.temp.toLocaleString()}°C in Allusive's room

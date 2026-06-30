@@ -11,7 +11,7 @@ async function temp(
     let temp = {} as temp
   let response
      try {
-     response = await fetch(
+     response = await f(
       `${API_URL}/temp`, { method: "GET"}
      );
      temp.statuscode = response.status

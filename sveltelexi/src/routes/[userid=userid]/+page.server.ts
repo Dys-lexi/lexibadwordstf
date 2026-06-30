@@ -35,7 +35,7 @@ async function playedwith(
 ) {
   let response
      try {
-     response = await fetch(
+     response = await f(
       `${API_URL}/playedwith`, { method: "POST", body: JSON.stringify({ "steam64": decodeURIComponent(steamid) }), headers: { "Content-Type": "application/json" } }
      );
 

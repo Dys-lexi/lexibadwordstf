@@ -38,7 +38,9 @@ services:
       - /mnt/bigdrives/tflogs/logs.sql:/var/logs.sql
     restart: unless-stopped
   search:
-    build: ./
+    build:
+      context: ./
+      dockerfile: ./dockerfile
     depends_on:
         postgres:
           condition: service_started
