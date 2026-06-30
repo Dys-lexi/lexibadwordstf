@@ -30,7 +30,7 @@
 					{/if}
 				</div>
 			</a>
-			<div class="playedwithholder">
+			
 			<!-- <div class="playedwithperson playedwithpersonpersonal">
 							
 								<img
@@ -43,23 +43,31 @@
 				{#await personresults.playedwith}
 					Loading playedwith data
 				{:then playedwith}
+				{#await personresults.biggestplayedwith then biggestplayedwith}
+				{#if playedwith.length}
+				<div class="playedwithholder">
 					{#each playedwith as data, index (index)}
 						<a href={`/${data.steam64}`}>
 							<div class="playedwithperson">
-							
+										<div class="playedwithpercent playedwithbad" ></div>
+								<div class="playedwithpercent" style={`height: ${(data.commonmatches*100)/biggestplayedwith}%`}></div>
 								<img
 									class="playedwithphoto"
 									src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
 									alt="avatar"
 								/>
+
 								<div class = "playedwithname" >{data.currentname}</div>
+								
 							</div>
 						</a>
 					{/each}
+					</div>{/if}
+					{/await}
 				{:catch error}
 					<h2>realy weird error loading data: {error.message}</h2>
 				{/await}
-			</div>
+			
 		</div>
 		<div class="externalwebsiteholder">
 			<a class = "externalwebsite loglink" href = {personresults.steamprofile} target="_blank">Steam</a>

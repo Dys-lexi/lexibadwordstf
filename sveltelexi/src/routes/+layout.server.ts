@@ -23,8 +23,11 @@ async function temp(
   return {temp}
 }
 
- export const load = ({ fetch }) => {
+export const load = ({ fetch }) => {
+  let tempw = {} as temp
+       tempw.statuscode = 444
+    tempw.temp = "bleh"
     return {
-      temp: temp(fetch)
+      temp: tempw
     };
   };

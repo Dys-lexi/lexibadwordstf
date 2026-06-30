@@ -6,6 +6,10 @@ import type { Userdetails,playedwithitem } from "./types.ts";
 import { API_URL } from "$lib/morestuff/config";
 import type { PageServerLoad } from './$types';
 
+type PlayedWithResponse = {
+  playedwith: Array<playedwithitem>
+  biggestplayedwith: number
+}
 
 async function funcyfunc(
   userid: string,
@@ -32,7 +36,7 @@ async function funcyfunc(
 async function playedwith(
     steamid: string,
     f: (input: RequestInfo, init?: RequestInit) => Promise<Response>
-) {
+): Promise<PlayedWithResponse | null> {
   let response
      try {
      response = await f(
@@ -40,7 +44,7 @@ async function playedwith(
      );
 
     if (response.status == 200) {
-      return  (await response.json());
+      return  (await response.json()) as PlayedWithResponse;
     }
   }
   catch {
@@ -54,9 +58,10 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
   const results = await funcyfunc(params.userid, fetch)
   // console.log("weee",results)
   if (results.statuscode == 200) {
-    results.personresults.playedwith = playedwith(results.personresults.steam64, fetch)
+    const playedwithresults = playedwith(results.personresults.steam64, fetch)
+    results.personresults.playedwith = playedwithresults.then((data) => data?.playedwith ?? [])
+    results.personresults.biggestplayedwith = playedwithresults.then((data) => data?.biggestplayedwith ?? 0)
   }
   return results 
   
 };
-

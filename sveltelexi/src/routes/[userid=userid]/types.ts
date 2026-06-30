@@ -5,7 +5,8 @@ export type Userdetails = {
     frame?: string
     steamprofile: string
     steam64: string
-    playedwith: Promise<Array< playedwithitem>>
+    playedwith: Promise<Array<playedwithitem>>
+    biggestplayedwith: Promise<number>
 
 };
 
