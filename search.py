@@ -57,7 +57,21 @@ def cachestats():
     with open("./statscache.json", "w") as f:
         f.write(json.dumps(stats,indent=4))
 
-    
+
+
+@app.route("/temp",methods=["GET"])
+def temp():
+    print("getting temp")
+    # time.sleep(10)
+
+    return tempreading()
+@cached(cache=TTLCache(maxsize=1024, ttl=10))
+def tempreading():
+    re = requests.get("https://allusive.me/temp/",timeout = 2)
+    if re.ok:
+        return f"{float(re.text):.2f}",200
+    else:
+        return "idk",500
 
 @app.route("/stats",methods=["GET"])
 def stats():

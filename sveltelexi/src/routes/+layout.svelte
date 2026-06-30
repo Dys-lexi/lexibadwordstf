@@ -5,14 +5,27 @@
 	import { Logo } from "$lib/morestuff/const.svelte";
   import Search from "$lib/morestuff/Search.svelte";
 	import faviconUrl from "$lib/images/logosmall.png";
-	let { children } = $props();
+	let { children ,data} = $props();
 
 
+	let { temp } = $derived(data);
 </script>
   
 <style>
 	
 </style>
+    <div class="Iwantthisinthetopright">
+      				{#await temp}
+				{" "}
+				{:then temp}
+        {#if temp.temp.statuscode == 200}
+        It is {temp.temp.temp.toLocaleString()}°C in Allusive's room
+        {/if}
+        	{:catch error}
+          {" "}
+				{/await}
+
+    </div>
       <div
         class="mainthing"
       >

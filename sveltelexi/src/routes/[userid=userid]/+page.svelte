@@ -62,10 +62,12 @@
 			</div>
 		</div>
 		<div class="externalwebsiteholder">
+			<a class = "externalwebsite loglink" href = {personresults.steamprofile} target="_blank">Steam</a>
 			<a class = "externalwebsite loglink" href = {`https://etf2l.org/search/${personresults.steam64}/`} target="_blank">ETF2L</a>
 			<a class = "externalwebsite loglink" href = {`https://tf2center.com/profile/${personresults.steam64}/`} target="_blank">TF2Center</a>
 			<a class = "externalwebsite loglink" href = {`https://ozfortress.com/users/steam_id/${personresults.steam64}/`} target="_blank">OZFortress</a>
 			<a class = "externalwebsite loglink" href = {`https://rgl.gg/Public/PlayerProfile?p=${personresults.steam64}/`} target="_blank">RGL</a>
+
 		</div>
 		<div class="nonowordsholder">
 			{#if personresults.nonowords != null && personresults.nonowords.length}
