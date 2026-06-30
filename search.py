@@ -70,7 +70,6 @@ def temp():
     return tempreading()
 @cached(cache=TTLCache(maxsize=1024, ttl=60))
 def tempreading():
-    return f"{float(100.1):.2f}",200
     re = requests.get("https://allusive.me/temp/",timeout = 10)
     if re.ok:
         return f"{float(re.text):.2f}",200

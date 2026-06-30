@@ -8,12 +8,13 @@
 	let { children ,data} = $props();
 
 
-	// let { temp } = $derived(data);
+	let { temp } = $derived(data);
 </script>
   
 <style>
 	
 </style>
+
       <div
         class="mainthing"
       >
@@ -26,5 +27,16 @@
         {@render children()}
       </div>
  
+    <div class="Iwantthisinthetopright">
+      				{#await temp}
+ {" "}
+				{:then temp}
+        {#if temp.statuscode == 200}
+        It is {temp.temp.toLocaleString()}°C in Allusive's room
+        {/if}
+        	{:catch error}
+          {" "}
+				{/await}
 
+    </div>
   
