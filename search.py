@@ -120,6 +120,7 @@ def playedwith(steam64,expand):
 
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
 def resolveavatarandname(steam64,timeout = 3600):
+    print(steam64)
     now = int(time.time())
     with querywrapper() as query:
         query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
@@ -128,10 +129,11 @@ def resolveavatarandname(steam64,timeout = 3600):
             if timeout:
                 failed = False
                 r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
+                currentname = None
                 if r.status_code in [429]:
                     query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
-                    output = query.fetchone()
-                    currentname = output and output[0] or "Unknown"
+                    name2 = query.fetchone()
+                    currentname = name2 and name2[0] or "Unknown"
                     avatarurl = 0
                     failed = True
                 else:
@@ -158,7 +160,7 @@ def resolveavatarandname(steam64,timeout = 3600):
                     query.commit()
                 elif output:
                     print("I GOT RATE LIMITED")
-                    currentname = output[0]
+                    currentname = currentname or output[0]
                     avatarurl = output[2]
                     frame = output[3]
             
@@ -178,6 +180,16 @@ def resolveavatarandname(steam64,timeout = 3600):
         avatarurl = avatarurl
     return {"avatar":avatarurl,"frame":frame,"currentusername":currentname}
 
+# @cached(cache=TTLCache(maxsize=30, ttl=1800))
+def resolvelotsofavatars(steam64s):
+    avatars = dict(zip(steam64s,["fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"]*len(steam64s),strict = True))
+    with querywrapper() as query: 
+        query.execute("SELECT steamid, avatar FROM currentthings WHERE steamid = ANY(%s)",(steam64s,))
+        avatars.update( dict(query.fetchall() ))
+        for steamid ,avatarurl in avatars.items():
+            if avatarurl.isdigit() and not int(avatarurl):
+                avatars[steamid] = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
+    return avatars
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
 def resolveamessyinputtoaprofile(userid):
     with querywrapper() as query:
@@ -212,6 +224,14 @@ def resolveamessyinputtoaprofile(userid):
                 
         return( Converter.to_steamID64(steam3))
 
+
+@app.route("/profile", methods=["POST"])
+def resolveprofile():
+    steam64 = resolveamessyinputtoaprofile(request.get_json()["url"])
+    if not steam64:
+        return {}, 404
+    return {**resolveavatarandname(steam64,request.get_json().get("timeout",3600)),"steam64":steam64}
+
 @app.route("/badwords", methods=["POST"])
 def resolvename():
     return resolvename_cache(request.get_json()["url"])
@@ -219,7 +239,7 @@ def resolvename():
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
 def resolvename_cache(userid):
     now = int(time.time())
-    print("pulling a user at",now)
+    print("pulling a user at",now,userid )
     timer = time.time()
     steam64 = resolveamessyinputtoaprofile(userid)
 
@@ -245,7 +265,7 @@ def resolvename_cache(userid):
                 continue
             reallogs.append(log)
         print("this took",time.time()-timer)
-        print(resolveavatarandname(steam64))
+        # print(resolveavatarandname(steam64))
         return  {**resolveavatarandname(steam64),"nonowords":reallogs,"steam64":str(steam64)} , 200
 
 
@@ -282,12 +302,7 @@ def defaultthing():
         query.execute("SELECT  name, steamid, cardinality(ids) FROM usernames  ORDER BY cardinality(ids) DESC LIMIT 10" )
         # query.execute(top_players_query)
         output = list(map(lambda x: {"n":x[0] if isinstance(x[0],list) else [x[0]],"id":str(x[1]),"g":x[2]}, query.fetchall()))
-        query.execute("SELECT steamid, avatar FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: int(x["id"]) , output)),))
-        avatars = dict(query.fetchall() )
-        for steamid ,avatarurl in avatars.items():
-            if avatarurl.isdigit() and not int(avatarurl):
-                avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
-                avatars[steamid] = avatarurl
+        avatars = resolvelotsofavatars(list(map(lambda x: int(x["id"]) , output)))
         output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
     # print(output)
     return output
@@ -309,29 +324,6 @@ def handle_search_helper(data):
         return
     escaped = data.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
     #  bv said no to searching by exact match -> popularity, now we only have popularity :(   c.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s   AND LENGTH(name) >= LENGTH(%s) ORDER BY  (LOWER(name) = LOWER(%s)) DESC,  cardinality(ids) DESC LIMIT 10", (f'{escaped}%',escaped,escaped))
-    # c.execute("""
-    # WITH steamids AS (
-    #     SELECT steamid FROM usernames 
-
-    #     WHERE name ILIKE %s
-    # ),
-    #  occurences AS (
-    # SELECT steamid, name, cardinality(ids) AS amount
-    #     FROM usernames
-    #     WHERE steamid IN (SELECT steamid FROM steamids)
-    # )
-    # SELECT 
-    #     array_agg(name ORDER BY amount DESC) AS names,
-    #     steamid,
-    #     SUM(amount) AS total_amount,
-    #      (array_agg(name ORDER BY LENGTH(name), name) FILTER (WHERE name ILIKE %s))[1]
-        
-        
-    # FROM occurences
-    # GROUP BY steamid ORDER BY total_amount DESC LIMIT 10""",(f'{escaped}%',f'{escaped}%'))
-
-    # print(json.dumps(list(map(lambda x: {"steamid":x[0],"names":x[1],"count":x[2]} ,c.fetchall())),indent=4))
-    # things = c.fetchall()
     search_query = ("""
     SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1:3] ,steamid,  SUM(cardinality(ids))  as pants
     FROM usernames
@@ -379,31 +371,7 @@ def handle_search_helper(data):
                 query.execute(search_query.replace("name ILIKE %s","steamid = ANY(%s)"), (list(steamid.keys()),))
 
                 output = sorted(map(lambda x: {"n":[steamid[x[1]],*x[0][0:2]],"id":str(x[1]),"g":x[2]}, query.fetchall()), key = lambda x: 1)#x["n"] == data, reverse = True)
-
-      
-        # print(list(list(map(lambda x: x["id"],output))))
-        # query.execute("SELECT steamid, avatar, timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output)),))
-        # ids = list(filter(lambda x: x["timestampcurrentname"] > now - 604800, map(lambda x:{"id":x[0],"avatar":x[1],"timestampcurrentname":x[2]}, query.fetchall())))
-        # requeststomake = list(filter(lambda x: x not in list(map(lambda x: x["id"],ids)), list(map(lambda x: x["id"] , output))))
-        # r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,requeststomake)))})
-        # if r.ok:
-        #     avatarstore = {}
-        #     for thing in r.json():
-
-        #         query.execute("INSERT INTO currentthings (steamid, timestampcurrentname,avatar,currentname) VALUES (%s, %s, %s, %s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar",(int(thing["steamid"]),now,thing["avatar_url"],thing["persona_name"]))
-        #         query.commit()
-        #         avatarstore[int(thing["steamid"])] = {"avatar":thing["avatar_url"],"currentname":thing["persona_name"]}
-        #     output = list(map(lambda x: {**x,**avatarstore[x]},output))
-        # else:
-        #     print(r.status_code)
-
-        query.execute("SELECT steamid, avatar FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: int(x["id"]) , output)),))
-        avatars = dict(query.fetchall() )
-        # print(avatars)
-        for steamid ,avatarurl in avatars.items():
-            if avatarurl.isdigit() and not int(avatarurl):
-                avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
-                avatars[steamid] = avatarurl
+        avatars = resolvelotsofavatars(list(map(lambda x: int(x["id"]) , output)))
         output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
         # print(list(map(lambda x: (x["id"], x["n"]) , output)))
     
@@ -424,12 +392,3 @@ if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=3440, debug=False, allow_unsafe_werkzeug=True)
 
 
-# WITH occurences AS (
-#     SELECT steamid, name, cardinality(ids) AS amount
-#     FROM usernames
-# )
-# SELECT steamid,
-#        string_agg(name, ', ' ORDER BY amount DESC) AS names,
-#        SUM(amount) AS total_amount
-# FROM occurences
-# GROUP BY steamid;
