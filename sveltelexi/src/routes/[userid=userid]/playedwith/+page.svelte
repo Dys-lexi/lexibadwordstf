@@ -45,7 +45,7 @@
 				{#if playedwith.length}
 				<div class = "playedwithholderholder">
 				<div class="playedwithinfo">
-					<a class="loglinkwhite" href={`/${personresults.steam64}`}>  {personresults.currentusername} has played with {totalplayedwith} people </a>
+					<a class="loglink" href={`/${personresults.steam64}`}>  {personresults.currentusername} has played with {totalplayedwith} people </a>
 					
 
 				</div>

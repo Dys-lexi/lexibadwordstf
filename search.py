@@ -134,7 +134,7 @@ def resolveavatarandname(steam64,timeout = 3600):
                     query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
                     name2 = query.fetchone()
                     currentname = name2 and name2[0] or "Unknown"
-                    avatarurl = 0
+                    avatarurl = "0"
                     failed = True
                 else:
                     r.raise_for_status()
@@ -168,7 +168,7 @@ def resolveavatarandname(steam64,timeout = 3600):
                 query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
                 output = query.fetchone()
                 currentname = output and output[0] or "Unknown"
-                avatarurl = 0
+                avatarurl = "0"
                 frame = None
         else:
             currentname = output[0]
