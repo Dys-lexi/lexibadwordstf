@@ -10,10 +10,10 @@
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
 		<div class="expandednameholder">
-			<a class="nameholderbad" href={personresults.steamprofile} target="_blank">
+			<a class="nameholderbad" href={`https://steamcommunity.com/profiles/${personresults.steam64}`} target="_blank">
 				<div class="nonowordavatarholder">
 					<img src={personresults.frame} class="avatarholder" alt="" />
-					<img src={personresults.avatarurl} class="nonowordavatar" alt="avatar" />
+					<img src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} class="nonowordavatar" alt="avatar" />
 				</div>
 				<div>
 					{' '}
@@ -40,11 +40,28 @@
 								/>
 								<div class = "playedwithname" >Plays With</div>
 							</div> -->
-				{#await personresults.playedwith}
+			
+		</div>
+		<div class="externalwebsiteholder">
+			<a class = "externalwebsite loglink" href = {`https://steamcommunity.com/profiles/${personresults.steam64}`} target="_blank">Steam</a>
+			<a class = "externalwebsite loglink" href = {`https://etf2l.org/search/${personresults.steam64}/`} target="_blank">ETF2L</a>
+			<a class = "externalwebsite loglink" href = {`https://tf2center.com/profile/${personresults.steam64}/`} target="_blank">TF2Center</a>
+			<a class = "externalwebsite loglink" href = {`https://ozfortress.com/users/steam_id/${personresults.steam64}/`} target="_blank">OZFortress</a>
+			<a class = "externalwebsite loglink" href = {`https://rgl.gg/Public/PlayerProfile?p=${personresults.steam64}/`} target="_blank">RGL</a>
+
+		</div>
+			{#await personresults.playedwith}
 					Loading playedwith data
 				{:then playedwith}
 				{#await personresults.biggestplayedwith then biggestplayedwith}
+				{#await personresults.totalplayedwith then totalplayedwith}
 				{#if playedwith.length}
+				<div class = "playedwithholderholder">
+				<div class="playedwithinfo">
+					<a class="loglinkwhite" href={`/${personresults.steam64}/playedwith`}>  {personresults.currentusername} has played with {totalplayedwith} people </a>
+					
+
+				</div>
 				<div class="playedwithholder">
 					{#each playedwith as data, index (index)}
 						<a href={`/${data.steam64}`}>
@@ -62,21 +79,13 @@
 							</div>
 						</a>
 					{/each}
-					</div>{/if}
+					</div></div>{/if}
+					{/await}
 					{/await}
 				{:catch error}
 					<h2>realy weird error loading data: {error.message}</h2>
 				{/await}
 			
-		</div>
-		<div class="externalwebsiteholder">
-			<a class = "externalwebsite loglink" href = {personresults.steamprofile} target="_blank">Steam</a>
-			<a class = "externalwebsite loglink" href = {`https://etf2l.org/search/${personresults.steam64}/`} target="_blank">ETF2L</a>
-			<a class = "externalwebsite loglink" href = {`https://tf2center.com/profile/${personresults.steam64}/`} target="_blank">TF2Center</a>
-			<a class = "externalwebsite loglink" href = {`https://ozfortress.com/users/steam_id/${personresults.steam64}/`} target="_blank">OZFortress</a>
-			<a class = "externalwebsite loglink" href = {`https://rgl.gg/Public/PlayerProfile?p=${personresults.steam64}/`} target="_blank">RGL</a>
-
-		</div>
 		<div class="nonowordsholder">
 			{#if personresults.nonowords != null && personresults.nonowords.length}
 				{#each personresults.nonowords as badword, index (index)}
@@ -130,12 +139,12 @@
 			property="og:description"
 			content={`${personresults.currentusername} has sent ${personresults.nonowords.length || 'No'} bad words`}
 		/>
-		<meta property="og:image" content={personresults.avatarurl} />
+		<meta property="og:image" content={personresults.avatar} />
 		<meta
 			name="twitter:description"
 			content={`${personresults.currentusername} has sent ${personresults.nonowords.length || 'No'} bad words`}
 		/>
-		<meta name="twitter:image" content={personresults.avatarurl} />
+		<meta name="twitter:image" content={personresults.avatar} />
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
 		<meta property="og:description" content="User not found" />

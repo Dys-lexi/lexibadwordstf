@@ -100,6 +100,11 @@ background-color: rgba(255,255,255,0.05);
 
 }
 
+.loglinkwhite{
+        color: #eee;
+     text-decoration: underline;    
+}
+
 .loglink:hover{
     
     background-color: rgba(255,255,255,0.05);
@@ -121,17 +126,24 @@ background-color: rgba(255,255,255,0.05);
 .playedwithholder{
     display: flex;
     flex-wrap: wrap;
-     border-radius: 5px;
-    background-color: rgba(255,255,255,0.05);
+
     /* justify-content: space-between; */
      flex-shrink: 1;
      justify-items: start;
      align-items: start; 
-     column-gap: 5px;
+     column-gap: 2px;
      row-gap: 2px;
-     overflow-y: scroll;
-     padding: 5px;
+     overflow-y: hidden;
+     /* padding: 5px; */
+     height: 34px;
+}
 
+.playedwithholderholder{
+         border-radius: 5px;
+    background-color: rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    gap:5px;
 }
 
 .playedwithholder::-webkit-scrollbar {
@@ -140,9 +152,17 @@ background-color: rgba(255,255,255,0.05);
   display: none;
 }
 
+.playedwithinfo{
+    display: flex;
+    gap: 5px;
+    padding:5px;
+}
+
 
 .playedwithperson{
-     background-color: rgba(255,255,255,0.02);
+     /* background-color: rgba(255,255,255,0.02); */
+     flex-grow: 10;
+     /* flex-basis: 1; */
      overflow: hidden;
      border-radius: 5px;
     display: flex;
@@ -150,6 +170,9 @@ background-color: rgba(255,255,255,0.05);
     align-items: center;
         color: rgb(100,100,200);
      text-decoration: none;
+     border-width: 1px;
+     border-style: solid;
+     border-color: rgba(255,255,255,0.05);
 }
 .playedwithpersonpersonal{
          background-color: rgba(255,255,255,0.1);

@@ -8,7 +8,7 @@
 	let { children ,data} = $props();
 
 
-	let { temp } = $derived(data);
+	let { temp,randomnumber } = $derived(data);
 </script>
   
 <style>
@@ -19,7 +19,7 @@
         class="mainthing"
       >
         <div class="titlebar">
-          {@render Logo()}
+          {@render Logo(randomnumber)}
           <h1 style = "margin: 0px">lexislurs for team fortress 2</h1>
           
         </div>

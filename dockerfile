@@ -30,4 +30,5 @@ EXPOSE 3440
 # Command to run the bot
 CMD ["gunicorn", "--worker-class", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "--workers", "1", "--worker-connections", "1000", "--bind", "0.0.0.0:3440", "search:app"]
 # CMD ["python3", "search.py"]
+# CMD ["gunicorn", "--worker-class", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w", "1","--bind", "0.0.0.0:3440", "search:app"]
 #gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --worker-connections 1000 --bind 0.0.0.0:3440 search:app

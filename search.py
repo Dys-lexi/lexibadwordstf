@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()
 from initsql import querywrapper
+from tempurature import recalltemp
 from cachetools import cached, LRUCache, TTLCache
 load_dotenv() 
 root = "https://logs.tf/api/v1"
@@ -65,16 +66,7 @@ def cachestats():
 @app.route("/temp",methods=["GET"])
 def temp():
     print("getting temp")
-    # time.sleep(10)  
-
-    return tempreading()
-@cached(cache=TTLCache(maxsize=1024, ttl=60))
-def tempreading():
-    re = requests.get("https://allusive.me/temp/",timeout = 3)
-    if re.ok:
-        return f"{float(re.text):.2f}",200
-    else:
-        return "idk",500
+    return recalltemp()
 
 @app.route("/stats",methods=["GET"])
 def stats():
@@ -103,12 +95,12 @@ def playedwithwrapper():
 
 @cached(cache=TTLCache(maxsize=10, ttl=1800))
 def playedwith(steam64,expand):
-    offset = 250
+    offset = 25
     with querywrapper() as query:
         if not expand:
             query.execute(f"SELECT steamid2, steamid, cardinality(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false ORDER BY cardinality(ids) DESC  LIMIT {offset}",(steam64,steam64))
         else:
-            query.execute(f"SELECT steamid2, steamid, cardinality(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false OFFSET {offset}",(steam64,steam64))
+            query.execute(f"SELECT steamid2, steamid, cardinality(ids) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false OFFSET {0}",(steam64,steam64))
         playedwith = dict(sorted((map(lambda x: (x[0] == steam64 and x[1] or x[0],x[2]),query.fetchall())),key = lambda x: x[1], reverse = True))
         query.execute("SELECT  steamid ,(array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = ANY(%s) GROUP BY steamid",(list(playedwith.keys()),))
         logname = dict(query.fetchall())
@@ -119,31 +111,75 @@ def playedwith(steam64,expand):
         playedwith = dict(map(lambda x: (x[0],{"commonmatches":x[1],"currentname":logsteamdetails.get(x[0],[logname[x[0]]])[0],"avatar":(  "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb" if (not logsteamdetails.get(x[0],[None] * 2)[1]) or ( logsteamdetails.get(x[0],[None] * 2)[1].isdigit() and not int(logsteamdetails.get(x[0],[None] * 2)[1])) else logsteamdetails.get(x[0],[None] * 2)[1]),"frame":logsteamdetails.get(x[0],[None]*3)[2],"backupusername":logname[x[0]]}) ,playedwith.items()))
         
 
-    
-
+        query.execute(f"SELECT COUNT(*) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
+        total = query.fetchone()[0]
     # return (json.dumps(playedwith,indent=4))
     # print({"playedwith":list(map(lambda x: {"steam64":str(x[0]),**x[1]},playedwith.items())),"biggestplayedwith": (playedwith or 0) and list(playedwith.values())[0]["commonmatches"]})
-    return {"playedwith":list(map(lambda x: {"steam64":str(x[0]),**x[1]},playedwith.items())),"biggestplayedwith": (playedwith or 0) and list(playedwith.values())[0]["commonmatches"]}
+    return {"playedwith":list(map(lambda x: {"steam64":str(x[0]),**x[1]},playedwith.items())),"biggestplayedwith": (playedwith or 0) and list(playedwith.values())[0]["commonmatches"],"totalplayedwith":total}
 
-
-
-@app.route("/user", methods=["POST"])
-def resolvename():
-    return resolvename_cache(request.get_json()["url"])
 
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
-def resolvename_cache(userid):
+def resolveavatarandname(steam64,timeout = 3600):
     now = int(time.time())
-    print("pulling a user at",now)
-    timer = time.time()
+    with querywrapper() as query:
+        query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
+        output = query.fetchone()
+        if not output or not all(output) or output[1] < now - (timeout or now):
+            if timeout:
+                failed = False
+                r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
+                if r.status_code in [429]:
+                    query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
+                    output = query.fetchone()
+                    currentname = output and output[0] or "Unknown"
+                    avatarurl = 0
+                    failed = True
+                else:
+                    r.raise_for_status()
+                    if not len(r.json()):
+                        query.rollback()
+                        return {}  , 404
+                    currentname = r.json()[0]["persona_name"]
+                    avatarurl = r.json()[0]["avatar_url"]
+                    profilevanity = r.json()[0]["profile_url"]
+                r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
+                if r.status_code in [429]:
+                    return {}, r.status_code
+                    frame = None
+                    failed = True
+                else:
+                    r.raise_for_status()
+                    soup = BeautifulSoup(r.text, "html.parser")
+                    
+                    frame = soup.select_one(".playersection_avatar_frame img")
+                    if frame: frame = frame.get("src")
+                if not failed:
+                    query.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame,vanity) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame, vanity = EXCLUDED.vanity",(currentname,avatarurl,now,steam64,frame,profilevanity or None))
+                    query.commit()
+                elif output:
+                    print("I GOT RATE LIMITED")
+                    currentname = output[0]
+                    avatarurl = output[2]
+                    frame = output[3]
+            
+            else:
+                query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
+                output = query.fetchone()
+                currentname = output and output[0] or "Unknown"
+                avatarurl = 0
+                frame = None
+        else:
+            currentname = output[0]
+            avatarurl = output[2]
+            frame = output[3]
+    if avatarurl.isdigit() and not int(avatarurl):
+        avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
+    else:
+        avatarurl = avatarurl
+    return {"avatar":avatarurl,"frame":frame,"currentusername":currentname}
 
-    # if userid.startswith("https:/steamcommunity.com/id/") or userid.startswith ("https:/steamcommunity.com/profiles/"):
-    #     # stupid fucking workaround
-    #     userid.replace("https:/","https://")
-
-    # for i in userid:
-    #     print("ABC:",i)
-    print(userid)
+@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+def resolveamessyinputtoaprofile(userid):
     with querywrapper() as query:
         if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
             vanity =(userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1]
@@ -154,16 +190,14 @@ def resolvename_cache(userid):
             else:
                 r = requests.get(f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/",params = {"key":os.getenv("STEAMAPIKEY"),"vanityurl":vanity})
                 if r.status_code in [429]:
-                    return {}, 429
+                    return 
                 r.raise_for_status()
                 if  r.json()["response"]["success"] != 1:
                     query.rollback()
-                    return {}, 404
+                    return
                 steam3 = Converter.to_steamID3(r.json()["response"]["steamid"]) 
                 query.execute("INSERT INTO vanityurls (vanity,steamid,lastcheckedtimestamp) VALUES (%s,%s,%s) ON CONFLICT (vanity) DO UPDATE SET steamid = EXCLUDED.steamid, lastcheckedtimestamp = EXCLUDED.lastcheckedtimestamp",(vanity,r.json()["response"]["steamid"],now))
                 query.commit()
-            
-           
 
         elif userid.startswith("https://steamcommunity.com/profiles/") or userid.startswith("steamcommunity.com/profiles/"):
             steam3 =  Converter.to_steamID3((userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1])
@@ -174,58 +208,27 @@ def resolvename_cache(userid):
                 steam3 = Converter.to_steamID3(userid)
             except: 
                 query.rollback()
-                return resolvename_cache(f"https://steamcommunity.com/id/{userid}")
+                return resolveamessyinputtoaprofile(f"https://steamcommunity.com/id/{userid}")
                 
-        steam64 = Converter.to_steamID64(steam3)
-        query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
-        output = query.fetchone()
-        # int(steamid64) - STEAMID64_BASE
+        return( Converter.to_steamID64(steam3))
 
-        if not output or not all(output) or output[1] < now - 3600:
-            # print("pants")
-            failed = False
-            r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
-            if r.status_code in [429]:
-                currentname = "Unknown (server rate limited) - cannot resolve user pfp or currentname for this request" 
-                avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
-                failed = True
-            else:
-                r.raise_for_status()
-                if not len(r.json()):
-                    query.rollback()
-                    return {}  , 404
-                currentname = r.json()[0]["persona_name"]
-                avatarurl = r.json()[0]["avatar_url"]
-                profilevanity = r.json()[0]["profile_url"]
-            r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
-            if r.status_code in [429]:
-                return {}, r.status_code
-                frame = None
-                failed = True
-            else:
-                r.raise_for_status()
-                soup = BeautifulSoup(r.text, "html.parser")
-                
-                frame = soup.select_one(".playersection_avatar_frame img")
-                if frame: frame = frame.get("src")
-            if not failed:
-                query.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame,vanity) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame, vanity = EXCLUDED.vanity",(currentname,avatarurl,now,steam64,frame,profilevanity or None))
-                query.commit()
-            elif output:
-                print("I GOT RATE LIMITED")
-                currentname = output[0]
-                avatarurl = output[2]
-                frame = output[3]
+@app.route("/badwords", methods=["POST"])
+def resolvename():
+    return resolvename_cache(request.get_json()["url"])
 
-        else:
-            currentname = output[0]
-            avatarurl = output[2]
-            frame = output[3]
+@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+def resolvename_cache(userid):
+    now = int(time.time())
+    print("pulling a user at",now)
+    timer = time.time()
+    steam64 = resolveamessyinputtoaprofile(userid)
 
-        if avatarurl.isdigit() and not int(avatarurl):
-            avatarurl = "https://avatars.fastly.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
-        else:
-            avatarurl = f"https://avatars.steamstatic.com/{avatarurl}_full.jpg"
+    with querywrapper() as query:
+        
+        if not steam64:
+            return {},404
+        steam3 = Converter.to_steamID3(steam64)
+
         
         
         query.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
@@ -242,7 +245,8 @@ def resolvename_cache(userid):
                 continue
             reallogs.append(log)
         print("this took",time.time()-timer)
-        return  {"currentusername":currentname,"nonowords":reallogs,"avatarurl":avatarurl,"frame":frame,"steamprofile":f"https://steamcommunity.com/profiles/{steam64}","steam64":str(steam64)} , 200
+        print(resolveavatarandname(steam64))
+        return  {**resolveavatarandname(steam64),"nonowords":reallogs,"steam64":str(steam64)} , 200
 
 
 
@@ -365,6 +369,17 @@ def handle_search_helper(data):
                 query.execute(search_query.replace("name ILIKE %s","steamid = %s"), (f"{(steamid[0])}",))
 
                 output = sorted(map(lambda x: {"n":x[0],"id":str(x[1]),"g":x[2]}, query.fetchall()), key = lambda x: 1)#x["n"] == data, reverse = True)
+        if not output: #vanityurl
+            query.execute("SELECT  steamid,currentname FROM currentthings WHERE currentname ILIKE %s LIMIT 10", (f"%{(escaped.endswith("/") and escaped[:-1] or escaped).replace("https://steamcommunity.com/id/","")}%",))
+            # query.execute("SELECT  name, steamid, cardinality(ids) FROM usernames WHERE name ILIKE %s ORDER BY cardinality(ids) DESC LIMIT 10", (f'{escaped}%',))
+            
+            steamid = dict(query.fetchall())
+            # print("HERE",steamid)
+            if steamid:
+                query.execute(search_query.replace("name ILIKE %s","steamid = ANY(%s)"), (list(steamid.keys()),))
+
+                output = sorted(map(lambda x: {"n":[steamid[x[1]],*x[0][0:2]],"id":str(x[1]),"g":x[2]}, query.fetchall()), key = lambda x: 1)#x["n"] == data, reverse = True)
+
       
         # print(list(list(map(lambda x: x["id"],output))))
         # query.execute("SELECT steamid, avatar, timestampcurrentname FROM currentthings WHERE steamid = ANY(%s)",(list(map(lambda x: x["id"] , output)),))

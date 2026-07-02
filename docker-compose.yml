@@ -46,6 +46,7 @@ services:
           condition: service_started
     volumes:
       - ./search.py:/app/search.py:ro
+      - ./tempurature.py:/app/tempurature.py:ro
       - ./initsql.py:/app/initsql.py:ro
       - ./statscache.json:/app/statscache.json:rw
     env_file:

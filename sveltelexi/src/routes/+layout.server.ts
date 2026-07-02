@@ -24,6 +24,7 @@ async function getTemp(
 
 export const load: LayoutServerLoad = ({ fetch }) => {
 	return {
-		temp: getTemp(fetch)
+		temp: getTemp(fetch),
+		randomnumber: Math.floor(Math.random() * 1000)
 	};
 };

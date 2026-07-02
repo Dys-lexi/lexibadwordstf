@@ -84,6 +84,7 @@ def dumploadsofthings():
 
 
 # dumploadsofthings()
+
 def redothatmaterialview():
 
     print("removing logs from less reputable places")
@@ -97,18 +98,17 @@ def redothatmaterialview():
         null_count = c.fetchone()[0]
 
         if null_count >= 10000:
-
+            print("big refresh!")
             c.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY uploadercounter")
 
-            c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids)  LIMIT 50")
+            c.execute("SELECT ids FROM uploadercounter WHERE cardinality(ids) > 50")
 
             # print(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]))
-
             c.execute("UPDATE logs_raw SET isreuputable = TRUE where id = ANY(%s)",(
                 functools.reduce(lambda a,b:  [*a,*b[0]], c.fetchall(), []),
             ))
 
-            c.execute("SELECT ids FROM uploadercounter  ORDER BY cardinality(ids) DESC OFFSET 50")
+            c.execute("SELECT ids FROM uploadercounter  WHERE cardinality(ids) <= 50")
 
             c.execute("UPDATE logs_raw SET isreuputable = FALSE where id = ANY(%s)",(
                 functools.reduce(lambda a,b:  [*a,*b[0]], c.fetchall(), []),
@@ -121,12 +121,13 @@ def redothatmaterialview():
             c.execute("""
                 SELECT uploaderid
                 FROM uploadercounter
-                ORDER BY cardinality(ids)
-                LIMIT 50
+                WHERE cardinality(ids) > 50
+                
             """)
+            
 
             reputable_uploaders = {row[0] for row in c.fetchall()}
-
+            # print(reputable_uploaders)
             c.execute("""
                 SELECT
                     id,
@@ -164,7 +165,6 @@ def redothatmaterialview():
 
     finally:
         pgpool.putconn(conn)
-
 
 
 
@@ -284,6 +284,7 @@ def getpriority(ditionary, *priority, **kwargs):
 
 def messagesync(todologs = None):
     print("Updating messages")
+    print(todologs)
     files = os.listdir(chatfilterroot)
     wordslist = []
     for file in files:
@@ -296,6 +297,7 @@ def messagesync(todologs = None):
     conn = pgpool.getconn()
     c = conn.cursor()
     for log in coolfunctionthatreturnslotsoids("json->'chat' as chat_array, json->'info'->'date' as log_date", todologs):
+        
         logid = log["log"]
         chatarray = log["data"][0]
         log_date = log["data"][1]
