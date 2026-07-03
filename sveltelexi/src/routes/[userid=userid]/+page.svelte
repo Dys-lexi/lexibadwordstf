@@ -2,7 +2,6 @@
 	import type { Userdetails } from './types';
 	import { page } from '$app/state';
 	import './Page.css';
-
 	let { data } = $props();
 	let { personresults, statuscode } = $derived(data);
 </script>
@@ -10,7 +9,7 @@
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
 		<div class="expandednameholder">
-			<a class="nameholderbad" href={`https://steamcommunity.com/profiles/${personresults.steam64}`} target="_blank">
+			<a class="nameholderbad" href={`/${personresults.steam64}`} >
 				<div class="nonowordavatarholder">
 					<img src={personresults.frame} class="avatarholder" alt="" />
 					<img src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} class="nonowordavatar" alt="avatar" />
@@ -90,7 +89,7 @@
 		{:then nonowords}
 		<div class="nonowordsholder">
 			{#if nonowords != null && personresults.badwords}
-			{console.log( personresults.badwords,"PANTS")}
+			<!-- {console.log( personresults.badwords,"PANTS")} -->
 				{#each nonowords as badword, index (index)}
 					<div class="nonowordbox">
 						<a
@@ -145,12 +144,12 @@
 			property="og:description"
 			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
 		/>
-		<meta property="og:image" content={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} />
+		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 		<meta
 			name="twitter:description"
 			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
 		/>
-		<meta name="twitter:image" content={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} />
+		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
 		<meta property="og:description" content="User not found" />
@@ -169,8 +168,8 @@
 	<meta property="og:url" content={page.url.href} />
 	<meta property="og:title" content="LexiSlurs" />
 
-	<meta property="og:image:width" content="184" />
-	<meta property="og:image:height" content="184" />
+	<!-- <meta property="og:image:width" content="184" />
+	<meta property="og:image:height" content="184" /> -->
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="LexiSlurs" />

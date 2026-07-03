@@ -49,6 +49,8 @@ services:
       - ./tempurature.py:/app/tempurature.py:ro
       - ./initsql.py:/app/initsql.py:ro
       - ./statscache.json:/app/statscache.json:rw
+      - ./slurcloud.py:/app/slurcloud.py:ro
+      - ./chatfilters:/app/chatfilters:ro
     env_file:
       - ./.env
     restart: unless-stopped

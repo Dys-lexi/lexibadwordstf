@@ -10,7 +10,7 @@
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
 	<div class="expandednameholder">
-			<a class="nameholderbad" href={`https://steamcommunity.com/profiles/${personresults.steam64}`} target="_blank">
+			<a class="nameholderbad" href={`/${personresults.steam64}`} >
 				<div class="nonowordavatarholder">
 					<img src={personresults.frame} class="avatarholder" alt="" />
 					<img src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} class="nonowordavatar" alt="avatar" />

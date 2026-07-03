@@ -2,7 +2,7 @@
     height: auto !important;
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-
+  max-height: none;
   /* padding: 10px; */
 }
 

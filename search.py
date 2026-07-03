@@ -11,8 +11,9 @@ import threading
 import requests
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
-from flask import Flask, jsonify, request, send_from_directory, send_file
+from flask import Flask, jsonify, request, send_from_directory, send_file, Response
 import os
+import re
 # [U:1:88677982]
 from steamid_converter import Converter
 from dotenv import load_dotenv
@@ -22,8 +23,10 @@ patch_psycopg()
 from initsql import querywrapper
 from tempurature import recalltemp
 from cachetools import cached, LRUCache, TTLCache
+from slurcloud import makewordcloud
 load_dotenv() 
 root = "https://logs.tf/api/v1"
+chatfilterroot = "./chatfilters/"
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
 
@@ -63,9 +66,41 @@ def cachestats():
 
 
 
+@app.route("/wordcloud/<steam64>",methods=["GET"])
+def wordcloud(steam64):
+    # print("generating a word cloud!")
+    return Response(wordcloudcache(int(steam64)),mimetype="image/png")
+
+
+@cached(cache=TTLCache(maxsize=10, ttl=600))
+def wordcloudcache(steam64):
+    files = os.listdir(chatfilterroot)
+    wordslist = []
+    for file in files:
+        with open(f"{chatfilterroot}{file}","r") as fing:
+            for line in fing.readlines():
+                stripped = line.strip()
+                if stripped and not stripped.startswith("###") and len(stripped):
+                    wordslist.append(stripped)
+    pattern = r'\b(' + '|'.join([re.escape(w) for w in [word.replace('\x00', '') for word in wordslist if word.replace('\x00', '') not in  ['%', '_', '']]]) + r')\b'
+
+
+    with querywrapper() as query:
+        steam3 = Converter.to_steamID3(steam64)
+        query.execute("""SELECT message FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
+        output = {}
+        for message in list(map(lambda x: x[0],query.fetchall())):
+            match = (re.search(pattern, message, re.IGNORECASE).group()).lower()
+            output.setdefault(match,0)
+            output[match] += 1
+        
+        return makewordcloud(f"https://avatars.fastly.steamstatic.com/{resolveavatarandname(steam64)["avatar"]}_full.jpg",output)
+        
+
+
+
 @app.route("/temp",methods=["GET"])
 def temp():
-    print("getting temp")
     return recalltemp()
 
 @app.route("/stats",methods=["GET"])
