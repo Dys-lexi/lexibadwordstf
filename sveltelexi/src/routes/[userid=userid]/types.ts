@@ -1,16 +1,17 @@
 export type Userdetails = {
     currentusername: string
-    nonowords: Array<Badmessage>
+    nonowords: Promise<Array<Badmessage>>
     avatar: string
     frame?: string
     steam64: string
     playedwith: Promise<Array<playedwithitem>>
     biggestplayedwith: Promise<number>
     totalplayedwith: Promise<number>
+    badwords: number
+    logs: number
+    aliases: Array<string>
 
 };
-
-
 
 export type Badmessage = {
     matchid: number

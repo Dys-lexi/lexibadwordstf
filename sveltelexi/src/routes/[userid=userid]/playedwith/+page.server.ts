@@ -41,7 +41,7 @@ async function playedwith(
   let response
      try {
      response = await f(
-      `${API_URL}/playedwith`, { method: "POST", body: JSON.stringify({"expand":true, "steam64": decodeURIComponent(steamid) }), headers: { "Content-Type": "application/json" } }
+      `${API_URL}/playedwith`, { method: "POST", body: JSON.stringify({"expand":true, "url": decodeURIComponent(steamid) }), headers: { "Content-Type": "application/json" } }
      );
 
     if (response.status == 200) {

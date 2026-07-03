@@ -6,11 +6,7 @@ import type { Userdetails,playedwithitem } from "./types.ts";
 import { API_URL } from "$lib/morestuff/config";
 import type { PageServerLoad } from './$types';
 
-type PlayedWithResponse = {
-  playedwith: Array<playedwithitem>
-  biggestplayedwith: number
-  totalplayedwith: number
-}
+
 
 async function funcyfunc(
   userid: string,
@@ -20,7 +16,7 @@ async function funcyfunc(
   let response
   try {
      response = await fetch(
-      `${API_URL}/badwords`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(userid) }), headers: { "Content-Type": "application/json" } }
+      `${API_URL}/profile`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(userid) }), headers: { "Content-Type": "application/json" } }
      );
 
     if (response.status == 200) {
@@ -37,15 +33,15 @@ async function funcyfunc(
 async function playedwith(
     steamid: string,
     f: (input: RequestInfo, init?: RequestInit) => Promise<Response>
-): Promise<PlayedWithResponse | null> {
+): Promise<Userdetails | null> {
   let response
      try {
      response = await f(
-      `${API_URL}/playedwith`, { method: "POST", body: JSON.stringify({ "steam64": decodeURIComponent(steamid) }), headers: { "Content-Type": "application/json" } }
+      `${API_URL}/playedwith`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(steamid) }), headers: { "Content-Type": "application/json" } }
      );
 
     if (response.status == 200) {
-      return  (await response.json()) as PlayedWithResponse;
+      return  (await response.json()) as Userdetails;
     }
   }
   catch {
@@ -53,6 +49,27 @@ async function playedwith(
   }
   return null
 }
+
+async function nonowords(
+    steamid: string,
+    f: (input: RequestInfo, init?: RequestInit) => Promise<Response>
+): Promise<Userdetails> {
+  let response
+     try {
+     response = await f(
+      `${API_URL}/badwords`, { method: "POST", body: JSON.stringify({ "url": decodeURIComponent(steamid) }), headers: { "Content-Type": "application/json" } }
+     );
+
+    if (response.status == 200) {
+      return  (await response.json()) as Userdetails;
+    }
+  }
+  catch {
+       return {} as Userdetails
+  }
+  return {} as Userdetails
+}
+
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
   // console.log("wqdqwd",params.userid)
@@ -63,6 +80,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
     results.personresults.playedwith = playedwithresults.then((data) => data?.playedwith ?? [])
     results.personresults.biggestplayedwith = playedwithresults.then((data) => data?.biggestplayedwith ?? 0)
     results.personresults.totalplayedwith = playedwithresults.then((data) => data?.totalplayedwith ?? 0)
+    results.personresults.nonowords = nonowords(results.personresults.steam64,fetch).then((data) => data.nonowords)
   }
   return results 
   

@@ -21,11 +21,11 @@
 						{' '}
 						{personresults.currentusername}
 					</div>
-					{#if personresults.nonowords.length == 1}
+					{#if personresults.badwords == 1}
 						<div class="badwordcounter">1 bad word</div>
-					{:else if personresults.nonowords.length}
+					{:else if personresults.badwords}
 						<div class="badwordcounter">
-							{personresults.nonowords.length} bad words
+							{personresults.badwords} bad words
 						</div>
 					{/if}
 				</div>
@@ -51,14 +51,14 @@
 
 		</div>
 			{#await personresults.playedwith}
-					Loading playedwith data
+					<div>Loading playedwith data</div>
 				{:then playedwith}
 				{#await personresults.biggestplayedwith then biggestplayedwith}
 				{#await personresults.totalplayedwith then totalplayedwith}
 				{#if playedwith.length}
 				<div class = "playedwithholderholder">
 				<div class="playedwithinfo">
-					<a class="loglink" href={`/${personresults.steam64}/playedwith`}>  {personresults.currentusername} has played with {totalplayedwith} people </a>
+					<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}/playedwith`}>  {personresults.currentusername} has played with {totalplayedwith} people </a>
 					
 
 				</div>
@@ -74,7 +74,7 @@
 									alt="avatar"
 								/>
 
-								<div class = "playedwithname" >{data.currentname}</div>
+								<div class = "goawayoverflow playedwithname" >{data.currentname}</div>
 								
 							</div>
 						</a>
@@ -85,10 +85,13 @@
 				{:catch error}
 					<h2>realy weird error loading data: {error.message}</h2>
 				{/await}
-			
+		{#await personresults.nonowords}
+		<div>Loading Bad words</div>
+		{:then nonowords}
 		<div class="nonowordsholder">
-			{#if personresults.nonowords != null && personresults.nonowords.length}
-				{#each personresults.nonowords as badword, index (index)}
+			{#if nonowords != null && personresults.badwords}
+			{console.log( personresults.badwords,"PANTS")}
+				{#each nonowords as badword, index (index)}
 					<div class="nonowordbox">
 						<a
 							class="nonowordtimestamp loglink"
@@ -118,6 +121,9 @@
 				<h2>No bad words found for {personresults.currentusername}</h2>
 			{/if}
 		</div>
+		{:catch error}
+					<h2>could not load bad words: {error.message}</h2>
+				{/await}
 	</div>
 {:else if statuscode == 404}
 	<h2>could not find user "{page.params.userid}"</h2>
@@ -133,18 +139,18 @@
 	{#if statuscode === 200}
 		<meta
 			name="description"
-			content={`${personresults.currentusername} has sent ${personresults.nonowords.length || 'No'} bad words`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
 		/>
 		<meta
 			property="og:description"
-			content={`${personresults.currentusername} has sent ${personresults.nonowords.length || 'No'} bad words`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
 		/>
-		<meta property="og:image" content={personresults.avatar} />
+		<meta property="og:image" content={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} />
 		<meta
 			name="twitter:description"
-			content={`${personresults.currentusername} has sent ${personresults.nonowords.length || 'No'} bad words`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
 		/>
-		<meta name="twitter:image" content={personresults.avatar} />
+		<meta name="twitter:image" content={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} />
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
 		<meta property="og:description" content="User not found" />

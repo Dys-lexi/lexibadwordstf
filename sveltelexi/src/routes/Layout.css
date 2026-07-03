@@ -1,6 +1,12 @@
 /* Links */
-a {
+a,
+a:hover,
+a:visited,
+a:link,
+a:active {
+  
   text-decoration: none;
+  /* background-color: rgb(72, 53, 53); */
 }
 #sidebar a {
   padding: 2px 10px;

@@ -91,7 +91,7 @@ def stats_cache():
 @app.route("/playedwith",methods=["POST","GET"])
 def playedwithwrapper():
     # print(request.get_json())
-    return playedwith(int(request.get_json()["steam64"]),request.get_json().get("expand"))
+    return playedwith(int(request.get_json()["url"]),request.get_json().get("expand"))
 
 @cached(cache=TTLCache(maxsize=10, ttl=1800))
 def playedwith(steam64,expand):
@@ -115,12 +115,14 @@ def playedwith(steam64,expand):
         total = query.fetchone()[0]
     # return (json.dumps(playedwith,indent=4))
     # print({"playedwith":list(map(lambda x: {"steam64":str(x[0]),**x[1]},playedwith.items())),"biggestplayedwith": (playedwith or 0) and list(playedwith.values())[0]["commonmatches"]})
+    # print(len(list(map(lambda x: {"steam64":str(x[0]),**x[1]},playedwith.items()))))
     return {"playedwith":list(map(lambda x: {"steam64":str(x[0]),**x[1]},playedwith.items())),"biggestplayedwith": (playedwith or 0) and list(playedwith.values())[0]["commonmatches"],"totalplayedwith":total}
 
 
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
-def resolveavatarandname(steam64,timeout = 3600):
+def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
     print(steam64)
+    moreinfodict = {}
     now = int(time.time())
     with querywrapper() as query:
         query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
@@ -130,11 +132,14 @@ def resolveavatarandname(steam64,timeout = 3600):
                 failed = False
                 r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
                 currentname = None
+                frame = None
+                avatarurl = None
                 if r.status_code in [429]:
+                    print("I GOT RATE LIMITED")
                     query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
                     name2 = query.fetchone()
                     currentname = name2 and name2[0] or "Unknown"
-                    avatarurl = "0"
+                    avatarurl = None
                     failed = True
                 else:
                     r.raise_for_status()
@@ -161,11 +166,12 @@ def resolveavatarandname(steam64,timeout = 3600):
                 elif output:
                     print("I GOT RATE LIMITED")
                     currentname = currentname or output[0]
-                    avatarurl = output[2]
-                    frame = output[3]
+                    avatarurl = avatarurl or output[2]
+                    frame = frame or output[3]
             
             else:
-                query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
+                query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
+                # query.execute("SELECT  name  FROM usernames WHERE steamid = %s ORDER BY ", (steam64,) )
                 output = query.fetchone()
                 currentname = output and output[0] or "Unknown"
                 avatarurl = "0"
@@ -174,11 +180,22 @@ def resolveavatarandname(steam64,timeout = 3600):
             currentname = output[0]
             avatarurl = output[2]
             frame = output[3]
-    if avatarurl.isdigit() and not int(avatarurl):
+        if moreinfo:
+            query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
+            moreinfodict["badwords"] = query.fetchone()[0]
+            query.execute("""SELECT SUM(cardinality(ids)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
+            moreinfodict["logs"] = query.fetchone()
+            moreinfodict["logs"] = moreinfodict["logs"] and moreinfodict["logs"][0]
+            query.execute("""SELECT cardinality(array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
+            moreinfodict["aliases"] = query.fetchone()
+            moreinfodict["aliases"] = moreinfodict["aliases"] and moreinfodict["aliases"][0]
+
+
+    if not avatarurl or  (avatarurl.isdigit() and not int(avatarurl)):
         avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
     else:
         avatarurl = avatarurl
-    return {"avatar":avatarurl,"frame":frame,"currentusername":currentname}
+    return {"avatar":avatarurl,"frame":frame,"currentusername":currentname,**moreinfodict}
 
 # @cached(cache=TTLCache(maxsize=30, ttl=1800))
 def resolvelotsofavatars(steam64s):
@@ -192,6 +209,7 @@ def resolvelotsofavatars(steam64s):
     return avatars
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
 def resolveamessyinputtoaprofile(userid):
+    now = int(time.time())
     with querywrapper() as query:
         if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
             vanity =(userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1]
@@ -230,7 +248,7 @@ def resolveprofile():
     steam64 = resolveamessyinputtoaprofile(request.get_json()["url"])
     if not steam64:
         return {}, 404
-    return {**resolveavatarandname(steam64,request.get_json().get("timeout",3600)),"steam64":steam64}
+    return {**resolveavatarandname(steam64,True,request.get_json().get("timeout",3600)),"steam64":steam64}
 
 @app.route("/badwords", methods=["POST"])
 def resolvename():
@@ -241,7 +259,7 @@ def resolvename_cache(userid):
     now = int(time.time())
     print("pulling a user at",now,userid )
     timer = time.time()
-    steam64 = resolveamessyinputtoaprofile(userid)
+    steam64 = userid #resolveamessyinputtoaprofile(userid)
 
     with querywrapper() as query:
         
@@ -266,7 +284,7 @@ def resolvename_cache(userid):
             reallogs.append(log)
         print("this took",time.time()-timer)
         # print(resolveavatarandname(steam64))
-        return  {**resolveavatarandname(steam64),"nonowords":reallogs,"steam64":str(steam64)} , 200
+        return  {"nonowords":reallogs} , 200
 
 
 
