@@ -171,7 +171,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                 avatarurl = None
                 if r.status_code in [429]:
                     print("I GOT RATE LIMITED")
-                    query.execute("SELECT  name  FROM usernames WHERE steamid = %s", (steam64,) )
+                    query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
                     name2 = query.fetchone()
                     currentname = name2 and name2[0] or "Unknown"
                     avatarurl = None
@@ -212,6 +212,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                 avatarurl = "0"
                 frame = None
         else:
+            print("HERE")
             currentname = output[0]
             avatarurl = output[2]
             frame = output[3]
