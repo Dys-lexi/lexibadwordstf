@@ -1,35 +1,18 @@
 <script lang="ts">
-	import type { Userdetails } from './types';
+	import type { Userdetails } from '$lib/morestuff/types';
 	import { page } from '$app/state';
+	import {Profile} from '$lib/morestuff/profile.svelte'
 	import './Page.css';
+	import { Logo } from '$lib/morestuff/const.svelte';
 	let { data } = $props();
 	let { personresults, statuscode } = $derived(data);
 </script>
 
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
-		<div class="expandednameholder">
-			<a class="nameholderbad" href={`/${personresults.steam64}`} >
-				<div class="nonowordavatarholder">
-					<img src={personresults.frame} class="avatarholder" alt="" />
-					<img src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} class="nonowordavatar" alt="avatar" />
-				</div>
-				<div>
-					{' '}
-					<div class="nonowordcurrentusername">
-						{' '}
-						{personresults.currentusername}
-					</div>
-					{#if personresults.badwords == 1}
-						<div class="badwordcounter">1 bad word</div>
-					{:else if personresults.badwords}
-						<div class="badwordcounter">
-							{personresults.badwords} bad words
-						</div>
-					{/if}
-				</div>
-			</a>
-			
+
+		{@render Profile(personresults.steam64)}
+
 			<!-- <div class="playedwithperson playedwithpersonpersonal">
 							
 								<img
@@ -39,90 +22,111 @@
 								/>
 								<div class = "playedwithname" >Plays With</div>
 							</div> -->
-			
-		</div>
+
 		<div class="externalwebsiteholder">
-			<a class = "externalwebsite loglink" href = {`https://steamcommunity.com/profiles/${personresults.steam64}`} target="_blank">Steam</a>
-			<a class = "externalwebsite loglink" href = {`https://etf2l.org/search/${personresults.steam64}/`} target="_blank">ETF2L</a>
-			<a class = "externalwebsite loglink" href = {`https://tf2center.com/profile/${personresults.steam64}/`} target="_blank">TF2Center</a>
-			<a class = "externalwebsite loglink" href = {`https://ozfortress.com/users/steam_id/${personresults.steam64}/`} target="_blank">OZFortress</a>
-			<a class = "externalwebsite loglink" href = {`https://rgl.gg/Public/PlayerProfile?p=${personresults.steam64}/`} target="_blank">RGL</a>
-
+			<a
+				class="externalwebsite loglink"
+				href={`https://steamcommunity.com/profiles/${personresults.steam64}`}
+				target="_blank">Steam</a
+			>
+			<a
+				class="externalwebsite loglink"
+				href={`https://etf2l.org/search/${personresults.steam64}/`}
+				target="_blank">ETF2L</a
+			>
+			<a
+				class="externalwebsite loglink"
+				href={`https://tf2center.com/profile/${personresults.steam64}/`}
+				target="_blank">TF2Center</a
+			>
+			<a
+				class="externalwebsite loglink"
+				href={`https://ozfortress.com/users/steam_id/${personresults.steam64}/`}
+				target="_blank">OZFortress</a
+			>
+			<a
+				class="externalwebsite loglink"
+				href={`https://rgl.gg/Public/PlayerProfile?p=${personresults.steam64}/`}
+				target="_blank">RGL</a
+			>
 		</div>
-			{#await personresults.playedwith}
-					<div>Loading playedwith data</div>
-				{:then playedwith}
-				{#await personresults.biggestplayedwith then biggestplayedwith}
+		{#await personresults.playedwith}
+			<div>Loading playedwith data</div>
+		{:then playedwith}
+			{#await personresults.biggestplayedwith then biggestplayedwith}
 				{#await personresults.totalplayedwith then totalplayedwith}
-				{#if playedwith.length}
-				<div class = "playedwithholderholder">
-				<div class="playedwithinfo">
-					<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}/playedwith`}>  {personresults.currentusername} has played with {totalplayedwith} people </a>
-					
-
-				</div>
-				<div class="playedwithholder">
-					{#each playedwith as data, index (index)}
-						<a href={`/${data.steam64}`}>
-							<div class="playedwithperson">
-										<div class="playedwithpercent playedwithbad" ></div>
-								<div class="playedwithpercent" style={`height: ${(data.commonmatches*100)/biggestplayedwith}%`}></div>
-								<img
-									class="playedwithphoto"
-									src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
-									alt="avatar"
-								/>
-
-								<div class = "goawayoverflow playedwithname" >{data.currentname}</div>
-								
+					{#if playedwith.length}
+						<div class="playedwithholderholder">
+							<div class="playedwithinfo">
+								<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}/playedwith`}>
+									{personresults.currentusername} has played with {totalplayedwith} people
+								</a>
 							</div>
-						</a>
-					{/each}
-					</div></div>{/if}
-					{/await}
-					{/await}
-				{:catch error}
-					<h2>realy weird error loading data: {error.message}</h2>
+							<div class="playedwithholder">
+								{#each playedwith as data, index (index)}
+									<a href={`/${data.steam64}`}>
+										<div class="playedwithperson">
+											<div class="playedwithpercent playedwithbad"></div>
+											<div
+												class="playedwithpercent"
+												style={`height: ${(data.commonmatches * 100) / biggestplayedwith}%`}
+											></div>
+											<img
+												class="playedwithphoto"
+												src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
+												alt="avatar"
+											/>
+
+											<div class="goawayoverflow playedwithname">{data.currentname}</div>
+										</div>
+									</a>
+								{/each}
+							</div>
+						</div>{/if}
 				{/await}
-		{#await personresults.nonowords}
-		<div>Loading Bad words</div>
-		{:then nonowords}
-		<div class="nonowordsholder">
-			{#if nonowords != null && personresults.badwords}
-			<!-- {console.log( personresults.badwords,"PANTS")} -->
-				{#each nonowords as badword, index (index)}
-					<div class="nonowordbox">
-						<a
-							class="nonowordtimestamp loglink"
-							target="_blank"
-							href={`https://logs.tf/${badword.matchid}`}
-						>
-							log
-						</a>
-						<div class="nonowordtimestamp">
-							{new Date(badword.timestamp * 1000).toLocaleDateString()}{' '}
-							<div class="nonowordname">
-								{new Date(badword.timestamp * 1000).toLocaleTimeString()}
-							</div>
-						</div>
-
-						{' '}
-						<div class="nonowordname">
-							{badword.name}<span style="color: #eee">:</span>
-						</div>
-						{' '}
-						<div class="nonowordmessage">
-							{badword.message}
-						</div>
-					</div>
-				{/each}
-			{:else}
-				<h2>No bad words found for {personresults.currentusername}</h2>
-			{/if}
-		</div>
+			{/await}
 		{:catch error}
-					<h2>could not load bad words: {error.message}</h2>
-				{/await}
+			<h2>realy weird error loading data: {error.message}</h2>
+		{/await}
+		{#await personresults.nonowords}
+			<div>Loading Bad words</div>
+		{:then nonowords}
+			<div class="nonowordsholder">
+				{#if nonowords.length}
+					<!-- {console.log( personresults.badwords,"PANTS")} -->
+					{#each nonowords as badword, index (index)}
+						<div class="nonowordbox">
+							<a
+								class="nonowordtimestamp loglink"
+								target="_blank"
+								href={`https://logs.tf/${badword.matchid}`}
+							>
+								log
+							</a>
+							<div class="nonowordtimestamp">
+								{new Date(badword.timestamp * 1000).toLocaleDateString()}{' '}
+								<div class="nonowordname">
+									{new Date(badword.timestamp * 1000).toLocaleTimeString()}
+								</div>
+							</div>
+
+							{' '}
+							<div class="nonowordname">
+								{badword.name}<span style="color: #eee">:</span>
+							</div>
+							{' '}
+							<div class="nonowordmessage">
+								{badword.message}
+							</div>
+						</div>
+					{/each}
+				{:else}
+					<h2>No bad words found for {personresults.currentusername}</h2>
+				{/if}
+			</div>
+		{:catch error}
+			<h2>could not load bad words: {error.message}</h2>
+		{/await}
 	</div>
 {:else if statuscode == 404}
 	<h2>could not find user "{page.params.userid}"</h2>
@@ -144,12 +148,18 @@
 			property="og:description"
 			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
 		/>
-		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta
+			property="og:image"
+			content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`}
+		/>
 		<meta
 			name="twitter:description"
 			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
 		/>
-		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta
+			name="twitter:image"
+			content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`}
+		/>
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
 		<meta property="og:description" content="User not found" />

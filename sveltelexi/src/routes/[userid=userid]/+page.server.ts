@@ -2,7 +2,7 @@
 
 // import type { PageContextServer } from "vike/types";
 // import { useConfig } from "vike-react/useConfig";
-import type { Userdetails,playedwithitem } from "./types.ts";
+import type { Userdetails } from "$lib/morestuff/types";
 import { API_URL } from "$lib/morestuff/config";
 import type { PageServerLoad } from './$types';
 

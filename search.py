@@ -212,20 +212,22 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                 avatarurl = "0"
                 frame = None
         else:
-            print("HERE")
+            # print("HERE")
             currentname = output[0]
             avatarurl = output[2]
             frame = output[3]
         if moreinfo:
+            moreinfodict["stats"] = {}
             query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
-            moreinfodict["badwords"] = query.fetchone()[0]
+            moreinfodict["stats"]["badwords"] = f"{query.fetchone()[0]} bad words"
             query.execute("""SELECT SUM(cardinality(ids)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
-            moreinfodict["logs"] = query.fetchone()
-            moreinfodict["logs"] = moreinfodict["logs"] and moreinfodict["logs"][0]
-            query.execute("""SELECT cardinality(array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
+            moreinfodict["stats"]["logs"] = query.fetchone()
+            moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} logs"
+            query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             moreinfodict["aliases"] = query.fetchone()
             moreinfodict["aliases"] = moreinfodict["aliases"] and moreinfodict["aliases"][0]
-
+            moreinfodict["stats"]["aliases"] = moreinfodict["aliases"] and f"{len(moreinfodict["aliases"])} Alias{not(len(moreinfodict["aliases"]) - 1) and "es" or ""}"
+           
 
     if not avatarurl or  (avatarurl.isdigit() and not int(avatarurl)):
         avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
@@ -284,7 +286,7 @@ def resolveprofile():
     steam64 = resolveamessyinputtoaprofile(request.get_json()["url"])
     if not steam64:
         return {}, 404
-    return {**resolveavatarandname(steam64,True,request.get_json().get("timeout",3600)),"steam64":steam64}
+    return {**resolveavatarandname(steam64,request.get_json().get("expand",False),request.get_json().get("timeout",3600)),"steam64":steam64}
 
 @app.route("/badwords", methods=["POST"])
 def resolvename():

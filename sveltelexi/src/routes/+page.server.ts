@@ -1,4 +1,4 @@
-import type { Stats } from './[userid=userid]/types';
+import type { Stats } from "$lib/morestuff/types";
 import { API_URL } from '$lib/morestuff/config';
 import type { PageServerLoad } from './$types';
 

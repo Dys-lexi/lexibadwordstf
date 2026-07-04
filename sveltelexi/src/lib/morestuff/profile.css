@@ -1,0 +1,69 @@
+.nameholderbad {
+	padding: 10px;
+	background-color: rgba(255, 255, 255, 0.05);
+	display: flex;
+	align-items: flex-start;
+	height: 90px;
+	gap: 10px;
+    justify-content: flex-start;
+	min-width: fit-content;
+
+	border-radius: 5px;
+}
+.nameholderbad:hover {
+	background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nonowordavatarholder {
+	position: relative;
+	height: 100%;
+	max-width: 100%;
+}
+
+.nonowordcurrentusername {
+	/* font-family: "Motiva Sans", fantasy, sans-serif !important; */
+	color: rgb(100, 100, 200);
+	text-decoration: underline;
+      max-width:max-content;
+	  grid-column-start: 1;
+	  grid-column-end:  span 2;
+	  grid-row:1;
+
+}
+.badwordcounterw {
+	color: #aaa;
+      text-overflow: ellipsis;
+    /* overflow: hidden; */
+
+  white-space: nowrap;
+  max-width:max-content;
+	/* font-family: 'Whitney', sans-serif !important; */
+	/* text-decoration-color: rgba(0,0,0,0) !important; */
+}
+.nonowordavatar {
+	height: 100%;
+	object-fit: contain;
+}
+.avatarholder {
+	transform: scale(1.23);
+	position: absolute;
+
+	height: 100%;
+	pointer-events: none;
+}
+
+.profileitems {
+	/* background-color: blue; */
+
+	display: grid ;
+	grid-auto-flow: column;
+      grid-auto-columns: fit-content(500px);
+    /* grid-template-columns: repeat(auto-fill,fit-content()) [end]; */
+	grid-template-rows: repeat(3, 1fr) ;
+	height: 100%;
+	gap: 10px;
+    width: 100%;
+}
+.woag{
+    display: flex;
+}

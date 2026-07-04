@@ -10,6 +10,7 @@ export type Userdetails = {
     badwords: number
     logs: number
     aliases: Array<string>
+    stats: Array<string>
 
 };
 

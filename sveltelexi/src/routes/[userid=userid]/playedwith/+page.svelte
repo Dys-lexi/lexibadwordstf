@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { Userdetails } from '../types';
+	import type { Userdetails } from '$lib/morestuff/types';
+	import {Profile} from '$lib/morestuff/profile.svelte'
 	import { page } from '$app/state';
 	import '../Page.css';
 	import './Page.css';
@@ -9,23 +10,9 @@
 
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
-	<div class="expandednameholder">
-			<a class="nameholderbad" href={`/${personresults.steam64}`} >
-				<div class="nonowordavatarholder">
-					<img src={personresults.frame} class="avatarholder" alt="" />
-					<img src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`} class="nonowordavatar" alt="avatar" />
-				</div>
-				<div>
-					{' '}
-					<div class="nonowordcurrentusername">
-						{' '}
-						{personresults.currentusername}
-					</div>
-					<div class = "badwordcounter">
-					I'll put cool data here soon</div>
-				</div>
-			</a>
-			
+
+			{@render Profile(personresults.steam64)}
+
 			<!-- <div class="playedwithperson playedwithpersonpersonal">
 							
 								<img
@@ -35,58 +22,54 @@
 								/>
 								<div class = "playedwithname" >Plays With</div>
 							</div> -->
-			
-		</div>
-			{#await personresults.playedwith}
-					Loading playedwith data
-				{:then playedwith}
-				{#await personresults.biggestplayedwith then biggestplayedwith}
+	
+		{#await personresults.playedwith}
+			Loading playedwith data
+		{:then playedwith}
+			{#await personresults.biggestplayedwith then biggestplayedwith}
 				{#await personresults.totalplayedwith then totalplayedwith}
-				{#if playedwith.length}
-				<div class = "playedwithholderholder">
-				<div class="playedwithinfo">
-					<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}`}>  {personresults.currentusername} has played with {totalplayedwith} people </a>
-					
-
-				</div>
-				<div class="playedwithholderbig playedwithholder">
-					{#each playedwith as data, index (index)}
-						<a class = "playedwithpersonsamey" href={`/${data.steam64}`}>
-							<div class=" playedwithperson">
-										<div class="playedwithpercent playedwithbad" ></div>
-								<div class="playedwithpercent" style={`height: ${(data.commonmatches*100)/biggestplayedwith}%`}></div>
-								<img
-									class="playedwithphoto"
-									src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
-									alt="avatar"
-								/>
-
-								<div class = "goawayoverflow playedwithname" >{data.currentname}</div>
-								
+					{#if playedwith.length}
+						<div class="playedwithholderholder">
+							<div class="playedwithinfo">
+								<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}`}>
+									{personresults.currentusername} has played with {totalplayedwith} people
+								</a>
 							</div>
-						</a>
-					{/each}
-					</div></div>
-			
-				
-					
+							<div class="playedwithholderbig playedwithholder">
+								{#each playedwith as data, index (index)}
+									<a class="playedwithpersonsamey" href={`/${data.steam64}`}>
+										<div class=" playedwithperson">
+											<div class="playedwithpercent playedwithbad"></div>
+											<div
+												class="playedwithpercent"
+												style={`height: ${(data.commonmatches * 100) / biggestplayedwith}%`}
+											></div>
+											<img
+												class="playedwithphoto"
+												src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
+												alt="avatar"
+											/>
+
+											<div class="goawayoverflow playedwithname">{data.currentname}</div>
+										</div>
+									</a>
+								{/each}
+							</div>
+						</div>
 					{/if}
-					{/await}
-					{/await}
-				{:catch error}
-					<h2>realy weird error loading data: {error.message}</h2>
 				{/await}
-		</div>	
+			{/await}
+		{:catch error}
+			<h2>realy weird error loading data: {error.message}</h2>
+		{/await}
+	</div>
 {/if}
 
 <svelte:head>
 	<title>{statuscode === 200 ? personresults.currentusername : 'LexiSlurs'}</title>
 
 	{#if statuscode === 200}
-		<meta
-			name="description"
-			content={`playedwithdata for ${personresults.currentusername}`}
-		/>
+		<meta name="description" content={`playedwithdata for ${personresults.currentusername}`} />
 		<meta
 			property="og:description"
 			content={`playedwithdata for ${personresults.currentusername}`}
