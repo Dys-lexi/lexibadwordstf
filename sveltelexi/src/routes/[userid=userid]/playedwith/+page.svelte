@@ -81,32 +81,32 @@
 			property="og:description"
 			content={`playedwithdata for ${personresults.currentusername}`}
 		/>
-		<meta property="og:image" content={personresults.avatar} />
+		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 		<meta
 			name="twitter:description"
 			content={`playedwithdata for ${personresults.currentusername}`}
 		/>
-		<meta name="twitter:image" content={personresults.avatar} />
+		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
 		<meta property="og:description" content="User not found" />
-		<meta property="og:image" content={`${page.url.origin}/logo.png`} />
+		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 		<meta name="twitter:description" content="User not found" />
-		<meta name="twitter:image" content={`${page.url.origin}/logo.png`} />
+		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 	{:else}
 		<meta name="description" content="Error finding information" />
 		<meta property="og:description" content="Error finding information" />
-		<meta property="og:image" content={`${page.url.origin}/logo.png`} />
+		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 		<meta name="twitter:description" content="Error finding information" />
-		<meta name="twitter:image" content={`${page.url.origin}/logo.png`} />
+		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
 	{/if}
 
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content={page.url.href} />
 	<meta property="og:title" content="LexiSlurs" />
 
-	<meta property="og:image:width" content="184" />
-	<meta property="og:image:height" content="184" />
+	<!-- <meta property="og:image:width" content="184" />
+	<meta property="og:image:height" content="184" /> -->
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="LexiSlurs" />

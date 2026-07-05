@@ -58,7 +58,7 @@ let hoverY = $derived(
 		bind:clientHeight={hoverHeight}
 		style={`top:${hoverY}px;left:${hoverX}px`}
 	>
-			<Profile steam64={steam64} /> 
+			<Profile steam64={steam64}  showcopy={false}/> 
 		</div>
 	{/if}
 

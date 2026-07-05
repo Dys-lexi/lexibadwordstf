@@ -10,7 +10,7 @@
 	  async function copylink(steam64: string) {
     await navigator.clipboard.writeText(`${page.url.origin}/${steam64}`);
 	  }
-	  let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number}= $props()
+	  let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number, showcopy = false as boolean}= $props()
 	  let profilestuff = $derived(!profiledefault.stats  ? getprofile({ steam64, recall }) : undefined);
 	//   let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number} = $derived(things)
 
@@ -32,7 +32,7 @@
 				{#if profilestuff}
 					{#await profilestuff}
 					
-					<div class = "badwordcounterw">	Loading Profile </div>
+					<div class = "loadingtext">	Loading Profile </div>
 					{:then { profile, statuscode }}
 					{#if profile.frame}
 						<img src={profile.frame} class="avatarholder" alt="" />
@@ -70,7 +70,7 @@
 						/>
 					
 					{:catch error}
-						could not load profile for {steam64} {error.message}
+						<!-- could not load profile for {steam64} {error.message} -->
 					{/await}
 				{:else}
 				
@@ -82,14 +82,16 @@
 				{/if}
 			{' '}
 			<div class="profileitems">
+				{#if showcopy}
 					<button  onclick={() => copylink(steam64)} class="copyimage"> {@render copy()} </button>
-				<div class="nonowordcurrentusername">
+				{/if}
+					<div class="nonowordcurrentusername">
 		
 					{#if profilestuff}
 						{#await profilestuff then { profile, statuscode }}
 							{profile.currentusername}
 						{:catch error}
-							Could not load name
+							<!-- Could not load name -->
 						{/await}
 					{:else if profiledefault.currentusername}
 						{profiledefault.currentusername}

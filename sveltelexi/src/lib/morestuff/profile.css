@@ -73,6 +73,13 @@ position: relative;
 	  /* align-self: stretch  */
 	  
 }
+
+.loadingtext {
+	color: #aaa;
+
+	/* font-family: 'Whitney', sans-serif !important; */
+	/* text-decoration-color: rgba(0,0,0,0) !important; */
+}
 .badwordcounterw {
 	color: #aaa;
       text-overflow: ellipsis;
