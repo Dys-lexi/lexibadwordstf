@@ -8,6 +8,7 @@
 	import { getprofile } from '$lib/remote/data.remote';
 	// let {steam64:string,profiledefault = {} as Userdetails} = $props();
 	import { mousePosition } from './store.js';
+	import { render } from 'svelte/server';
 	  async function copylink(steam64: string) {
     await navigator.clipboard.writeText(`${page.url.origin}/${steam64}`);
 	  }

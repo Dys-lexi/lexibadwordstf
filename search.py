@@ -161,6 +161,8 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
     moreinfodict = {}
     now = int(time.time())
     with querywrapper() as query:
+        query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
+        moreinfodict["badwords"] = query.fetchone()[0]
         query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
         output = query.fetchone()
         if not output or not all(output) or output[1] < now - (timeout or now):
@@ -222,8 +224,8 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             frame = output[3]
         if moreinfo:
             moreinfodict["stats"] = {}
-            query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
-            moreinfodict["stats"]["badwords"] = f"{query.fetchone()[0]} bad words"
+            # query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
+            moreinfodict["stats"]["badwords"] = f"{ moreinfodict["badwords"]} bad words"
             query.execute("""SELECT SUM(cardinality(ids)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             moreinfodict["stats"]["logs"] = query.fetchone()
             moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} logs"
@@ -231,8 +233,14 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             aliases = query.fetchone()
             aliases = aliases and aliases[0]
             moreinfodict["aliases"] = aliases
-            moreinfodict["stats"]["aliases"] = moreinfodict["aliases"] and f"{len(moreinfodict["aliases"])} Alias{not(len(moreinfodict["aliases"]) - 1) and "es" or ""}"
-           
+            query.execute(f"SELECT  SUM(cardinality(ids)) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
+            playedwith = query.fetchone()
+            if playedwith:
+                moreinfodict["stats"]["playedwith"] = f"{playedwith[0]} people played with"
+            # print(not(len(moreinfodict["aliases"]) - 1) and "es")
+            # print(not(len(moreinfodict["aliases"]) - 1))
+            moreinfodict["stats"]["aliases"] = moreinfodict["aliases"] and f"{len(moreinfodict["aliases"])} alias{not(len(moreinfodict["aliases"]) - 1) and " " or "es"}"
+
 
     if not avatarurl or  (avatarurl.isdigit() and not int(avatarurl)):
         avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"

@@ -32,7 +32,7 @@
 				{#if profilestuff}
 					{#await profilestuff}
 					
-						Loading Profile
+					<div class = "badwordcounterw">	Loading Profile </div>
 					{:then { profile, statuscode }}
 					{#if profile.frame}
 						<img src={profile.frame} class="avatarholder" alt="" />
@@ -42,6 +42,7 @@
 							class="nonowordavatar"
 							alt=""
 						/>
+					
 					{:catch error}
 						could not load profile for {steam64} {error.message}
 					{/await}
@@ -56,7 +57,29 @@
 					/>
 				{/if}
 			</div>
-
+{#if profilestuff}
+					{#await profilestuff then { profile, statuscode }}
+					
+					
+				
+				
+						<img
+							src={`https://avatars.fastly.steamstatic.com/${profile.avatar}_full.jpg`}
+							class="bigblur"
+							alt=""
+						/>
+					
+					{:catch error}
+						could not load profile for {steam64} {error.message}
+					{/await}
+				{:else}
+				
+					<img
+						src={`https://avatars.fastly.steamstatic.com/${profiledefault.avatar}_full.jpg`}
+						class="bigblur"
+						alt=""
+					/>
+				{/if}
 			{' '}
 			<div class="profileitems">
 					<button  onclick={() => copylink(steam64)} class="copyimage"> {@render copy()} </button>
