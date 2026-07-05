@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { Userdetails } from '$lib/morestuff/types';
-	import {Profile} from '$lib/morestuff/profile.svelte'
+
 	import { page } from '$app/state';
+	import Profile from '$lib/morestuff/profile.svelte'
 	import '../Page.css';
 	import './Page.css';
+	import Hoverprofile from '$lib/morestuff/hoverprofile.svelte'
 	let { data } = $props();
 	let { personresults, statuscode } = $derived(data);
 </script>
@@ -11,8 +13,8 @@
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
 
-			{@render Profile(personresults.steam64)}
-
+			<!-- {@render Profile(personresults.steam64)} -->
+			<Profile steam64={personresults.steam64}/>
 			<!-- <div class="playedwithperson playedwithpersonpersonal">
 							
 								<img
@@ -38,7 +40,9 @@
 							<div class="playedwithholderbig playedwithholder">
 								{#each playedwith as data, index (index)}
 									<a class="playedwithpersonsamey" href={`/${data.steam64}`}>
+									
 										<div class=" playedwithperson">
+										
 											<div class="playedwithpercent playedwithbad"></div>
 											<div
 												class="playedwithpercent"
@@ -51,8 +55,11 @@
 											/>
 
 											<div class="goawayoverflow playedwithname">{data.currentname}</div>
+											
 										</div>
+											<Hoverprofile steam64={data.steam64}/>
 									</a>
+								
 								{/each}
 							</div>
 						</div>

@@ -8,8 +8,9 @@
 
 .playedwithpersonsamey{
     /* width: min(200px , calc(50% - 10px));
-
+  
     max-width: 200px; */
+    position: relative;
     width:100%;
   
 }

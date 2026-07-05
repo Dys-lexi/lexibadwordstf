@@ -29,10 +29,10 @@ root = "https://logs.tf/api/v1"
 chatfilterroot = "./chatfilters/"
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
+lock = threading.Lock()
 
 
-
-
+lastratelimittime = 0
     
 
 def cachestats():
@@ -143,7 +143,7 @@ def playedwith(steam64,expand):
         logsteamdetails = query.fetchall()
         logsteamdetails = dict(map(lambda x: (x[0],x[1:]),logsteamdetails))
         # print(logsteamdetails)
-        playedwith = dict(map(lambda x: (x[0],{"commonmatches":x[1],"currentname":logsteamdetails.get(x[0],[logname[x[0]]])[0],"avatar":(  "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb" if (not logsteamdetails.get(x[0],[None] * 2)[1]) or ( logsteamdetails.get(x[0],[None] * 2)[1].isdigit() and not int(logsteamdetails.get(x[0],[None] * 2)[1])) else logsteamdetails.get(x[0],[None] * 2)[1]),"frame":logsteamdetails.get(x[0],[None]*3)[2],"backupusername":logname[x[0]]}) ,playedwith.items()))
+        playedwith = dict(map(lambda x: (x[0],{"commonmatches":x[1],"currentname":logsteamdetails.get(x[0],[logname[x[0]]])[0],"avatar":(  "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb" if (not logsteamdetails.get(x[0],[None] * 2)[1]) or ( logsteamdetails.get(x[0],[None] * 2)[1].isdigit() and not int(logsteamdetails.get(x[0],[None] * 2)[1])) else logsteamdetails.get(x[0],[None] * 2)[1]),"frame":logsteamdetails.get(x[0],[None]*3)[2]}) ,playedwith.items()))
         
 
         query.execute(f"SELECT COUNT(*) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
@@ -156,61 +156,65 @@ def playedwith(steam64,expand):
 
 @cached(cache=TTLCache(maxsize=1024, ttl=1800))
 def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
-    print(steam64)
+    global lastratelimittime
+    # print(steam64)
     moreinfodict = {}
     now = int(time.time())
     with querywrapper() as query:
         query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
         output = query.fetchone()
         if not output or not all(output) or output[1] < now - (timeout or now):
-            if timeout:
-                failed = False
-                r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
-                currentname = None
-                frame = None
-                avatarurl = None
-                if r.status_code in [429]:
-                    print("I GOT RATE LIMITED")
-                    query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
-                    name2 = query.fetchone()
-                    currentname = name2 and name2[0] or "Unknown"
-                    avatarurl = None
-                    failed = True
-                else:
-                    r.raise_for_status()
-                    if not len(r.json()):
-                        query.rollback()
-                        return {}  , 404
-                    currentname = r.json()[0]["persona_name"]
-                    avatarurl = r.json()[0]["avatar_url"]
-                    profilevanity = r.json()[0]["profile_url"]
-                r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
-                if r.status_code in [429]:
-                    return {}, r.status_code
+            with lock:
+                if timeout or lastratelimittime > now-30:
+                    failed = False
+                    r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
+                    currentname = None
                     frame = None
-                    failed = True
+                    avatarurl = None
+                    if r.status_code in [429]:
+                        lastratelimittime = now
+                        print("I GOT RATE LIMITED")
+                        query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
+                        name2 = query.fetchone()
+                        currentname = name2 and name2[0] or "Unknown"
+                        avatarurl = None
+                        failed = True
+                    else:
+                        r.raise_for_status()
+                        if not len(r.json()):
+                            query.rollback()
+                            return {}  , 404
+                        currentname = r.json()[0]["persona_name"]
+                        avatarurl = r.json()[0]["avatar_url"]
+                        profilevanity = r.json()[0]["profile_url"]
+                    r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
+                    if r.status_code in [429,500]:
+                        # return {}, r.status_code
+                        frame = None
+                        failed = True
+                    else:
+                        r.raise_for_status()
+                        soup = BeautifulSoup(r.text, "html.parser")
+                        
+                        frame = soup.select_one(".playersection_avatar_frame img")
+                        if frame: frame = frame.get("src")
+                    if not failed:
+                        query.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame,vanity) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame, vanity = EXCLUDED.vanity",(currentname,avatarurl,now,steam64,frame,profilevanity or None))
+                        query.commit()
+                    elif output:
+                        lastratelimittime = now
+                        print("I GOT RATE LIMITED")
+                        currentname = currentname or output[0]
+                        avatarurl = avatarurl or output[2]
+                        frame = frame or output[3]
+                
                 else:
-                    r.raise_for_status()
-                    soup = BeautifulSoup(r.text, "html.parser")
-                    
-                    frame = soup.select_one(".playersection_avatar_frame img")
-                    if frame: frame = frame.get("src")
-                if not failed:
-                    query.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame,vanity) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame, vanity = EXCLUDED.vanity",(currentname,avatarurl,now,steam64,frame,profilevanity or None))
-                    query.commit()
-                elif output:
-                    print("I GOT RATE LIMITED")
-                    currentname = currentname or output[0]
-                    avatarurl = avatarurl or output[2]
-                    frame = frame or output[3]
-            
-            else:
-                query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
-                # query.execute("SELECT  name  FROM usernames WHERE steamid = %s ORDER BY ", (steam64,) )
-                output = query.fetchone()
-                currentname = output and output[0] or "Unknown"
-                avatarurl = "0"
-                frame = None
+                    query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
+                    # query.execute("SELECT  name  FROM usernames WHERE steamid = %s ORDER BY ", (steam64,) )
+                    othername = query.fetchone()
+                    currentname =  output[0] or ((othername or "Unknown") and othername[0])
+                    avatarurl = output[2] or "0"
+                    frame = output[3] or None
         else:
             # print("HERE")
             currentname = output[0]
@@ -224,8 +228,9 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             moreinfodict["stats"]["logs"] = query.fetchone()
             moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} logs"
             query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
-            moreinfodict["aliases"] = query.fetchone()
-            moreinfodict["aliases"] = moreinfodict["aliases"] and moreinfodict["aliases"][0]
+            aliases = query.fetchone()
+            aliases = aliases and aliases[0]
+            moreinfodict["aliases"] = aliases
             moreinfodict["stats"]["aliases"] = moreinfodict["aliases"] and f"{len(moreinfodict["aliases"])} Alias{not(len(moreinfodict["aliases"]) - 1) and "es" or ""}"
            
 
@@ -233,6 +238,8 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
         avatarurl = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
     else:
         avatarurl = avatarurl
+    if avatarurl == "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb":
+        print("pants")
     return {"avatar":avatarurl,"frame":frame,"currentusername":currentname,**moreinfodict}
 
 # @cached(cache=TTLCache(maxsize=30, ttl=1800))
