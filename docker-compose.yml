@@ -36,6 +36,7 @@ services:
       # - /mnt/bigdrives/tflogs/db:/var/lib/postgresql/data
       - ./db:/var/lib/postgresql/data
       - /mnt/bigdrives/tflogs/logs.sql:/var/logs.sql
+      - ./dump:/var/bvmountIonlyhavelike7terrabytesofstoragepleasebekindtomethankyouloveyou
     restart: unless-stopped
   search:
     build:

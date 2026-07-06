@@ -23,7 +23,7 @@ export type Badmessage = {
 
 export type playedwithitem = {
     commonmatches: number
-    currentname: string
+    currentusername: string
     avatar: string | null
     frame: string | null
     backupusername: string

@@ -68,7 +68,7 @@
 								{#each playedwith as data, index (index)}
 									<a href={`/${data.steam64}`}>
 										<div class="playedwithperson">
-											<Hoverprofile steam64={data.steam64}/>
+											<Hoverprofile steam64={data.steam64} profiledefault={data}/>
 											<div class="playedwithpercent playedwithbad"></div>
 											<div
 												class="playedwithpercent"
@@ -80,7 +80,7 @@
 												alt="avatar"
 											/>
 
-											<div class="goawayoverflow playedwithname">{data.currentname}</div>
+											<div class="goawayoverflow playedwithname">{data.currentusername}</div>
 										</div>
 									</a>
 								{/each}

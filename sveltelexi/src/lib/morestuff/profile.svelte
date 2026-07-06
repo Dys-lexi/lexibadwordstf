@@ -4,13 +4,13 @@
 	// export { Profile , };
 	import {copy} from "./const.svelte"
 	import { page } from '$app/state';
-	import { getprofile } from '$lib/remote/data.remote';
+	import { getprofile,getwordcloud } from '$lib/remote/data.remote';
 	// let {steam64:string,profiledefault = {} as Userdetails} = $props();
 	// import { mousePosition } from './store.js';
 	  async function copylink(steam64: string) {
     await navigator.clipboard.writeText(`${page.url.origin}/${steam64}`);
 	  }
-	  let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number, showcopy = false as boolean}= $props()
+	  let {steam64, profiledefault = {} , recall = 3600 as number, showcopy = true as boolean}= $props()
 	  let profilestuff = $derived(!profiledefault.stats  ? getprofile({ steam64, recall }) : undefined);
 	//   let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number} = $derived(things)
 
@@ -26,10 +26,10 @@
 
 
 	<div class="woag">
-	
+	<img src = {(await getwordcloud(steam64)).profile} alt = "pants"/>
 		<a class="nameholderbad" href={`/${steam64}`}>
 			<div class="nonowordavatarholder">
-				{#if profilestuff}
+				{#if !profiledefault.avatar && profilestuff}
 					{#await profilestuff}
 					
 					<div class = "loadingtext">	Loading Profile </div>
@@ -57,7 +57,7 @@
 					/>
 				{/if}
 			</div>
-{#if profilestuff}
+{#if  !profiledefault.avatar && profilestuff}
 					{#await profilestuff then { profile, statuscode }}
 					
 					
@@ -87,7 +87,7 @@
 				{/if}
 					<div class="nonowordcurrentusername">
 		
-					{#if profilestuff}
+					{#if  !profiledefault.currentusername && profilestuff}
 						{#await profilestuff then { profile, statuscode }}
 							{profile.currentusername}
 						{:catch error}
@@ -98,9 +98,10 @@
 					{/if}
 				</div>
 
-				{#if profilestuff}
-				{#await profilestuff then  { profile, statuscode }}
-					
+				{#if !profiledefault.stats && profilestuff}
+				{#await profilestuff }
+				<div class="badwordcounterw">Loading stats</div>
+					{:then  { profile, statuscode }}
 		
 					{#each Object.values(profile.stats) as data, index (index)}
 						{#if data}

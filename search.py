@@ -143,7 +143,7 @@ def playedwith(steam64,expand):
         logsteamdetails = query.fetchall()
         logsteamdetails = dict(map(lambda x: (x[0],x[1:]),logsteamdetails))
         # print(logsteamdetails)
-        playedwith = dict(map(lambda x: (x[0],{"commonmatches":x[1],"currentname":logsteamdetails.get(x[0],[logname[x[0]]])[0],"avatar":(  "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb" if (not logsteamdetails.get(x[0],[None] * 2)[1]) or ( logsteamdetails.get(x[0],[None] * 2)[1].isdigit() and not int(logsteamdetails.get(x[0],[None] * 2)[1])) else logsteamdetails.get(x[0],[None] * 2)[1]),"frame":logsteamdetails.get(x[0],[None]*3)[2]}) ,playedwith.items()))
+        playedwith = dict(map(lambda x: (x[0],{"commonmatches":x[1],"currentusername":logsteamdetails.get(x[0],[logname[x[0]]])[0],"avatar":(  "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb" if (not logsteamdetails.get(x[0],[None] * 2)[1]) or ( logsteamdetails.get(x[0],[None] * 2)[1].isdigit() and not int(logsteamdetails.get(x[0],[None] * 2)[1])) else logsteamdetails.get(x[0],[None] * 2)[1]),"frame":logsteamdetails.get(x[0],[None]*3)[2]}) ,playedwith.items()))
         
 
         query.execute(f"SELECT COUNT(*) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
@@ -233,12 +233,10 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             aliases = query.fetchone()
             aliases = aliases and aliases[0]
             moreinfodict["aliases"] = aliases
-            query.execute(f"SELECT  SUM(cardinality(ids)) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
-            playedwith = query.fetchone()
-            if playedwith:
-                moreinfodict["stats"]["playedwith"] = f"{playedwith[0]} people played with"
-            # print(not(len(moreinfodict["aliases"]) - 1) and "es")
-            # print(not(len(moreinfodict["aliases"]) - 1))
+            # query.execute(f"SELECT  SUM(cardinality(ids)) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
+            # playedwith = query.fetchone()
+            # if playedwith:
+            #     moreinfodict["stats"]["playedwith"] = f"{playedwith[0]} people played with"
             moreinfodict["stats"]["aliases"] = moreinfodict["aliases"] and f"{len(moreinfodict["aliases"])} alias{not(len(moreinfodict["aliases"]) - 1) and " " or "es"}"
 
 

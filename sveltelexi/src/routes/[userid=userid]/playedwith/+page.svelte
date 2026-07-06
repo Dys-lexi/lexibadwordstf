@@ -54,10 +54,10 @@
 												alt="avatar"
 											/>
 
-											<div class="goawayoverflow playedwithname">{data.currentname}</div>
+											<div class="goawayoverflow playedwithname">{data.currentusername}</div>
 											
 										</div>
-											<Hoverprofile steam64={data.steam64}/>
+											<Hoverprofile steam64={data.steam64} profiledefault={data}/>
 									</a>
 								
 								{/each}

@@ -12,7 +12,7 @@
 	  async function copylink(steam64: string) {
     await navigator.clipboard.writeText(`${page.url.origin}/${steam64}`);
 	  }
-	  let {steam64}= $props()
+	  let {steam64,profiledefault = {}}= $props()
 	//   let profilestuff = $derived( getprofile({ steam64, recall:0 }) );
 	//   let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number} = $derived(things)
     //    profiledefault={(await profilestuff).profile}
@@ -58,7 +58,7 @@ let hoverY = $derived(
 		bind:clientHeight={hoverHeight}
 		style={`top:${hoverY}px;left:${hoverX}px`}
 	>
-			<Profile steam64={steam64}  showcopy={false}/> 
+			<Profile steam64={steam64} profiledefault={profiledefault}  showcopy={false}/> 
 		</div>
 	{/if}
 
