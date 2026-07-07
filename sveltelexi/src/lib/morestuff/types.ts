@@ -11,6 +11,7 @@ export type Userdetails = {
     logs: number
     aliases: Array<string>
     stats: Array<string>
+    mostrecentmatchtimestamp: number
 
 };
 

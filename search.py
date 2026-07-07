@@ -175,7 +175,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                     avatarurl = None
                     if r.status_code in [429]:
                         lastratelimittime = now
-                        print("I GOT RATE LIMITED")
+                        # print("I GOT RATE LIMITED")
                         query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
                         name2 = query.fetchone()
                         currentname = name2 and name2[0] or "Unknown"
@@ -205,7 +205,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                         query.commit()
                     elif output:
                         lastratelimittime = now
-                        print("I GOT RATE LIMITED")
+                        # print("I GOT RATE LIMITED")
                         currentname = currentname or output[0]
                         avatarurl = avatarurl or output[2]
                         frame = frame or output[3]
@@ -214,9 +214,9 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                     query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
                     # query.execute("SELECT  name  FROM usernames WHERE steamid = %s ORDER BY ", (steam64,) )
                     othername = query.fetchone()
-                    currentname =  output[0] or ((othername or "Unknown") and othername[0])
-                    avatarurl = output[2] or "0"
-                    frame = output[3] or None
+                    currentname =  (output and output[0]) or ((othername or "Unknown") and othername[0])
+                    avatarurl = (output and output[2]) or "0"
+                    frame = (output and output[3]) or None
         else:
             # print("HERE")
             currentname = output[0]
@@ -233,6 +233,13 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             aliases = query.fetchone()
             aliases = aliases and aliases[0]
             moreinfodict["aliases"] = aliases
+            query.execute("""SELECT l.time FROM logs_raw l WHERE l.id = (SELECT MAX(x) FROM usernames u, unnest(u.ids) AS x WHERE u.steamid = %s);
+            """,(steam64,))
+            mostrecentmatch = query.fetchone()
+            if mostrecentmatch and (mostrecentmatch := mostrecentmatch[0]):
+                moreinfodict["mostrecentmatchtimestamp"] = int(mostrecentmatch.timestamp())
+                
+                # print("date and time:",date_time)	
             # query.execute(f"SELECT  SUM(cardinality(ids)) FROM playedwith WHERE (steamid = %s OR steamid2 = %s) AND sameteam != false",(steam64,steam64))
             # playedwith = query.fetchone()
             # if playedwith:

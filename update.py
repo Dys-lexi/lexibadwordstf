@@ -10,7 +10,7 @@ import os
 import re
 import requests
 from steamid_converter import Converter
-import initsql
+from initsql import querywrapper
 import threading
 import itertools
 
@@ -400,43 +400,42 @@ def biglogsdedupe(all = True):
 
 
 def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WITHOUT IT (also the steam api no support)
-    conn = pgpool.getconn()
-    c = conn.cursor()
     laststatuses = 0
     while True:
-        now = int(time.time())
-        c.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE deletedaccount = false AND r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 100",(604800*10,))
-        output1 = list(map(lambda x: x[0], c.fetchall()))
-        if not output1:
-            print("pulling names thinks it is done")
-            c.execute("SELECT * FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
-            print(c.fetchall())
-            time.sleep(3600)
-            continue
-        for output in output1:
-            output = [output,]
+        with querywrapper() as query:
+            now = int(time.time())
+            query.execute("SELECT l.steamid FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE deletedaccount = false AND r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 100",(604800*10,))
+            output1 = list(map(lambda x: x[0], query.fetchall()))
+            if not output1:
+                print("pulling names thinks it is done")
+                query.execute("SELECT * FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
+                print(query.fetchall())
+                time.sleep(3600)
+                continue
+            for output in output1:
+                output = [output,]
 
-            # print("pulling",output)
-            r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
-            if r.ok:
-                laststatuses = 0
-                if not r.json():
-                    print("could not find profile for",output)
-                    c.execute("UPDATE usernames SET deletedaccount = true WHERE steamid = %s",(output[0],))
-                    continue
-                # print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
-                if not r.json()[0].get("persona_name"):
-                    print(json.dumps(r.json(),indent = 4))
-                    print("COULD NOT FIND PERSONA NAME")
-                    continue
-                c.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname,vanity) VALUES (%s,%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"],r.json()[0]["profile_url"] or None ))
-                conn.commit()
-            else:
-                # print(r.status_code)
-                if r.status_code == 429:
-                    laststatuses += 1
-                    time.sleep(laststatuses*20)
-            time.sleep(2)
+                # print("pulling",output)
+                r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params={"steamids":",".join(list(map(str,output)))},headers = {"User-Agent": "Mozilla/5.0"})
+                if r.ok:
+                    laststatuses = 0
+                    if not r.json():
+                        print("could not find profile for",output)
+                        query.execute("UPDATE usernames SET deletedaccount = true WHERE steamid = %s",(output[0],))
+                        continue
+                    # print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
+                    if not r.json()[0].get("persona_name"):
+                        print(json.dumps(r.json(),indent = 4))
+                        print("COULD NOT FIND PERSONA NAME")
+                        continue
+                    query.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname,vanity) VALUES (%s,%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"],r.json()[0]["profile_url"] or None ))
+                    query.commit()
+                else:
+                    # print(r.status_code)
+                    if r.status_code == 429:
+                        laststatuses += 1
+                        time.sleep(laststatuses*20)
+                time.sleep(2)
 
 
 

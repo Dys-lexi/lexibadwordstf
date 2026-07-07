@@ -47,7 +47,7 @@ let hoverY = $derived(
 
  <div class = "hoverplease"
     role="presentation"
-    onmouseenter={() => {renderhover = true;console.log(renderhover)}}
+    onmouseenter={() => {renderhover = true;}}
     onmouseleave={() => renderhover = false}
   >
 	<!-- {renderhover} -->

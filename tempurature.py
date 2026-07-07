@@ -9,14 +9,14 @@ def tempreading():
     if re.ok:
         return f"{float(re.text):.2f}",200
     else:
-        return "idk",500
+        return None
 
 def tempreadingloop():
     global temp
     while True:
         output = tempreading()
         with lock:
-            temp = output
+            temp = output or temp
         time.sleep(300)
 def recalltemp():
     global temp

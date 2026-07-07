@@ -26,9 +26,13 @@
 
 		<div class="externalwebsiteholder">
 			<a
-				class="externalwebsite loglink"
+				class="externalwebsite loglink" 
 				href={`/${personresults.steam64}/wordcloud`}
-				target="_blank">Wordcloud</a
+				target="_blank">Wordcloud 	<img
+					src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`}
+					class="bigblurext"
+					alt=""
+				/></a
 			>
 			<a
 				class="externalwebsite loglink"
