@@ -6,6 +6,7 @@
 	import '../Page.css';
 	import './Page.css';
 	import Hoverprofile from '$lib/morestuff/hoverprofile.svelte'
+	import Miniprofile from '$lib/morestuff/miniprofile.svelte'
 	let { data } = $props();
 	let { personresults, statuscode } = $derived(data);
 </script>
@@ -39,26 +40,7 @@
 							</div>
 							<div class="playedwithholderbig playedwithholder">
 								{#each playedwith as data, index (index)}
-									<a class="playedwithpersonsamey" href={`/${data.steam64}`}>
-									
-										<div class=" playedwithperson">
-										
-											<div class="playedwithpercent playedwithbad"></div>
-											<div
-												class="playedwithpercent"
-												style={`height: ${(data.commonmatches * 100) / biggestplayedwith}%`}
-											></div>
-											<img
-												class="playedwithphoto"
-												src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
-												alt="avatar"
-											/>
-
-											<div class="goawayoverflow playedwithname">{data.currentusername}</div>
-											
-										</div>
-											<Hoverprofile steam64={data.steam64} profiledefault={data}/>
-									</a>
+								<Miniprofile data={data} biggestplayedwith={biggestplayedwith}/>
 								
 								{/each}
 							</div>

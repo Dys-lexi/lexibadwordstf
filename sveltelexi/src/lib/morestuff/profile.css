@@ -154,3 +154,81 @@ position: relative;
 	filter:blur(20px) brightness(20%) saturate(200%);
 	transform: translate(-50%,-50%);
 }
+
+
+
+.playedwithperson{
+     /* background-color: rgba(255,255,255,0.02); */
+     flex-grow: 10;
+     /* flex-basis: 1; */
+     overflow: hidden;
+     border-radius: 5px;
+    display: flex;
+    position: relative;
+    align-items: center;
+        color: rgb(100,100,200);
+		max-height: 32px;
+   
+}
+.playedwithstats{
+	padding:2px;
+	height:22px;
+	max-height: 22px;
+	display: flex;
+	align-items: center;
+}
+.playedwithstatsandwhatnot{
+	position: relative;
+	display: flex;
+	flex-direction: column;
+  text-decoration: none;
+     border-width: 1px;
+     border-style: solid;
+     overflow: hidden;
+     border-color: rgba(255,255,255,0.05);
+	 align-self: start;
+	 border-radius: 5px;
+}
+
+.playedwithpersonpersonal{
+         background-color: rgba(255,255,255,0.1);
+}
+.playedwithbad{
+    height: 100%;
+
+    background-color: rgba(0,0,0,1) !important;
+    border-radius: 0px !important;
+    /* box-shadow: none !important; */
+}
+.playedwithpercent{
+    
+    position: absolute;
+    width: 5px;
+    background-color: rgba(100,255,100,0.8);
+    bottom:0px;
+    z-index: -1;
+    left:32px;
+    border-radius: 1px 1px 0px 0px;
+    /* box-shadow: 0px 0px  2px rgba(100,255,100,0.8); */
+
+    
+}
+
+.playedwithnumber{
+    position: absolute;
+    top:0px;
+    left:0px;
+    z-index: 5;
+
+}
+
+
+.playedwithphoto{
+    /* position: absolute; */
+    left: 0px;
+    top:0px;
+    z-index: -5;
+    height: 32px;
+    width: 32px;
+    
+}

@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import Profile from '$lib/morestuff/profile.svelte'
 	import Hoverprofile from '$lib/morestuff/hoverprofile.svelte'
+	import Miniprofile from '$lib/morestuff/miniprofile.svelte'
 	import './Page.css';
 	import { Logo } from '$lib/morestuff/const.svelte';
 	let { data } = $props();
@@ -75,23 +76,7 @@
 							<div class="playedwithholder">
 						
 								{#each playedwith as data, index (index)}
-									<a href={`/${data.steam64}`}>
-										<div class="playedwithperson">
-											<Hoverprofile steam64={data.steam64} profiledefault={data}/>
-											<div class="playedwithpercent playedwithbad"></div>
-											<div
-												class="playedwithpercent"
-												style={`height: ${(data.commonmatches * 100) / biggestplayedwith}%`}
-											></div>
-											<img
-												class="playedwithphoto"
-												src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
-												alt="avatar"
-											/>
-
-											<div class="goawayoverflow playedwithname">{data.currentusername}</div>
-										</div>
-									</a>
+									<Miniprofile data={data} biggestplayedwith={biggestplayedwith}/>
 								{/each}
 							</div>
 						</div>{/if}
