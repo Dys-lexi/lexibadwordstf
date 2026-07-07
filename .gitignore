@@ -158,3 +158,6 @@ dist
 cdk.out
 statscache.json
 dump
+
+
+wordcloud

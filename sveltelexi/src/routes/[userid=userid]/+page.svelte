@@ -27,6 +27,11 @@
 		<div class="externalwebsiteholder">
 			<a
 				class="externalwebsite loglink"
+				href={`/${personresults.steam64}/wordcloud`}
+				target="_blank">Wordcloud</a
+			>
+			<a
+				class="externalwebsite loglink"
 				href={`https://steamcommunity.com/profiles/${personresults.steam64}`}
 				target="_blank">Steam</a
 			>

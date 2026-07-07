@@ -52,8 +52,9 @@ only respond 'none' if you think they are actually the same
 text1: {text1}
 text2: {text2}
 """
+
     payload = {
-        "model": "lfm2.5:latest",
+        "model": "qwen3.6:latest",
         "messages": [
             # *list(map(lambda x: {"role":"assistant","content":x} ,messagesisent[-20:] )),
             # {"role": "system", "content": system_prompt},
@@ -62,9 +63,9 @@ text2: {text2}
         ],
         "stream": False,
         "keep_alive":"12h",
-        "options":{"temperature":0.1}
+        "options":{"temperature":0}
     }
-    r =  requests.post("http://192.168.1.189:11434/api/chat", json=payload, timeout=222222)
+    r =  requests.post("http://192.168.18.83:11434/api/chat", json=payload, timeout=222222)
     r.raise_for_status()
     print(json.dumps(r.json(),indent=4))
     return r.json()["message"]["content"]
@@ -107,7 +108,7 @@ for word in winnings:
             done = True
         print(f"{word} | {word2} {answer}")
 
-        with open(f"horriblewords.json","w") as fing:
+        with open(f"horriblewords2.json","w") as fing:
             fing.write(json.dumps(winnings,indent=4,ensure_ascii=False))
 
 

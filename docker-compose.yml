@@ -52,6 +52,7 @@ services:
       - ./statscache.json:/app/statscache.json:rw
       - ./slurcloud.py:/app/slurcloud.py:ro
       - ./chatfilters:/app/chatfilters:ro
+      - ./wordcloud:/app/wordcloud:ro
     env_file:
       - ./.env
     restart: unless-stopped

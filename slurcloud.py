@@ -2,10 +2,16 @@ import base64
 import os
 from io import BytesIO
 from urllib.request import Request, urlopen
-
+import sys
+sys.path.append("./wordcloud")
 import numpy as np
 from PIL import Image
-from wordcloud import ImageColorGenerator, WordCloud
+fallback = True
+try:
+    from wordcloudchanged import ImageColorGenerator, WordCloud
+    fallback = False
+except:
+    from wordcloud import ImageColorGenerator, WordCloud
 import random
 
 DEFAULT_URL = "https://avatars.fastly.steamstatic.com/0c337d8bb0fa932b3927aea319be0ad7787fe6f9_full.jpg"
@@ -39,23 +45,23 @@ def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE):
         wc = WordCloud(
             max_words=100,
             mask=mask,
-            max_font_size=100,
+            max_font_size=120,
             random_state=42,
-            relative_scaling=0.0,
+            relative_scaling=0.0 if  fallback else 0.7,
             mode="RGBA",
             background_color=None,
             min_font_size=10,
-            repeat=True,
+            repeat=fallback,
             normalize_plurals=True
         )
-
-        wc.generate_from_frequencies(dict(list(frequencies.items())))
+        # print(frequencies)
+        wc.generate_from_frequencies(dict(sorted(list(frequencies.items()),key = lambda x: x[1],reverse = True)))
 
         inverted_colors = np.clip(255 - base_colors.astype(np.int16) - 20, 0, 255).astype(
             np.uint8
         )
         wc.recolor(color_func=ImageColorGenerator(inverted_colors))
-        # wc.recolor(color_func=lambda *args, **kwargs: f"rgb({random.randint(0,255)},{random.randint(0,255)},{random.randint(0,255)})")
+        wc.recolor(color_func=lambda *args, **kwargs: f"rgb({random.randint(0,255)},{random.randint(0,255)},{random.randint(0,255)})")
         word_layer = wc.to_image().convert("RGBA")
         
         result.alpha_composite(word_layer)

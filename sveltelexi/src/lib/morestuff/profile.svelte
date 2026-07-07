@@ -4,7 +4,7 @@
 	// export { Profile , };
 	import {copy} from "./const.svelte"
 	import { page } from '$app/state';
-	import { getprofile,getwordcloud } from '$lib/remote/data.remote';
+	import { getprofile } from '$lib/remote/data.remote';
 	// let {steam64:string,profiledefault = {} as Userdetails} = $props();
 	// import { mousePosition } from './store.js';
 	  async function copylink(steam64: string) {
@@ -26,7 +26,7 @@
 
 
 	<div class="woag">
-	<img src = {(await getwordcloud(steam64)).profile} alt = "pants"/>
+	
 		<a class="nameholderbad" href={`/${steam64}`}>
 			<div class="nonowordavatarholder">
 				{#if !profiledefault.avatar && profilestuff}
