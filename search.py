@@ -167,7 +167,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
         output = query.fetchone()
         if not output or not all(output) or output[1] < now - (timeout or now):
             with lock:
-                if timeout or lastratelimittime > now-30:
+                if timeout and lastratelimittime < now-30:
                     failed = False
                     r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64})
                     currentname = None
