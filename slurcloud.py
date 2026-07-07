@@ -11,6 +11,7 @@ try:
     from wordcloudchanged import ImageColorGenerator, WordCloud
     fallback = False
 except:
+    print("ohno")
     from wordcloud import ImageColorGenerator, WordCloud
 import random
 
@@ -38,30 +39,30 @@ def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE):
     base_image = load_image_from_url(url, image_size)
     base_colors = np.array(base_image)
 
-    mask = np.zeros(base_colors.shape[:2], dtype=np.uint8)
-    mask[base_colors.sum(axis=2) == 0] = 255
+    mask = np.zeros(base_colors.shape[:2], dtype=np.uint32)
+    mask[base_colors.sum(axis=2) == 0] = 256
     result = base_image.convert("RGBA")
     if frequencies:
         wc = WordCloud(
             max_words=100,
             mask=mask,
-            max_font_size=120,
+            max_font_size=250,
             random_state=42,
             relative_scaling=0.0 if  fallback else 0.7,
             mode="RGBA",
             background_color=None,
-            min_font_size=10,
+            min_font_size=5,
             repeat=fallback,
             normalize_plurals=True
         )
         # print(frequencies)
         wc.generate_from_frequencies(dict(sorted(list(frequencies.items()),key = lambda x: x[1],reverse = True)))
 
-        inverted_colors = np.clip(255 - base_colors.astype(np.int16) - 20, 0, 255).astype(
+        inverted_colors = np.clip(255 - base_colors.astype(np.int16) - 20, 1, 255).astype(
             np.uint8
         )
         wc.recolor(color_func=ImageColorGenerator(inverted_colors))
-        wc.recolor(color_func=lambda *args, **kwargs: f"rgb({random.randint(0,255)},{random.randint(0,255)},{random.randint(0,255)})")
+        # wc.recolor(color_func=lambda *args, **kwargs: f"rgb({random.randint(254,255)},{random.randint(0,3)},{random.randint(200,255)})")
         word_layer = wc.to_image().convert("RGBA")
         
         result.alpha_composite(word_layer)
