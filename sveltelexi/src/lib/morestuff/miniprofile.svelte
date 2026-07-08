@@ -22,7 +22,7 @@
  <img
     style="filter:blur(5px) brightness(20%) saturate(200%);"
 
-				src={`https://avatars.fastly.steamstatic.com/${data.avatar}_full.jpg`}
+				src={`https://avatars.fastly.steamstatic.com/${data.avatar}.jpg`}
 				class="bigblur"
 				alt=""
 			/>

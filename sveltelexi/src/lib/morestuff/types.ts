@@ -15,6 +15,16 @@ export type Userdetails = {
 
 };
 
+export type Aliases = Array<Alias>
+
+export type Alias = {
+    name: string
+    firstseen: number
+    lastseen: number
+    firstlog: number
+    lastlog: number
+}
+
 export type Badmessage = {
     matchid: number
     message: string

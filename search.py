@@ -299,14 +299,27 @@ def resolveamessyinputtoaprofile(userid):
                 return resolveamessyinputtoaprofile(f"https://steamcommunity.com/id/{userid}")
                 
         return( Converter.to_steamID64(steam3))
-
+@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+def resolvealiases(steam64):
+    with querywrapper() as query:
+        query.execute("""SELECT name,(SELECT l.time FROM logs_raw l WHERE l.id =  (SELECT MAX(x) FROM unnest(ids) AS x)) ,(SELECT l.time FROM logs_raw l WHERE l.id = (SELECT MIN(x) FROM unnest(ids) AS x)), (SELECT MIN(x) FROM unnest(ids) AS x),(SELECT MAX(x) FROM unnest(ids) AS x)  FROM usernames WHERE steamid = %s ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC""",(steam64,))
+        return list(map(lambda x: ({"name":x[0],"firstseen":int(x[2].timestamp()),"lastseen":int(x[1].timestamp()),"firstlog":x[3],"lastlog":x[4]}),query.fetchall()))
+        # aliases = aliases and aliases[0]
+        # moreinfodict["aliases"] = aliases
 
 @app.route("/profile", methods=["POST"])
 def resolveprofile():
     steam64 = resolveamessyinputtoaprofile(request.get_json()["url"])
     if not steam64:
         return {}, 404
-    return {**resolveavatarandname(steam64,request.get_json().get("expand",False),request.get_json().get("timeout",3600)),"steam64":steam64}
+    return {**resolveavatarandname(steam64,request.get_json().get("expand",False),request.get_json().get("timeout",3600)),"steam64":steam64}, 200
+
+
+@app.route("/aliases", methods=["POST"])
+def aliases():
+    # print(resolvealiases(int(request.get_json()["url"])))
+    return  resolvealiases(int(request.get_json()["url"])) ,  200 
+
 
 @app.route("/badwords", methods=["POST"])
 def resolvename():

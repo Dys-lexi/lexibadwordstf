@@ -24,7 +24,7 @@
 </script>
 
 <div class="woag">
-	<a class="nameholderbad" href={`/${steam64}`}>
+	<div class="nameholderbad">
 		<div class="nonowordavatarholder">
 			{#if !profiledefault.avatar && profilestuff}
 				{#await profilestuff}
@@ -78,7 +78,7 @@
 			{#if showcopy}
 				<button onclick={() => copylink(steam64)} class="copyimage"> {@render copy()} </button>
 			{/if}
-			<div class="nonowordcurrentusername">
+			<a class="nonowordcurrentusername underlineme" href={`/${steam64}`}>
 				{#if !profiledefault.currentusername && profilestuff}
 					{#await profilestuff}
 						Loading Profile
@@ -90,14 +90,18 @@
 				{:else if profiledefault.currentusername}
 					{profiledefault.currentusername}
 				{/if}
-			</div>
+			</a>
 
 			{#if !profiledefault.stats && profilestuff}
 				{#await profilestuff}
 					<div class="badwordcounterw">Loading stats</div>
 				{:then { profile, statuscode }}
 					{#each Object.values(profile.stats) as data, index (index)}
-						{#if data}
+					{#if data && index == 0}
+<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
+					{:else if data && index == 1}
+<a class="badwordcounterw underlineme" href={`/${steam64}`}>{data}</a>
+					{:else if data}
 							<div class="badwordcounterw">{data}</div>
 						{/if}
 					{/each}
@@ -106,8 +110,13 @@
 				{/await}
 			{:else}
 				{#each Object.values(profiledefault.stats ?? []) as data, index (index)}
-					{#if data}
-						<div class="badwordcounterw">{data}</div>
+					{#if data && index == 0}
+<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
+					{:else if data && index == 1}
+<a class="badwordcounterw underlineme" href={`/${steam64}`}>{data}</a>
+					{:else if data}
+
+						<div class="badwordcounterw">{data} {index}</div>
 					{/if}
 				{/each}
 			{/if}
@@ -125,5 +134,5 @@
 					</div>
 			{/if}
 		</div>
-	</a>
+	</div>
 </div>

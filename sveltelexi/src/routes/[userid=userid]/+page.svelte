@@ -42,6 +42,11 @@
 			>
 			<a
 				class="externalwebsite loglink"
+				href={`https://logs.tf/profile/${personresults.steam64}`}
+				target="_blank">Logs.tf</a
+			>
+			<a
+				class="externalwebsite loglink"
 				href={`https://etf2l.org/search/${personresults.steam64}/`}
 				target="_blank">ETF2L</a
 			>

@@ -1,6 +1,6 @@
 import { query } from '$app/server';
 import { API_URL } from '$lib/morestuff/config';
-import type { Userdetails } from '$lib/morestuff/types';
+import type { Userdetails ,Aliases} from '$lib/morestuff/types';
 import * as v from 'valibot';
 
 export const getprofile = query(
@@ -60,5 +60,31 @@ export const getwordcloud = query(
 		} catch {
 			return { profile: '', statuscode: status };
 		}
+	}
+);
+
+
+export const getaliases = query(
+	v.string(),
+	async (steam64) => {
+		let aliases = {} as Aliases;
+		// console.log(profile)
+		let status = 500
+		try {
+			 const response = await fetch(`${API_URL}/aliases`, {
+				method: 'POST',
+				body: JSON.stringify({ url: steam64 }),
+				headers: { 'Content-Type': 'application/json' }
+			});
+
+			if (response.ok) {
+				aliases = await response.json();
+			}
+			status = response.status
+		} catch {
+			
+		}
+
+		return { aliases, statuscode: status };
 	}
 );
