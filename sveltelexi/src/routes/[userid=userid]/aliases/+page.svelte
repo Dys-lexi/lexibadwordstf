@@ -18,12 +18,12 @@
 	{#await aliases then { aliases }}
 		{#each aliases as alias, index (index)}
 			<div class="nonowordbox">
-				<a class="nonowordtimestamp" href={`https://logs.tf/${alias.firstlog}`}>
+			<div class="dateholder">	<a class="nonowordtimestamp" href={`https://logs.tf/${alias.firstlog}`}>
 					<span class="loglink underlineme" >first seen </span> <span style = "color:#eeeeee" class="nonowordmessage">{new Date(alias.firstseen * 1000).toLocaleDateString()} </span><span class="nonowordname" >{new Date(alias.firstseen * 1000).toLocaleTimeString()}{' '}</span> 
 				</a>
 				<a class="nonowordtimestamp" href={`https://logs.tf/${alias.lastlog}`}>
 				<span class="loglink underlineme" >	last seen </span><span  style = "color:#eeeeee"  class="nonowordmessage">{new Date(alias.lastseen * 1000).toLocaleDateString()} </span><span class="nonowordname" >{new Date(alias.lastseen * 1000).toLocaleTimeString()}{' '}</span> 
-				</a>
+				</a></div>
 				{alias.name}
 			</div>
 		{/each}

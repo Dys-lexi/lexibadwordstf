@@ -122,9 +122,13 @@
 			{/if}
 			{#if !profiledefault.mostrecentmatchtimestamp && profilestuff}
 				{#await profilestuff then { profile, statuscode }}
-	<div class="badwordcounterw"> Last seen
+				{#if profile.mostrecentmatchtimestamp}
+	<div class="badwordcounterw"> 
+		
+		Last seen
 					{new Date(profile.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
 					</div>
+						{/if}
 				{:catch error}
 					<!-- could not load profile for {steam64} {error.message} -->
 				{/await}
@@ -132,6 +136,7 @@
 					<div class="badwordcounterw"> Last seen
 					{new Date(profiledefault.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
 					</div>
+				
 			{/if}
 		</div>
 	</div>

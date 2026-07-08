@@ -1,10 +1,27 @@
 from contextvars import ContextVar
 from psycopg2 import pool
-
+from cachetools import cached, LRUCache, TTLCache
+import os
+import re
 try:
     pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
 except:
     pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
+chatfilterroot = "./chatfilters/"
+
+@cached(cache=TTLCache(maxsize=10, ttl=600))
+def getbadwords():
+    files = os.listdir(chatfilterroot)
+    wordslist = []
+    for file in files:
+        with open(f"{chatfilterroot}{file}","r") as fing:
+            for line in fing.readlines():
+                stripped = line.strip()
+                if stripped and not stripped.startswith("###") and len(stripped):
+                    wordslist.append(stripped)
+    return r'\b(' + '|'.join([re.escape(w) for w in [word.replace('\x00', '') for word in wordslist if word.replace('\x00', '') not in  ['%', '_', '']]]) + r')\b'
+
+
 
 class querywrapper:
     def __init__(self):
@@ -47,7 +64,9 @@ class querywrapper:
 
 
 
-
+with querywrapper() as query:
+    query.execute("""SELECT tablename   FROM pg_tables""")
+    tables = list(map(lambda x: x[0] ,query.fetchall()))
 def init():
     print("init")
     conn = pgpool.getconn()
@@ -173,4 +192,5 @@ def init():
     c.execute("CREATE INDEX IF NOT EXISTS idx_usernames_steamid ON usernames (steamid)")
     conn.commit()
     pgpool.putconn(conn)
-init()
+if "messages" not in tables:
+    init()

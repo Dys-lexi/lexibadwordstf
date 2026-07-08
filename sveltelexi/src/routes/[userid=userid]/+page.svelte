@@ -13,7 +13,7 @@
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
 
-		<Profile steam64={personresults.steam64}/>
+		<Profile steam64={personresults.steam64} profiledefault={personresults}/>
 
 			<!-- <div class="playedwithperson playedwithpersonpersonal">
 							

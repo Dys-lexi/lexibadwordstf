@@ -15,7 +15,7 @@
 	<div class="nonoresultsholder">
 
 			<!-- {@render Profile(personresults.steam64)} -->
-			<Profile steam64={personresults.steam64}/>
+			<Profile steam64={personresults.steam64} profiledefault={personresults}/>
 			<!-- <div class="playedwithperson playedwithpersonpersonal">
 							
 								<img

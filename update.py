@@ -10,7 +10,7 @@ import os
 import re
 import requests
 from steamid_converter import Converter
-from initsql import querywrapper
+from initsql import querywrapper, getbadwords
 import threading
 import itertools
 
@@ -286,15 +286,7 @@ def getpriority(ditionary, *priority, **kwargs):
 def messagesync(todologs = None):
     print("Updating messages")
     # print(todologs)
-    files = os.listdir(chatfilterroot)
-    wordslist = []
-    for file in files:
-        with open(f"{chatfilterroot}{file}","r") as fing:
-            for line in fing.readlines():
-                stripped = line.strip()
-                if stripped and not stripped.startswith("###") and len(stripped):
-                    wordslist.append(stripped)
-    pattern = r'\b(' + '|'.join([re.escape(w) for w in [word.replace('\x00', '') for word in wordslist if word.replace('\x00', '') not in  ['%', '_', '']]]) + r')\b'
+    pattern = getbadwords()
     conn = pgpool.getconn()
     c = conn.cursor()
     for log in coolfunctionthatreturnslotsoids("json->'chat' as chat_array, json->'info'->'date' as log_date", todologs):

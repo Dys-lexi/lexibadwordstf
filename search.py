@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()
-from initsql import querywrapper
+from initsql import querywrapper, getbadwords
 from tempurature import recalltemp
 from cachetools import cached, LRUCache, TTLCache
 from slurcloud import makewordcloud
@@ -74,16 +74,7 @@ def wordcloud(steam64):
 
 @cached(cache=TTLCache(maxsize=10, ttl=600))
 def wordcloudcache(steam64):
-    files = os.listdir(chatfilterroot)
-    wordslist = []
-    for file in files:
-        with open(f"{chatfilterroot}{file}","r") as fing:
-            for line in fing.readlines():
-                stripped = line.strip()
-                if stripped and not stripped.startswith("###") and len(stripped):
-                    wordslist.append(stripped)
-    pattern = r'\b(' + '|'.join([re.escape(w) for w in [word.replace('\x00', '') for word in wordslist if word.replace('\x00', '') not in  ['%', '_', '']]]) + r')\b'
-
+    pattern = getbadwords()
 
     with querywrapper() as query:
         steam3 = Converter.to_steamID3(steam64)
