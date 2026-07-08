@@ -303,7 +303,7 @@ def resolveamessyinputtoaprofile(userid):
 def resolvealiases(steam64):
     with querywrapper() as query:
         query.execute("""SELECT name,(SELECT l.time FROM logs_raw l WHERE l.id =  (SELECT MAX(x) FROM unnest(ids) AS x)) ,(SELECT l.time FROM logs_raw l WHERE l.id = (SELECT MIN(x) FROM unnest(ids) AS x)), (SELECT MIN(x) FROM unnest(ids) AS x),(SELECT MAX(x) FROM unnest(ids) AS x)  FROM usernames WHERE steamid = %s ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC""",(steam64,))
-        return list(map(lambda x: ({"name":x[0],"firstseen":int(x[2].timestamp()),"lastseen":int(x[1].timestamp()),"firstlog":x[3],"lastlog":x[4]}),query.fetchall()))
+        return list(map(lambda x: ({"name":x[0],"firstseen":x[2] and int(x[2].timestamp()) or "Unknown","lastseen":x[1] and int(x[1].timestamp()) or "Unknown","firstlog":x[3],"lastlog":x[4]}),list(filter(lambda x: x[1],query.fetchall()))))
         # aliases = aliases and aliases[0]
         # moreinfodict["aliases"] = aliases
 

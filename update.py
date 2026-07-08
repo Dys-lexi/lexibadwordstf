@@ -30,7 +30,7 @@ print("pants")
 def occasionallyrunsomething():
     print("loopies")
     while True:
-        time.sleep(3600)
+        # time.sleep(3600)
         occasionallyasknicelyiftherearenewlogs()
         time.sleep(7200)
 
@@ -201,9 +201,9 @@ def indexsomecoolmessages(firsttime = False):
 
     todologs = list(map(lambda x: x[0], cursor.fetchall()))
     print(f"Indexing {len(todologs):,} logs")
-    todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 500 else [*a,[b]] ,todologs,[])
-    initplayedwith(todologs)
-    usernamesync(todologs)
+    todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 10000 else [*a,[b]] ,todologs,[])
+    # initplayedwith(todologs)
+    # usernamesync(todologs)
     messagesync(todologs)
     print("done!")
 
@@ -216,9 +216,10 @@ def coolfunctionthatreturnslotsoids(thingtoreturn,todologs = None):
     if todologs == None: 
         cursor.execute(f"""SELECT id FROM logs_raw WHERE empty = false AND isduplicate IS NOT TRUE AND  isreuputable IS TRUE ORDER BY id DESC""")
         todologs = list(map(lambda x: x[0], cursor.fetchall()))
-        todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 5000 else [*a,[b]] ,todologs,[])
+        todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 10000 else [*a,[b]] ,todologs,[])
     for i,block in enumerate(todologs):
         cursor.execute(f"SELECT id,  {thingtoreturn} FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
+        print("doing block",i+1,"out of",len(todologs))
         for log in cursor.fetchall():
             yield {"log":log[0],"data":log[1:]}
     pgpool.putconn(conn)
@@ -284,7 +285,7 @@ def getpriority(ditionary, *priority, **kwargs):
 
 def messagesync(todologs = None):
     print("Updating messages")
-    print(todologs)
+    # print(todologs)
     files = os.listdir(chatfilterroot)
     wordslist = []
     for file in files:
@@ -302,10 +303,12 @@ def messagesync(todologs = None):
         chatarray = log["data"][0]
         log_date = log["data"][1]
         for idwithinlogs, message in enumerate(chatarray):
-            if re.search(pattern, message["msg"], re.IGNORECASE):
-                print("found a bad word",message["msg"])
-            cursor.execute("INSERT INTO messages (id,idwithinlogs, message,sender,time,name,flagged) VALUES (%s, %s, %s, %s, %s, %s ,%s) ON CONFLICT DO NOTHING",(logid,idwithinlogs,message["msg"],message["steamid"],log_date,message["name"],bool(re.search(pattern, message["msg"], re.IGNORECASE))))
-
+            # if re.search(pattern, message["msg"], re.IGNORECASE):
+            #     print("found a bad word",message["name"].ljust(20)+":",message["msg"])
+            c.execute("INSERT INTO messages (id,idwithinlogs, message,sender,time,name,flagged) VALUES (%s, %s, %s, %s, %s, %s ,%s) ON CONFLICT DO NOTHING",(logid,idwithinlogs,message["msg"],message["steamid"],log_date,message["name"],bool(re.search(pattern, message["msg"], re.IGNORECASE))))
+    
+        conn.commit()
+    pgpool.putconn(conn) 
 
 
 

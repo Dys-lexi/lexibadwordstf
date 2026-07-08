@@ -17,7 +17,7 @@ def tempreadingloop():
         output = tempreading()
         with lock:
             temp = output or temp
-        time.sleep(300)
+        time.sleep(60)
 def recalltemp():
     global temp
     with lock:
