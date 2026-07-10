@@ -1,12 +1,12 @@
 export type Userdetails = {
     currentusername: string
-    nonowords: Promise<Array<Badmessage>>
+    nonowords: Array<Badmessage>
     avatar: string
     frame?: string
     steam64: string
-    playedwith: Promise<Array<playedwithitem>>
-    biggestplayedwith: Promise<number>
-    totalplayedwith: Promise<number>
+    playedwith: Array<playedwithitem>
+    biggestplayedwith: number
+    totalplayedwith: number
     badwords: number
     logs: number
     aliases: Array<string>
@@ -42,6 +42,12 @@ export type playedwithitem = {
 
 }
 
+export type PlayedWithResponse = {
+    playedwith: Array<playedwithitem>
+    biggestplayedwith: number
+    totalplayedwith: number
+}
+
 export type Stats = {
     totalmatches: number
     totalmessages: number
@@ -49,4 +55,3 @@ export type Stats = {
     uniquepeople: number
     flaggedplayers: number
 }
-

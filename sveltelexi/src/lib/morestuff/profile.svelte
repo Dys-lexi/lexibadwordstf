@@ -5,6 +5,8 @@
 	import { copy } from './const.svelte';
 	import { page } from '$app/state';
 	import { getprofile } from '$lib/remote/data.remote';
+	import { getsteamurl } from '$lib/morestuff/config';
+
 	// let {steam64:string,profiledefault = {} as Userdetails} = $props();
 	// import { mousePosition } from './store.js';
 	async function copylink(steam64: string) {
@@ -78,7 +80,7 @@
 			{#if showcopy}
 				<button onclick={() => copylink(steam64)} class="copyimage"> {@render copy()} </button>
 			{/if}
-			<a class="nonowordcurrentusername underlineme" href={`/${steam64}`}>
+			<a class="nonowordcurrentusername underlineme" href={getsteamurl(steam64)}>
 				{#if !profiledefault.currentusername && profilestuff}
 					{#await profilestuff}
 						Loading Profile
@@ -97,11 +99,11 @@
 					<div class="badwordcounterw">Loading stats</div>
 				{:then { profile, statuscode }}
 					{#each Object.values(profile.stats) as data, index (index)}
-					{#if data && index == 0}
-<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
-					{:else if data && index == 1}
-<a class="badwordcounterw underlineme" href={`/${steam64}`}>{data}</a>
-					{:else if data}
+						{#if data && index == 0}
+							<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
+						{:else if data && index == 1}
+							<a class="badwordcounterw underlineme" href={getsteamurl(steam64)}>{data}</a>
+						{:else if data}
 							<div class="badwordcounterw">{data}</div>
 						{/if}
 					{/each}
@@ -111,32 +113,30 @@
 			{:else}
 				{#each Object.values(profiledefault.stats ?? []) as data, index (index)}
 					{#if data && index == 0}
-<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
+						<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
 					{:else if data && index == 1}
-<a class="badwordcounterw underlineme" href={`/${steam64}`}>{data}</a>
+						<a class="badwordcounterw underlineme" href={getsteamurl(steam64)}>{data}</a>
 					{:else if data}
-
 						<div class="badwordcounterw">{data} {index}</div>
 					{/if}
 				{/each}
 			{/if}
 			{#if !profiledefault.mostrecentmatchtimestamp && profilestuff}
 				{#await profilestuff then { profile, statuscode }}
-				{#if profile.mostrecentmatchtimestamp}
-	<div class="badwordcounterw"> 
-		
-		Last seen
-					{new Date(profile.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
-					</div>
-						{/if}
+					{#if profile.mostrecentmatchtimestamp}
+						<div class="badwordcounterw">
+							Last seen
+							{new Date(profile.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
+						</div>
+					{/if}
 				{:catch error}
 					<!-- could not load profile for {steam64} {error.message} -->
 				{/await}
 			{:else}
-					<div class="badwordcounterw"> Last seen
+				<div class="badwordcounterw">
+					Last seen
 					{new Date(profiledefault.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
-					</div>
-				
+				</div>
 			{/if}
 		</div>
 	</div>

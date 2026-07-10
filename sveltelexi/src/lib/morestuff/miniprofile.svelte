@@ -2,10 +2,11 @@
 	import './profile.css';
 	import type { playedwithitem } from '$lib/morestuff/types';
 	// export { Profile , };
-	import { copy } from './const.svelte';
+
 	import { page } from '$app/state';
 	import Hoverprofile from '$lib/morestuff/hoverprofile.svelte';
-	import { getprofile } from '$lib/remote/data.remote';
+		  import {getsteamurl} from '$lib/morestuff/config'
+
 	// let {steam64:string,profiledefault = {} as Userdetails} = $props();
 	// import { mousePosition } from './store.js';
 	async function copylink(steam64: string) {
@@ -18,7 +19,7 @@
 	// const coords =  mousePosition()
 </script>
 
-<a href={`/${data.steam64}`} class="playedwithstatsandwhatnot"> 
+<a href={getsteamurl(data.steam64)} class="playedwithstatsandwhatnot"> 
  <img
     style="filter:blur(5px) brightness(20%) saturate(200%);"
 

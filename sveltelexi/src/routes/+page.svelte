@@ -3,11 +3,11 @@
 	// import Search from '$lib/morestuff/Search.svelte';
 	import { page } from '$app/state';
 	import faviconUrl from '$lib/images/logosmall.png';
-	import type { PageData } from './$types';
+	import type { PageData} from './$types';
 
 	let { data }: { data: PageData } = $props();
 	const { stats, statuscode } = $derived(data);
-
+  import Search from "$lib/morestuff/Search.svelte";
 	const prettynames: Record<string, string> = {
 		uniquepeople: 'Unique Players',
 		totalmessages: 'Total Messages',
@@ -20,6 +20,7 @@
 		return prettynames[name] || name;
 	}
 </script>
+          <Search classNameform="bigsearchform" classNameinput="bigsearchinput" classnamebutton="bigsearchbutton" />
 
 <div class="flexbox" style="gap: 30px; margin-top: 30px">
 	<div class="statsholder">

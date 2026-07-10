@@ -88,3 +88,57 @@ export const getaliases = query(
 		return { aliases, statuscode: status };
 	}
 );
+
+
+export const nonowords = query(
+	v.string(),
+	async (steam64) => {
+		let badwords = {} as Userdetails;
+		// console.log(profile)
+		let status = 500
+		try {
+			 const response = await fetch(`${API_URL}/badwords`, {
+				method: 'POST',
+				body: JSON.stringify({ url: steam64 }),
+				headers: { 'Content-Type': 'application/json' }
+			});
+
+			if (response.ok) {
+				badwords = await response.json();
+			}
+			status = response.status
+		} catch {
+			
+		}
+
+		return { badwords, statuscode: status };
+	}
+);
+
+export const playedwithdetails = query(
+	v.object({
+		steam64: v.string(),
+		more: v.boolean()
+	}),
+	async (data) => {
+		let playedwithdata = {} as Userdetails;
+		// console.log(profile)
+		let status = 500
+		try {
+			 const response = await fetch(`${API_URL}/playedwith`, {
+				method: 'POST',
+				body: JSON.stringify({ url: data.steam64, expand:data.more }),
+				headers: { 'Content-Type': 'application/json' }
+			});
+
+			if (response.ok) {
+				playedwithdata = await response.json();
+			}
+			status = response.status
+		} catch {
+			
+		}
+
+		return { playedwithdata, statuscode: status };
+	}
+);

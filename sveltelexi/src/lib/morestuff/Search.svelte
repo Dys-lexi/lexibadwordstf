@@ -3,6 +3,7 @@
   import { usewsstore } from './websocketsearch';
   import '../../routes/Layout.css';
 	import { onMount } from 'svelte';
+  import {getsteamurl} from '$lib/morestuff/config'
 
   let { classNameform = '', classNameinput = '', classnamebutton = '' } = $props();
 
@@ -26,7 +27,7 @@
     steam64 = null
     const match = matches.length && matches[0].n[0].toLocaleLowerCase().includes(username.toLocaleLowerCase());
     const id = match ? matches[0].id : username;
-    await goto(`/${encodeURIComponent(id)}`);
+    await goto(getsteamurl(id));
   }
 
   async function onsuggest(id: string, name: string) {

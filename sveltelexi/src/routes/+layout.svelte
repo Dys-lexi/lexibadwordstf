@@ -1,13 +1,11 @@
 <script lang="ts">
 
-	import { page } from '$app/state';
+	import { page, navigating } from '$app/state';
 	import './Layout.css';
 	import { Logo } from "$lib/morestuff/const.svelte";
   import Search from "$lib/morestuff/Search.svelte";
 	import faviconUrl from "$lib/images/logosmall.png";
 	let { children ,data} = $props();
-
-
 	let { temp,randomnumber } = $derived(data);
 </script>
   
@@ -23,8 +21,11 @@
           <h1 style = "margin: 0px">lexislurs for team fortress 2</h1>
           
         </div>
-          <Search classNameform="bigsearchform" classNameinput="bigsearchinput" classnamebutton="bigsearchbutton" />
+        <!-- {#if navigating.to}
+          owag
+        	{:else} -->
         {@render children()}
+        <!-- {/if} -->
       </div>
  
   

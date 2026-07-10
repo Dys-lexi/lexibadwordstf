@@ -130,6 +130,7 @@ def init():
             time BIGINT,
             name TEXT,
             flagged BOOLEAN,
+            trusted BOOLEAN,
             PRIMARY KEY (id, idwithinlogs)
         )"""
     )
@@ -159,7 +160,7 @@ def init():
 
     c.execute("CREATE UNIQUE INDEX IF NOT EXISTS name ON uploadercounter(uploaderid);")
 
-
+    c.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS trusted BOOLEAN")
     # print("teee")
     c.execute("CREATE INDEX IF NOT EXISTS idx_messages_id ON messages (id)")
     # print("a")
@@ -183,7 +184,10 @@ def init():
     # print("d")
     c.execute("CREATE INDEX IF NOT EXISTS idx_logs_raw_isduplicate ON logs_raw (isduplicate)")
     # print("e")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true;")
+    # c.execute("DROP INDEX idx_messages_flagged")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true AND trusted IS NOT false")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flaggedstuff ON messages (flagged)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flaggedtrusted ON messages (trusted)")
     # print("veee")
 
     c.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
@@ -194,3 +198,4 @@ def init():
     pgpool.putconn(conn)
 if "messages" not in tables:
     init()
+# init()

@@ -5,8 +5,9 @@
 	import Profile from '$lib/morestuff/profile.svelte'
 	import '../Page.css';
 	import './Page.css';
-	import Hoverprofile from '$lib/morestuff/hoverprofile.svelte'
+
 	import Miniprofile from '$lib/morestuff/miniprofile.svelte'
+	import { playedwithdetails } from '$lib/remote/data.remote';
 	let { data } = $props();
 	let { personresults, statuscode } = $derived(data);
 </script>
@@ -26,32 +27,35 @@
 								<div class = "playedwithname" >Plays With</div>
 							</div> -->
 	
-		{#await personresults.playedwith}
+		{#await playedwithdetails({steam64: personresults.steam64, more: true})}
 			Loading playedwith data
-		{:then playedwith}
-			{#await personresults.biggestplayedwith then biggestplayedwith}
-				{#await personresults.totalplayedwith then totalplayedwith}
-					{#if playedwith.length}
+		{:then {playedwithdata}}
+
+					{#if playedwithdata.playedwith.length}
 						<div class="playedwithholderholder">
 							<div class="playedwithinfo">
 								<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}`}>
-									{personresults.currentusername} has played with {totalplayedwith} people
+									{personresults.currentusername} has played with {playedwithdata.totalplayedwith} people
 								</a>
 							</div>
 							<div class="playedwithholderbig playedwithholder">
-								{#each playedwith as data, index (index)}
-								<Miniprofile data={data} biggestplayedwith={biggestplayedwith}/>
+								{#each playedwithdata.playedwith as data, index (index)}
+								<Miniprofile data={data} biggestplayedwith={playedwithdata.biggestplayedwith}/>
 								
 								{/each}
 							</div>
 						</div>
 					{/if}
-				{/await}
-			{/await}
+		
+
 		{:catch error}
 			<h2>realy weird error loading data: {error.message}</h2>
 		{/await}
 	</div>
+{:else}
+<h1  style="color: red">
+				Something went wrong :( {statuscode}
+			</h1>
 {/if}
 
 <svelte:head>

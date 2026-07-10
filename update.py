@@ -30,9 +30,9 @@ print("pants")
 def occasionallyrunsomething():
     print("loopies")
     while True:
-        # time.sleep(3600)
+        time.sleep(3600)
         occasionallyasknicelyiftherearenewlogs()
-        time.sleep(7200)
+        time.sleep(3600*6)
 
 def occasionallyasknicelyiftherearenewlogs():
     conn = pgpool.getconn()
@@ -90,6 +90,7 @@ def redothatmaterialview():
     print("removing logs from less reputable places")
 
     conn = pgpool.getconn()
+    logthreshold = 500
 
     c = conn.cursor()
 
@@ -101,27 +102,28 @@ def redothatmaterialview():
             print("big refresh!")
             c.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY uploadercounter")
 
-            c.execute("SELECT ids FROM uploadercounter WHERE cardinality(ids) > 50")
+            c.execute(f"SELECT ids FROM uploadercounter WHERE cardinality(ids) > {logthreshold}")
 
             # print(functools.reduce(lambda a,b:  [*a,*b[0]],c.fetchall(),[]))
             c.execute("UPDATE logs_raw SET isreuputable = TRUE where id = ANY(%s)",(
                 functools.reduce(lambda a,b:  [*a,*b[0]], c.fetchall(), []),
             ))
 
-            c.execute("SELECT ids FROM uploadercounter  WHERE cardinality(ids) <= 50")
+            c.execute(f"SELECT ids FROM uploadercounter  WHERE cardinality(ids) <= {logthreshold}")
 
             c.execute("UPDATE logs_raw SET isreuputable = FALSE where id = ANY(%s)",(
                 functools.reduce(lambda a,b:  [*a,*b[0]], c.fetchall(), []),
             ))
+            
 
         else:
             print(f"only {null_count} unprocessed logs, skipping materialized view refresh")
 
 
-            c.execute("""
+            c.execute(f"""
                 SELECT uploaderid
                 FROM uploadercounter
-                WHERE cardinality(ids) > 50
+                WHERE cardinality(ids) > {logthreshold}
                 
             """)
             
@@ -158,9 +160,13 @@ def redothatmaterialview():
                 )
 
         conn.commit()
-
+        c.execute("SELECT id, json->'names', json->'info'->'uploader'->'id' FROM logs_raw WHERE isreuputable = FALSE AND empty IS FALSE ORDER BY id DESC")
+        c.execute("UPDATE logs_raw SET isreuputable = TRUE WHERE id = ANY(%s)",(list(map(lambda x: x[0],list(filter( lambda x: x[2]   and x[2].isdigit() and int(x[2]) and len(x[2]) == 17 and (Converter.to_steamID3(x[2]) in x[1] or Converter.to_steamID(x[2]) in  x[1]), c.fetchall())))),))
+        # c.execute("UPDATE messages AS m SET trusted = r.isreuputable FROM logs_raw AS r WHERE m.id = r.id")
+        conn.commit()
     except Exception:
         conn.rollback()
+        pgpool.putconn(conn)
         raise
 
     finally:
@@ -201,9 +207,8 @@ def indexsomecoolmessages(firsttime = False):
 
     todologs = list(map(lambda x: x[0], cursor.fetchall()))
     print(f"Indexing {len(todologs):,} logs")
-    todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 10000 else [*a,[b]] ,todologs,[])
-    # initplayedwith(todologs)
-    # usernamesync(todologs)
+    initplayedwith(todologs)
+    usernamesync(todologs)
     messagesync(todologs)
     print("done!")
 
@@ -216,7 +221,7 @@ def coolfunctionthatreturnslotsoids(thingtoreturn,todologs = None):
     if todologs == None: 
         cursor.execute(f"""SELECT id FROM logs_raw WHERE empty = false AND isduplicate IS NOT TRUE AND  isreuputable IS TRUE ORDER BY id DESC""")
         todologs = list(map(lambda x: x[0], cursor.fetchall()))
-        todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 10000 else [*a,[b]] ,todologs,[])
+    todologs = functools.reduce(lambda a, b: [*a[:-1],[*a[-1],b]] if a and len(a[-1]) < 10000 else [*a,[b]] ,todologs,[])
     for i,block in enumerate(todologs):
         cursor.execute(f"SELECT id,  {thingtoreturn} FROM logs_raw WHERE id = ANY(%s)  ORDER BY id",(block,))
         print("doing block",i+1,"out of",len(todologs))
@@ -423,7 +428,7 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
                         print(json.dumps(r.json(),indent = 4))
                         print("COULD NOT FIND PERSONA NAME")
                         continue
-                    query.execute("INSERT INTO currentthings (steamid,timestampcurrentname,avatar,currentname,vanity) VALUES (%s,%s,%s,%s,%s)",(int(r.json()[0]["steamid"]),now,r.json()[0]["avatar_url"],r.json()[0]["persona_name"],r.json()[0]["profile_url"] or None ))
+                    query.execute("INSERT INTO currentthings (steamid, timestampcurrentname, avatar, currentname, vanity) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (steamid) DO UPDATE SET timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, currentname = EXCLUDED.currentname, vanity = EXCLUDED.vanity", (int(r.json()[0]["steamid"]), now, r.json()[0]["avatar_url"], r.json()[0]["persona_name"], r.json()[0]["profile_url"] or None))
                     query.commit()
                 else:
                     # print(r.status_code)

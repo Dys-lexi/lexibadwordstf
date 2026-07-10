@@ -1,21 +1,28 @@
 <script lang="ts">
-	import type { Userdetails } from '$lib/morestuff/types';
 	import { page } from '$app/state';
-	import Profile from '$lib/morestuff/profile.svelte'
-	import Hoverprofile from '$lib/morestuff/hoverprofile.svelte'
-	import Miniprofile from '$lib/morestuff/miniprofile.svelte'
+	import Profile from '$lib/morestuff/profile.svelte';
+	import Miniprofile from '$lib/morestuff/miniprofile.svelte';
+	import { playedwithdetails, nonowords } from '$lib/remote/data.remote';
+	import { onMount } from 'svelte';
+	// import {replaceState} from "$app/navigation"
+	// onMount(() => {
+	// 	if (page.url.searchParams.get('asyncload') === '1') {
+	// 		const url = new URL(page.url);
+	// 		url.searchParams.delete('asyncload');
+	// 		replaceState( '', url.toString());
+	// 	}
+	// });
 	import './Page.css';
-	import { Logo } from '$lib/morestuff/const.svelte';
+	import { getsteamurl } from '$lib/morestuff/config';
 	let { data } = $props();
 	let { personresults, statuscode } = $derived(data);
 </script>
 
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
+		<Profile steam64={personresults.steam64} profiledefault={personresults} />
 
-		<Profile steam64={personresults.steam64} profiledefault={personresults}/>
-
-			<!-- <div class="playedwithperson playedwithpersonpersonal">
+		<!-- <div class="playedwithperson playedwithpersonpersonal">
 							
 								<img
 									class="playedwithphoto"
@@ -27,9 +34,10 @@
 
 		<div class="externalwebsiteholder">
 			<a
-				class="externalwebsite loglink" 
+				class="externalwebsite loglink"
 				href={`/${personresults.steam64}/wordcloud`}
-				target="_blank">Wordcloud 	<img
+				target="_blank"
+				>Wordcloud <img
 					src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`}
 					class="bigblurext"
 					alt=""
@@ -66,37 +74,32 @@
 				target="_blank">RGL</a
 			>
 		</div>
-		{#await personresults.playedwith}
+		{#await playedwithdetails({steam64: personresults.steam64, more: false})}
 			<div>Loading playedwith data</div>
-		{:then playedwith}
-			{#await personresults.biggestplayedwith then biggestplayedwith}
-				{#await personresults.totalplayedwith then totalplayedwith}
-					{#if playedwith.length}
-						<div class="playedwithholderholder">
-							<div class="playedwithinfo">
-								<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}/playedwith`}>
-									{personresults.currentusername} has played with {totalplayedwith} people
-								</a>
-							</div>
-							<div class="playedwithholder">
-						
-								{#each playedwith as data, index (index)}
-									<Miniprofile data={data} biggestplayedwith={biggestplayedwith}/>
-								{/each}
-							</div>
-						</div>{/if}
-				{/await}
-			{/await}
+		{:then { playedwithdata }}
+			{#if playedwithdata.playedwith.length}
+				<div class="playedwithholderholder">
+					<div class="playedwithinfo">
+						<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}/playedwith`}>
+							{personresults.currentusername} has played with {playedwithdata.totalplayedwith} people
+						</a>
+					</div>
+					<div class="playedwithholder">
+						{#each playedwithdata.playedwith as data, index (index)}
+							<Miniprofile {data} biggestplayedwith={playedwithdata.biggestplayedwith} />
+						{/each}
+					</div>
+				</div>{/if}
 		{:catch error}
 			<h2>realy weird error loading data: {error.message}</h2>
 		{/await}
-		{#await personresults.nonowords}
+		{#await nonowords(personresults.steam64)}
 			<div>Loading Bad words</div>
-		{:then nonowords}
+		{:then { badwords }}
 			<div class="nonowordsholder">
-				{#if nonowords.length}
+				{#if badwords.nonowords.length}
 					<!-- {console.log( personresults.badwords,"PANTS")} -->
-					{#each nonowords as badword, index (index)}
+					{#each badwords.nonowords as badword, index (index)}
 						<div class="nonowordbox">
 							<a
 								class="nonowordtimestamp loglink"
@@ -177,7 +180,7 @@
 	{/if}
 
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content={page.url.href} />
+	<meta property="og:url" content={getsteamurl(page.url.href, false)} />
 	<meta property="og:title" content="LexiSlurs" />
 
 	<!-- <meta property="og:image:width" content="184" />

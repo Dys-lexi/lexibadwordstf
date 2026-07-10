@@ -48,16 +48,16 @@ def cachestats():
         query.execute("SELECT COUNT(*) FROM logs_raw")
         if output := query.fetchone():
             stats["totalmatches"] = output[0]
-        query.execute("SELECT COUNT(*) FROM messages")
+        query.execute("SELECT COUNT(*) FROM messages WHERE trusted IS NOT FALSE")
         if output := query.fetchone():
             stats["totalmessages"] = output[0]
-        query.execute("SELECT COUNT(*) FROM messages WHERE flagged = true")
+        query.execute("SELECT COUNT(*) FROM messages WHERE flagged = true AND trusted IS NOT FALSE")
         if output := query.fetchone():
             stats["badmessages"] = output[0]
-        query.execute("SELECT COUNT(DISTINCT sender) FROM messages")
+        query.execute("SELECT COUNT(DISTINCT steamid) FROM usernames")
         if output := query.fetchone():
             stats["uniquepeople"] = output[0]
-        query.execute("SELECT COUNT(DISTINCT sender) FROM messages WHERE flagged = true")
+        query.execute("SELECT COUNT(DISTINCT sender) FROM messages WHERE flagged = true AND trusted IS NOT FALSE")
         if output := query.fetchone():
             stats["flaggedplayers"] = output[0]
         print("done caching stats")
@@ -78,7 +78,7 @@ def wordcloudcache(steam64):
 
     with querywrapper() as query:
         steam3 = Converter.to_steamID3(steam64)
-        query.execute("""SELECT message FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
+        query.execute("""SELECT message FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
         output = {}
         for message in list(map(lambda x: x[0],query.fetchall())):
             match = (re.search(pattern, message, re.IGNORECASE).group()).lower()
@@ -117,6 +117,7 @@ def stats_cache():
 @app.route("/playedwith",methods=["POST","GET"])
 def playedwithwrapper():
     # print(request.get_json())
+    # print(f"playedwith {int(time.time()):,}")
     return playedwith(int(request.get_json()["url"]),request.get_json().get("expand"))
 
 @cached(cache=TTLCache(maxsize=10, ttl=1800))
@@ -152,7 +153,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
     moreinfodict = {}
     now = int(time.time())
     with querywrapper() as query:
-        query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
+        query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
         moreinfodict["badwords"] = query.fetchone()[0]
         query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
         output = query.fetchone()
@@ -164,7 +165,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                     currentname = None
                     frame = None
                     avatarurl = None
-                    if r.status_code in [429]:
+                    if r.status_code in [429,503]:
                         lastratelimittime = now
                         # print("I GOT RATE LIMITED")
                         query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
@@ -181,7 +182,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                         avatarurl = r.json()[0]["avatar_url"]
                         profilevanity = r.json()[0]["profile_url"]
                     r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"})
-                    if r.status_code in [429,500]:
+                    if r.status_code in [429,500,503]:
                         # return {}, r.status_code
                         frame = None
                         failed = True
@@ -205,7 +206,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                     query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
                     # query.execute("SELECT  name  FROM usernames WHERE steamid = %s ORDER BY ", (steam64,) )
                     othername = query.fetchone()
-                    currentname =  (output and output[0]) or ((othername or "Unknown") and othername[0])
+                    currentname =  (output and output[0]) or (othername and othername[0] or "Unknown")
                     avatarurl = (output and output[2]) or "0"
                     frame = (output and output[3]) or None
         else:
@@ -286,7 +287,6 @@ def resolveamessyinputtoaprofile(userid):
             try:
                 steam3 = Converter.to_steamID3(userid)
             except: 
-                query.rollback()
                 return resolveamessyinputtoaprofile(f"https://steamcommunity.com/id/{userid}")
                 
         return( Converter.to_steamID64(steam3))
@@ -331,7 +331,7 @@ def resolvename_cache(userid):
 
         
         
-        query.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
+        query.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
         
         output = list(map(lambda x: {"name":x[0],"timestamp":x[2],"message":x[1],"matchid":x[3]},query.fetchall()))
         reallogs = []
@@ -465,7 +465,7 @@ def handle_search_helper(data):
 # gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 --bind 0.0.0.0:3440 search:app
 print("done!")
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": [os.getenv("WEBSITEURLFORCORS").split(",")] or "*"}})
 
 
 if __name__ == '__main__':
