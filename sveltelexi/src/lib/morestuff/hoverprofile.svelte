@@ -12,7 +12,7 @@
 	import { readable, type Readable } from 'svelte/store';
 
 	type Coordinates = { x: number; y: number };
-	let coords: Readable<Coordinates> = $state(readable({ x: 0, y: 0 }));
+	let coords: Readable<Coordinates> = $state(readable({ x: 0 , y: 0 }));
 
 	onMount(() => {
 		coords = mousePosition();
@@ -39,6 +39,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 let hoverX = $derived(
+	$coords.x === 0 ? -999 :
 	clamp($coords.x + hoverOffset, hoverOffset, innerWidth - hoverWidth - hoverOffset)
 )
 let hoverY = $derived(
