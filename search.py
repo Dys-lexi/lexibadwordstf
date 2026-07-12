@@ -316,6 +316,7 @@ def aliases():
 
 @app.after_request
 def bleh(response):
+    # time.sleep(2)
     # print("woag \n")
     # print(json.dumps(response.json,indent=4))
     return response

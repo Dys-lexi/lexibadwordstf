@@ -133,10 +133,12 @@
 					<!-- could not load profile for {steam64} {error.message} -->
 				{/await}
 			{:else}
+			{#if profiledefault.mostrecentmatchtimestamp}
 				<div class="badwordcounterw">
 					Last seen
 					{new Date(profiledefault.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
 				</div>
+				{/if}
 			{/if}
 		</div>
 	</div>

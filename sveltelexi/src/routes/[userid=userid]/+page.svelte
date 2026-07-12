@@ -132,25 +132,29 @@
 				>
 			</div>
 			{#if loading}
-				{@render playedwithsnippet(
-					(await playedwithdetails({ steam64: personresults.steam64, more: false })).playedwithdata
-				)}
+				{@render playedwithsnippet((await playedwithdetails({ steam64: personresults.steam64, more: false })).playedwithdata,personresults)}
 			{:else}
 				{#await playedwithdetails({ steam64: personresults.steam64, more: false })}
-					<div>Loading playedwith data</div>
-				{:then { playedwithdata }}
-					{@render playedwithsnippet(playedwithdata)}
+				<div class="skellyTheskeleton contents">
+					{@render playedwithsnippet((await playedwithdetails({ steam64: "0", more: false })).playedwithdata,personresults)}
+				</div>
+					{:then { playedwithdata }}
+					{@render playedwithsnippet(playedwithdata,personresults)}
 				{:catch error}
 					<h2>realy weird error loading data: {error.message}</h2>
 				{/await}
 			{/if}
 			{#if loading}
-				{@render nonowordssnip((await nonowords(personresults.steam64)).badwords)}
+		
+				{@render nonowordssnip((await nonowords(personresults.steam64)).badwords,personresults)}
+				
 			{:else}
 				{#await nonowords(personresults.steam64)}
-					<div>Loading Bad words</div>
+					<div class="skellyTheskeleton contents">
+					{@render nonowordssnip((await nonowords("0")).badwords,personresults)}
+					</div>
 				{:then { badwords }}
-					{@render nonowordssnip(badwords)}
+					{@render nonowordssnip(badwords,personresults)}
 				{:catch error}
 					<h2>could not load bad words: {error.message}</h2>
 				{/await}
@@ -165,7 +169,7 @@
 	{/if}
 {/snippet}
 
-{#snippet nonowordssnip(badwords: BadWordsResponse)}
+{#snippet nonowordssnip(badwords: BadWordsResponse,personresults:Userdetails)}
 	<div class="nonowordsholder">
 		{#if badwords.nonowords.length}
 			<!-- {console.log( personresults.badwords,"PANTS")} -->
@@ -201,7 +205,7 @@
 		{/if}
 	</div>{/snippet}
 
-{#snippet playedwithsnippet(playedwithdata: PlayedWithResponse)}
+{#snippet playedwithsnippet(playedwithdata: PlayedWithResponse,personresults:Userdetails)}
 	{#if playedwithdata.playedwith.length}
 		<div class="playedwithholderholder">
 			<div class="playedwithinfo">

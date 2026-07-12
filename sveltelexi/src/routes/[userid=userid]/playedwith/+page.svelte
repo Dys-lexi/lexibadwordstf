@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Userdetails } from '$lib/morestuff/types';
+	import type { Userdetails, PlayedWithResponse } from '$lib/morestuff/types';
 
 	import { page } from '$app/state';
 	import Profile from '$lib/morestuff/profile.svelte'
@@ -28,26 +28,14 @@
 							</div> -->
 	
 		{#await playedwithdetails({steam64: personresults.steam64, more: true})}
-			Loading playedwith data
-		{:then {playedwithdata}}
-
-					{#if playedwithdata.playedwith.length}
-						<div class="playedwithholderholder">
-							<div class="playedwithinfo">
-								<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}`}>
-									{personresults.currentusername} has played with {playedwithdata.totalplayedwith} people
-								</a>
-							</div>
-							<div class="playedwithholderbig playedwithholder">
-								{#each playedwithdata.playedwith as data, index (index)}
-								<Miniprofile data={data} biggestplayedwith={playedwithdata.biggestplayedwith}/>
-								
-								{/each}
-							</div>
-						</div>
-					{/if}
+		<div class="skellyTheskeleton contents">
+				{@render playedwithsnippet((await playedwithdetails({steam64: "0", more: true})).playedwithdata,personresults)}
+		</div>
 		
+				{:then {playedwithdata}}
 
+		
+		{@render playedwithsnippet(playedwithdata,personresults)}
 		{:catch error}
 			<h2>realy weird error loading data: {error.message}</h2>
 		{/await}
@@ -97,3 +85,23 @@
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="LexiSlurs" />
 </svelte:head>
+
+
+{#snippet playedwithsnippet(playedwithdata: PlayedWithResponse,personresults:Userdetails)}
+
+					{#if playedwithdata.playedwith.length}
+						<div class="playedwithholderholder">
+							<div class="playedwithinfo">
+								<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}`}>
+									{personresults.currentusername} has played with {playedwithdata.totalplayedwith} people
+								</a>
+							</div>
+							<div class="playedwithholderbig playedwithholder">
+								{#each playedwithdata.playedwith as data, index (index)}
+								<Miniprofile data={data} biggestplayedwith={playedwithdata.biggestplayedwith}/>
+								
+								{/each}
+							</div>
+						</div>
+					{/if}
+{/snippet}
