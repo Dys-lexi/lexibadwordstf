@@ -23,7 +23,7 @@ async function getTemp(
 }
 
 export const load: LayoutServerLoad = ({ fetch, cookies }) => {
-	cookies.set('client', 'true', { path: '/' , sameSite:true});
+	
 	return {
 		temp: getTemp(fetch),
 		randomnumber: Math.floor(Math.random() * 1000)

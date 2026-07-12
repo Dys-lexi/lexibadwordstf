@@ -10,7 +10,7 @@
 	import type { PageProps } from './$types';
 	import { getaliases } from '$lib/remote/data.remote';
 		let { data,params } = $props();
-	let { personresults, statuscode } = $derived(data);
+	let { personresults, statuscode } = $derived(await data.profile);
 	const aliases = $derived(getaliases(params.userid));
 </script>
 {#if statuscode == 200}

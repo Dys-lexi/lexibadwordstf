@@ -35,12 +35,12 @@
 						class="nonowordavatar"
 						alt=""
 					/>
-				{:then { profile, statuscode }}
-					{#if profile.frame}
-						<img src={profile.frame} class="avatarholder" alt="" />
+				{:then { personresults, statuscode }}
+					{#if personresults.frame}
+						<img src={personresults.frame} class="avatarholder" alt="" />
 					{/if}
 					<img
-						src={`https://avatars.fastly.steamstatic.com/${profile.avatar}_full.jpg`}
+						src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`}
 						class="nonowordavatar"
 						alt=""
 					/>
@@ -59,9 +59,9 @@
 			{/if}
 		</div>
 		{#if !profiledefault.avatar && profilestuff}
-			{#await profilestuff then { profile, statuscode }}
+			{#await profilestuff then { personresults, statuscode }}
 				<img
-					src={`https://avatars.fastly.steamstatic.com/${profile.avatar}_full.jpg`}
+					src={`https://avatars.fastly.steamstatic.com/${personresults.avatar}_full.jpg`}
 					class="bigblur"
 					alt=""
 				/>
@@ -84,8 +84,8 @@
 				{#if !profiledefault.currentusername && profilestuff}
 					{#await profilestuff}
 						Loading Profile
-					{:then { profile, statuscode }}
-						{profile.currentusername}
+					{:then { personresults, statuscode }}
+						{personresults.currentusername}
 					{:catch error}
 						<!-- Could not load name -->
 					{/await}
@@ -97,8 +97,8 @@
 			{#if !profiledefault.stats && profilestuff}
 				{#await profilestuff}
 					<div class="badwordcounterw">Loading stats</div>
-				{:then { profile, statuscode }}
-					{#each Object.values(profile.stats) as data, index (index)}
+				{:then { personresults, statuscode }}
+					{#each Object.values(personresults.stats) as data, index (index)}
 						{#if data && index == 0}
 							<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
 						{:else if data && index == 1}
@@ -117,16 +117,16 @@
 					{:else if data && index == 1}
 						<a class="badwordcounterw underlineme" href={getsteamurl(steam64)}>{data}</a>
 					{:else if data}
-						<div class="badwordcounterw">{data} {index}</div>
+						<div class="badwordcounterw">{data}</div>
 					{/if}
 				{/each}
 			{/if}
 			{#if !profiledefault.mostrecentmatchtimestamp && profilestuff}
-				{#await profilestuff then { profile, statuscode }}
-					{#if profile.mostrecentmatchtimestamp}
+				{#await profilestuff then { personresults, statuscode }}
+					{#if personresults.mostrecentmatchtimestamp}
 						<div class="badwordcounterw">
 							Last seen
-							{new Date(profile.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
+							{new Date(personresults.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
 						</div>
 					{/if}
 				{:catch error}

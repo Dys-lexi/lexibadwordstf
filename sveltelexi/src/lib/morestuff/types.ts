@@ -32,12 +32,30 @@ export type Badmessage = {
     name: string
 }
 
+export type ProfileResponse = {
+    avatar: string | null
+    badwords: number
+    currentusername: string
+    frame: string | null
+    mostrecentmatchtimestamp: number
+    stats: {
+        aliases: string
+        badwords: string
+        logs: string
+    }
+    steam64: string
+}
+
+export type BadWordsResponse = {
+    nonowords: Array<Badmessage>
+}
+
 export type playedwithitem = {
     commonmatches: number
     currentusername: string
     avatar: string | null
     frame: string | null
-    backupusername: string
+    backupusername?: string
     steam64: string
 
 }

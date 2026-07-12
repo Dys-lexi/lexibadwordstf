@@ -1,6 +1,16 @@
 import { query } from '$app/server';
-import { API_URL } from '$lib/morestuff/config';
-import type { Userdetails ,Aliases} from '$lib/morestuff/types';
+import {
+	API_URL,
+	badwordsResponse,
+	playedwithResponse,
+	profileResponse
+} from '$lib/morestuff/config';
+import type {
+	Aliases,
+	BadWordsResponse,
+	PlayedWithResponse,
+	Userdetails
+} from '$lib/morestuff/types';
 import * as v from 'valibot';
 
 export const getprofile = query(
@@ -9,6 +19,13 @@ export const getprofile = query(
 		recall: v.number()
 	}),
 	async (data) => {
+		if (data.steam64 === '0' || data.steam64 === '00000000000000000') {
+			return {
+				personresults: profileResponse as unknown as Userdetails,
+				statuscode: 200
+			};
+		}
+
 		let profile = {} as Userdetails;
 		// console.log(profile)
 		let status = 500
@@ -27,7 +44,7 @@ export const getprofile = query(
 			
 		}
 
-		return { profile, statuscode: status };
+		return {personresults: profile, statuscode: status };
 	}
 );
 
@@ -93,7 +110,11 @@ export const getaliases = query(
 export const nonowords = query(
 	v.string(),
 	async (steam64) => {
-		let badwords = {} as Userdetails;
+		if (steam64 === '0' || steam64 === '00000000000000000') {
+			return { badwords: badwordsResponse, statuscode: 200 };
+		}
+
+		let badwords = {} as BadWordsResponse;
 		// console.log(profile)
 		let status = 500
 		try {
@@ -121,7 +142,11 @@ export const playedwithdetails = query(
 		more: v.boolean()
 	}),
 	async (data) => {
-		let playedwithdata = {} as Userdetails;
+		if (data.steam64 === '0' || data.steam64 === '00000000000000000') {
+			return { playedwithdata: playedwithResponse, statuscode: 200 };
+		}
+
+		let playedwithdata = {} as PlayedWithResponse;
 		// console.log(profile)
 		let status = 500
 		try {

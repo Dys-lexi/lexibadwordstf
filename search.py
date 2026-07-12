@@ -224,7 +224,9 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             aliases = query.fetchone()
             aliases = aliases and aliases[0]
-            moreinfodict["aliases"] = aliases
+            # moreinfodict["aliases"] = aliases
+            moreinfodict["stats"]["aliases"] = aliases and f"{len(aliases)} alias{not(len(aliases) - 1) and " " or "es"}"
+
             query.execute("""SELECT l.time FROM logs_raw l WHERE l.id = (SELECT MAX(x) FROM usernames u, unnest(u.ids) AS x WHERE u.steamid = %s);
             """,(steam64,))
             mostrecentmatch = query.fetchone()
@@ -236,7 +238,6 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             # playedwith = query.fetchone()
             # if playedwith:
             #     moreinfodict["stats"]["playedwith"] = f"{playedwith[0]} people played with"
-            moreinfodict["stats"]["aliases"] = moreinfodict["aliases"] and f"{len(moreinfodict["aliases"])} alias{not(len(moreinfodict["aliases"]) - 1) and " " or "es"}"
 
 
     if not avatarurl or  (avatarurl.isdigit() and not int(avatarurl)):
@@ -300,6 +301,7 @@ def resolvealiases(steam64):
 
 @app.route("/profile", methods=["POST"])
 def resolveprofile():
+    # time.sleep(30)
     steam64 = resolveamessyinputtoaprofile(request.get_json()["url"])
     if not steam64:
         return {}, 404
@@ -311,6 +313,12 @@ def aliases():
     # print(resolvealiases(int(request.get_json()["url"])))
     return  resolvealiases(int(request.get_json()["url"])) ,  200 
 
+
+@app.after_request
+def bleh(response):
+    # print("woag \n")
+    # print(json.dumps(response.json,indent=4))
+    return response
 
 @app.route("/badwords", methods=["POST"])
 def resolvename():

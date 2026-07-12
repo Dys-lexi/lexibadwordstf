@@ -14,7 +14,11 @@ const nonos = [
 "tone2_cropped_croppedsmall.png",
 "tone2_cropped.png",
 "favicon.ico",
-"sitemap.xml"
+"sitemap.xml",
+"0",
+"00000000000000000"
+
+
 ] as Array<string>
 
 

@@ -2,11 +2,13 @@
 
 	import { page, navigating } from '$app/state';
 	import './Layout.css';
+  	import { onMount } from 'svelte';
 	import { Logo } from "$lib/morestuff/const.svelte";
-  import Search from "$lib/morestuff/Search.svelte";
-	import faviconUrl from "$lib/images/logosmall.png";
 	let { children ,data} = $props();
 	let { temp,randomnumber } = $derived(data);
+    onMount(() => {
+        document.cookie = 'client=true; Path=/; SameSite=Strict;maxAge=604800';
+  })
 </script>
   
 <style>

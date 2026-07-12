@@ -9,7 +9,7 @@
 	import Miniprofile from '$lib/morestuff/miniprofile.svelte'
 	import { playedwithdetails } from '$lib/remote/data.remote';
 	let { data } = $props();
-	let { personresults, statuscode } = $derived(data);
+	let { personresults, statuscode } = $derived(await data.profile);
 </script>
 
 {#if statuscode == 200}
