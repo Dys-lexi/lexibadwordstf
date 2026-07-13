@@ -46,6 +46,7 @@ services:
         postgres:
           condition: service_started
     volumes:
+      # - ./fonts:/app/fonts:ro
       - ./search.py:/app/search.py:ro
       - ./tempurature.py:/app/tempurature.py:ro
       - ./initsql.py:/app/initsql.py:ro

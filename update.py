@@ -30,7 +30,7 @@ print("pants")
 def occasionallyrunsomething():
     print("loopies")
     while True:
-        time.sleep(3600)
+        # time.sleep(3600)
         occasionallyasknicelyiftherearenewlogs()
         time.sleep(3600*6)
 
@@ -38,6 +38,7 @@ def occasionallyasknicelyiftherearenewlogs():
     conn = pgpool.getconn()
     c = conn.cursor()
     c.execute("SELECT id FROM logs_raw ORDER BY id DESC LIMIT 1")
+    now = int(time.time())
     mostrecentstoredlog = c.fetchone()
     if mostrecentstoredlog: mostrecentstoredlog = mostrecentstoredlog[0]
     # print(mostrecentstoredlog)
@@ -61,7 +62,9 @@ def occasionallyasknicelyiftherearenewlogs():
             print("^ this log is missing!")
             continue
         # print(getpriority(log.json(),["info","date"]))
-
+        if getpriority(log.json(),["info","date"]) > now - 7200:
+            print("stopping download as log is potentially ongoing")
+            break
         c.execute("INSERT INTO logs_raw (id,json,time,empty,isduplicate) VALUES (%s, %s, to_timestamp(%s), %s, NULL)",(logid,json.dumps(log.json()),getpriority(log.json(),["info","date"]),not log.json()["success"]))
         conn.commit()
     # c.execute("INSERT INTO logs_raw (id,json,time) VALUES (%s, %s, to_timestamp(%s))",(6_000_000,json.dumps({"pants":"underwear"}),time.time()))

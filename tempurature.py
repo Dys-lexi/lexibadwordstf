@@ -14,10 +14,14 @@ def tempreading():
 def tempreadingloop():
     global temp
     while True:
-        output = tempreading()
-        with lock:
-            temp = output or temp
-        time.sleep(60)
+        try:
+            output = tempreading()
+            with lock:
+                temp = output or temp
+                # print(temp)
+        except:
+            pass
+        time.sleep(60)   
 def recalltemp():
     global temp
     with lock:

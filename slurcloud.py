@@ -6,6 +6,7 @@ import sys
 sys.path.append("./wordcloud")
 import numpy as np
 from PIL import Image
+import random
 fallback = True
 try:
     from wordcloudchanged import ImageColorGenerator, WordCloud
@@ -44,6 +45,9 @@ def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE):
     result = base_image.convert("RGBA")
     if frequencies:
         wc = WordCloud(
+            # font_path=random.choice(list(map(lambda x: f"./fonts/{x}",(os.listdir("./fonts"))))),
+            font_path= os.path.exists( "./fonts")and os.listdir("./fonts") and sorted(list(map(lambda x: f"./fonts/{x}",(os.listdir("./fonts")))),key = lambda x: os.path.getctime(x), reverse = True)[0] or None,
+
             max_words=100,
             mask=mask,
             max_font_size=250,
