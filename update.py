@@ -31,8 +31,10 @@ def occasionallyrunsomething():
     print("loopies")
     while True:
         # time.sleep(3600)
-        occasionallyasknicelyiftherearenewlogs()
-        time.sleep(3600*6)
+        pleasedoagainsoon = occasionallyasknicelyiftherearenewlogs()
+        if not pleasedoagainsoon:
+            time.sleep(3600*5.5)
+        time.sleep(30)
 
 def occasionallyasknicelyiftherearenewlogs():
     conn = pgpool.getconn()
@@ -51,12 +53,17 @@ def occasionallyasknicelyiftherearenewlogs():
     mostrecentlogid = mostrecentlog.json()["logs"][0]["id"]
     print(f"Logs downloaded: {mostrecentstoredlog:,} Logs on logs.tf: {mostrecentlogid:,}")
 # to_timestamp(1481294792) AT TIME ZONE 'UTC'
-
+    pleasedoagainsoon = False
     for logid in range(mostrecentstoredlog+1,mostrecentlogid+1):
         print(f"downloading log {logid:,}, {(mostrecentlogid-logid):,} logs left" )
-        log = requests.get(f"{root}/log/{logid}")
+        try:
+            log = requests.get(f"{root}/log/{logid}")
+        except:
+            pleasedoagainsoon = True
+            break
         if log.status_code != requests.codes.ok and log.status_code != 404:
             print("PANIC",logid,log.status_code)
+            pleasedoagainsoon = True
             break
         elif log.status_code == 404:
             print("^ this log is missing!")
@@ -64,12 +71,14 @@ def occasionallyasknicelyiftherearenewlogs():
         # print(getpriority(log.json(),["info","date"]))
         if getpriority(log.json(),["info","date"]) > now - 7200:
             print("stopping download as log is potentially ongoing")
+            # pleasedoagainsoon = True
             break
         c.execute("INSERT INTO logs_raw (id,json,time,empty,isduplicate) VALUES (%s, %s, to_timestamp(%s), %s, NULL)",(logid,json.dumps(log.json()),getpriority(log.json(),["info","date"]),not log.json()["success"]))
         conn.commit()
     # c.execute("INSERT INTO logs_raw (id,json,time) VALUES (%s, %s, to_timestamp(%s))",(6_000_000,json.dumps({"pants":"underwear"}),time.time()))
     pgpool.putconn(conn)
     indexsomecoolmessages()
+    return pleasedoagainsoon
     
 
 
