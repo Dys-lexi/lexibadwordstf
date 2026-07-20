@@ -87,10 +87,15 @@
 							</div>
 						{/if}
                         {#if badword.classes?.length}
-                            {@const biggestclassplaytime = Math.max(
+                            <!-- {@const biggestclassplaytime = Math.max(
                                 1,
                                 ...badword.classes.map((classinfo) => classinfo.time)
-                            )}
+                            )} -->
+							{@const biggestclassplaytime = badword.classes.reduce(
+    (total, classinfo) => total + classinfo.time,
+    0
+  )}
+
                             <div class="classholder">
                                 {#each badword.classes as classinfo, index (index)}
                                     <div class="woag">
