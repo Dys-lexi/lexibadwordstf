@@ -133,6 +133,7 @@ position: relative;
 	/* top:0;
 	left:0; */
 }
+
 .hoverplease{
 	 position: absolute;
 	 width:100%;
@@ -233,3 +234,6 @@ position: relative;
     
 }
 
+.contexthoverholder{
+	max-width:500px;
+}

@@ -10,7 +10,7 @@ import os
 import re
 import requests
 from steamid_converter import Converter
-from initsql import querywrapper, getbadwords
+from initsql import querywrapper, getbadwords, getpriority
 import threading
 import itertools
 
@@ -33,7 +33,7 @@ def occasionallyrunsomething():
         # time.sleep(3600)
         pleasedoagainsoon = occasionallyasknicelyiftherearenewlogs()
         if not pleasedoagainsoon:
-            time.sleep(3600*5.5)
+            time.sleep(3600*1)
         time.sleep(30)
 
 def occasionallyasknicelyiftherearenewlogs():
@@ -287,17 +287,7 @@ def setplayedwith(id,rounds):
 
 
 
-def getpriority(ditionary, *priority, **kwargs):
-    """Gets dictionary value using priority-based key lookup with fallbacks"""
-    for route in priority:
-        output = ditionary.copy()
-        if isinstance(route, str):
-            route = [route]
-        for place in route:
-            output = output.get(place, {})
-        if output != {}:
-            return output
-    return kwargs.get("nofind", None)
+
 
 
 def messagesync(todologs = None):
@@ -435,7 +425,7 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
                         print("could not find profile for",output)
                         query.execute("UPDATE usernames SET deletedaccount = true WHERE steamid = %s",(output[0],))
                         continue
-                    # print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
+                    print("pulled avatar for",r.json()[0].get("persona_name", "UNKNWON PERSONA NAME"))
                     if not r.json()[0].get("persona_name"):
                         print(json.dumps(r.json(),indent = 4))
                         print("COULD NOT FIND PERSONA NAME")

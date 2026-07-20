@@ -30,6 +30,10 @@ export type Badmessage = {
     message: string
     timestamp: number
     name: string
+    index?: number
+    team?: string,
+    original?: boolean
+    
 }
 
 export type ProfileResponse = {

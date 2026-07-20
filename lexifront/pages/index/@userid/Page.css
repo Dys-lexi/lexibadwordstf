@@ -7,6 +7,7 @@
 
 .nonowordbox{
     display: flex;
+    margin:0px;
     /* flex-direction: column; */
     padding:5px;
     background-color: rgba(255,255,255,0.05);

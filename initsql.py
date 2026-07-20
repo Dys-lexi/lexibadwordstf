@@ -20,7 +20,17 @@ def getbadwords():
                 if stripped and not stripped.startswith("###") and len(stripped):
                     wordslist.append(stripped)
     return r'\b(' + '|'.join([re.escape(w) for w in [word.replace('\x00', '') for word in wordslist if word.replace('\x00', '') not in  ['%', '_', '']]]) + r')\b'
-
+def getpriority(ditionary, *priority, **kwargs):
+    """Gets dictionary value using priority-based key lookup with fallbacks"""
+    for route in priority:
+        output = ditionary.copy()
+        if isinstance(route, str):
+            route = [route]
+        for place in route:
+            output = output.get(place, {})
+        if output != {}:
+            return output
+    return kwargs.get("nofind", None)
 
 
 class querywrapper:

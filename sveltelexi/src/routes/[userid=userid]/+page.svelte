@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Profile from '$lib/morestuff/profile.svelte';
+	import Badwordsbox from '$lib/morestuff/badwords.svelte';
 	import type { Userdetails, BadWordsResponse, PlayedWithResponse } from '$lib/morestuff/types';
 	import Miniprofile from '$lib/morestuff/miniprofile.svelte';
-	import { playedwithdetails, nonowords, getprofile } from '$lib/remote/data.remote';
+	import { playedwithdetails, nonowords, getprofile, getbadcontext } from '$lib/remote/data.remote';
 
 	import './Page.css';
 	import { getsteamurl } from '$lib/morestuff/config';
@@ -144,21 +145,7 @@
 					<h2>realy weird error loading data: {error.message}</h2>
 				{/await}
 			{/if}
-			{#if loading}
-		
-				{@render nonowordssnip((await nonowords(personresults.steam64)).badwords,personresults)}
-				
-			{:else}
-				{#await nonowords(personresults.steam64)}
-					<div class="skellyTheskeleton contents">
-					{@render nonowordssnip((await nonowords("0")).badwords,personresults)}
-					</div>
-				{:then { badwords }}
-					{@render nonowordssnip(badwords,personresults)}
-				{:catch error}
-					<h2>could not load bad words: {error.message}</h2>
-				{/await}
-			{/if}
+			<Badwordsbox personresults={personresults} rendermore={false}/>
 		</div>
 	{:else if statuscode == 404}
 		<h2>could not find user "{page.params.userid}"</h2>
@@ -169,41 +156,6 @@
 	{/if}
 {/snippet}
 
-{#snippet nonowordssnip(badwords: BadWordsResponse,personresults:Userdetails)}
-	<div class="nonowordsholder">
-		{#if badwords.nonowords.length}
-			<!-- {console.log( personresults.badwords,"PANTS")} -->
-			{#each badwords.nonowords as badword, index (index)}
-				<div class="nonowordbox">
-					<a
-						class="nonowordtimestamp loglink"
-						target="_blank"
-						href={`https://logs.tf/${badword.matchid}`}
-					>
-						log
-					</a>
-					<div class="nonowordtimestamp">
-						{new Date(badword.timestamp * 1000).toLocaleDateString()}{' '}
-						<div class="nonowordname">
-							{new Date(badword.timestamp * 1000).toLocaleTimeString()}
-						</div>
-					</div>
-
-					{' '}
-					<div class="nonowordname">
-						{badword.name}
-						<span class="loglinkwhite">:</span>
-					</div>
-					{' '}
-					<div class="nonowordmessage">
-						{badword.message}
-					</div>
-				</div>
-			{/each}
-		{:else}
-			<h2>No bad words found for {personresults.currentusername}</h2>
-		{/if}
-	</div>{/snippet}
 
 {#snippet playedwithsnippet(playedwithdata: PlayedWithResponse,personresults:Userdetails)}
 	{#if playedwithdata.playedwith.length}

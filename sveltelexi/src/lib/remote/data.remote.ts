@@ -167,3 +167,33 @@ export const playedwithdetails = query(
 		return { playedwithdata, statuscode: status };
 	}
 );
+
+
+export const getbadcontext = query(
+	v.object({
+		matchid: v.number(),
+		index: v.number()
+	}),
+	async (data) => {
+		// console.log("MEOW")
+		let context = {} as BadWordsResponse;
+		// console.log(profile)
+		let status = 500
+		try {
+			 const response = await fetch(`${API_URL}/badcontext`, {
+				method: 'POST',
+				body: JSON.stringify( data ),
+				headers: { 'Content-Type': 'application/json' }
+			});
+
+			if (response.ok) {
+				context.nonowords = await response.json();
+			}
+			status = response.status
+		} catch {
+			
+		}
+
+		return { context, statuscode: status };
+	}
+);

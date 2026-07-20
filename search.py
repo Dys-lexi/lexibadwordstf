@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()
-from initsql import querywrapper, getbadwords
+from initsql import querywrapper, getbadwords, getpriority
 from tempurature import recalltemp
 from cachetools import cached, LRUCache, TTLCache
 from slurcloud import makewordcloud
@@ -121,7 +121,7 @@ def playedwithwrapper():
     # print(f"playedwith {int(time.time()):,}")
     return playedwith(int(request.get_json()["url"]),request.get_json().get("expand"))
 
-@cached(cache=TTLCache(maxsize=10, ttl=1800))
+@cached(cache=TTLCache(maxsize=10, ttl=900))
 def playedwith(steam64,expand):
     offset = 25
     with querywrapper() as query:
@@ -147,7 +147,7 @@ def playedwith(steam64,expand):
     return {"playedwith":list(map(lambda x: {"steam64":str(x[0]),**x[1]},playedwith.items())),"biggestplayedwith": (playedwith or 0) and list(playedwith.values())[0]["commonmatches"],"totalplayedwith":total}
 
 
-@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+@cached(cache=TTLCache(maxsize=1024, ttl=900))
 def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
     global lastratelimittime
     # print(steam64)
@@ -270,7 +270,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
         print("pants")
     return {"avatar":avatarurl,"frame":frame,"currentusername":currentname,**moreinfodict}
 
-# @cached(cache=TTLCache(maxsize=30, ttl=1800))
+# @cached(cache=TTLCache(maxsize=30, ttl=900))
 def resolvelotsofavatars(steam64s):
     avatars = dict(zip(steam64s,["fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"]*len(steam64s),strict = True))
     with querywrapper() as query: 
@@ -280,11 +280,12 @@ def resolvelotsofavatars(steam64s):
             if avatarurl.isdigit() and not int(avatarurl):
                 avatars[steamid] = "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb"
     return avatars
-@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+@cached(cache=TTLCache(maxsize=1024, ttl=900))
 def resolveamessyinputtoaprofile(userid):
     now = int(time.time())
     with querywrapper() as query:
         if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
+            userid = userid.rsplit("?",1)[0]
             vanity =(userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1]
             query.execute("SELECT vanity,steamid,lastcheckedtimestamp FROM vanityurls WHERE vanity = %s",(vanity,))
             output = query.fetchone()
@@ -313,7 +314,7 @@ def resolveamessyinputtoaprofile(userid):
                 return resolveamessyinputtoaprofile(f"https://steamcommunity.com/id/{userid}")
                 
         return( Converter.to_steamID64(steam3))
-@cached(cache=TTLCache(maxsize=1024, ttl=1800))
+@cached(cache=TTLCache(maxsize=1024, ttl=900))
 def resolvealiases(steam64):
     with querywrapper() as query:
         query.execute("""SELECT name,(SELECT l.time FROM logs_raw l WHERE l.id =  (SELECT MAX(x) FROM unnest(ids) AS x)) ,(SELECT l.time FROM logs_raw l WHERE l.id = (SELECT MIN(x) FROM unnest(ids) AS x)), (SELECT MIN(x) FROM unnest(ids) AS x),(SELECT MAX(x) FROM unnest(ids) AS x)  FROM usernames WHERE steamid = %s ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC""",(steam64,))
@@ -345,10 +346,10 @@ def bleh(response):
 
 @app.route("/badwords", methods=["POST"])
 def resolvename():
-    return resolvename_cache(request.get_json()["url"])
+    return badwordsandsuch(request.get_json()["url"])
 
-@cached(cache=TTLCache(maxsize=1024, ttl=1800))
-def resolvename_cache(userid):
+@cached(cache=TTLCache(maxsize=1024, ttl=900))
+def badwordsandsuch(userid):
     now = int(time.time())
     print("pulling a user at",now,userid )
     timer = time.time()
@@ -362,9 +363,9 @@ def resolvename_cache(userid):
 
         
         
-        query.execute("""SELECT name, message,time,id FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
+        query.execute("""SELECT name, message,time,id, idwithinlogs FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
         
-        output = list(map(lambda x: {"name":x[0],"timestamp":x[2],"message":x[1],"matchid":x[3]},query.fetchall()))
+        output = list(map(lambda x: {"name":x[0],"timestamp":x[2],"message":x[1],"matchid":x[3],"index":x[4]},query.fetchall()))
         reallogs = []
         for log in output:
             shouldreturn = False
@@ -394,8 +395,34 @@ def handle_disconnect():
     pass
     # print('Client disconnected')
 
+@app.route("/badcontext", methods=["POST"])
+def contextbadwordthingy():
+    # print("woag",request.get_json())
+    return contextsearch(request.get_json()["matchid"],request.get_json()["index"])
+@cached(cache=TTLCache(maxsize=100, ttl=3600))
+def contextsearch(matchid,index):
+    with querywrapper() as query:
+        query.execute("SELECT json->'chat', json->'players' as chat_array FROM logs_raw WHERE id = %s",(matchid,))
+        stuff = query.fetchone()
+        messages = []
+        if not stuff: 
+            return messages,404
+        # if matchid == 4056403:
+        #     print("index",index)
+        #     print(stuff[0],"\n",stuff[1])
+        captureat = 7
+        # print(index)
+        for i,message in enumerate(stuff[0][max(index-captureat,0):index+3]):
+            messages.append({**message,"message":message["msg"],"original":i == min(captureat,index),"team":(getpriority(stuff[1],(message["steamid"],"team"),nofind = "neutral").lower())})
+        # if matchid == 4056403:
+        #     print(messages)
+        return messages,200
+        
+        
+
+
 @socketio.on('n')
-def handle_search(data):
+def handledefaultsearch(data):
     now = time.time()
     emit("m",[data,defaultthing()])
     print(time.time()-now)
@@ -425,7 +452,7 @@ def handle_search(data):
     # print("PANTS",data)
     emit("m",[data[1],handle_search_helper(data[0])])
     print(data[0].ljust(10), time.time()-now)
-@cached(cache=TTLCache(maxsize=10000, ttl=3600))
+@cached(cache=TTLCache(maxsize=1000, ttl=3600))
 def handle_search_helper(data):
     now = int(time.time())
 
