@@ -2,7 +2,7 @@
 	import './profile.css';
 	import type { BadWordsResponse, Userdetails, Badmessage } from '$lib/morestuff/types';
 	import Hover from '$lib/morestuff/followingmouse.svelte';
-
+    import { ClassLogo } from '$lib/morestuff/const.svelte';
 	import { playedwithdetails, nonowords, getprofile, getbadcontext } from '$lib/remote/data.remote';
 	import { Logo } from './const.svelte';
 	import { getsteamurl } from './config';
@@ -22,7 +22,7 @@
 	let renderhover = $state({} as Record<number, boolean>);
 	let newest = $state(-1);
 	function updaterenderhover(thing: number, value: boolean) {
-		console.log(thing);
+		// console.log(thing);
 		renderhover[thing] = value;
 		newest = thing;
 	}
@@ -55,7 +55,7 @@
 								{#await getbadcontext({ matchid: badword.matchid, index: badword.index })}
 									<div class="skellyTheskeleton contents">
 										{@render nonowordssnip(
-											(await nonowords('0')).badwords.nonowords.slice(0, 10),
+											(await nonowords('0')).badwords.nonowords.slice(0, 11),
 											personresults,
 											false,
 											true
@@ -86,6 +86,26 @@
 								</div>
 							</div>
 						{/if}
+                        {#if badword.classes?.length}
+                            {@const biggestclassplaytime = Math.max(
+                                1,
+                                ...badword.classes.map((classinfo) => classinfo.time)
+                            )}
+                            <div class="classholder">
+                                {#each badword.classes as classinfo, index (index)}
+                                    <div class="woag">
+                                        {@render ClassLogo(classinfo.class)}
+										<div class ="woag" style = "align-items: flex-end;background-color:black">
+                                        <div
+                                            class="playedaspercent"
+                                            style={`height: ${(classinfo.time * 100) / biggestclassplaytime}%`}
+                                        ></div>
+										</div>
+										
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
 
 						{' '}
 						<div class="nonowordname" style={getteam(badword.team)}>

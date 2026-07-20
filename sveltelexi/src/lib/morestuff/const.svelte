@@ -5,12 +5,32 @@
   import roninLogo from "$lib/images/ronin2_cropped_croppedsmall.png";
   import scorchLogo from "$lib/images/scorch2_cropped_croppedsmall.png";
   import toneLogo from "$lib/images/tone2_cropped_croppedsmall.png";
+  import demomanLogo from "$lib/images/demoman.png";
+  import engineerLogo from "$lib/images/engineer.png";
+  import heavyweaponsLogo from "$lib/images/heavyweapons.png";
+  import medicLogo from "$lib/images/medic.png";
+  import pyroLogo from "$lib/images/pyro.png";
+  import scoutLogo from "$lib/images/scout.png";
+  import sniperLogo from "$lib/images/sniper.png";
+  import soldierLogo from "$lib/images/soldier.png";
+  import spyLogo from "$lib/images/spy.png";
   // import copylogo from "$lib/images/copy.svg";
 
-  export { Logo,copy };
+  export { ClassLogo, Logo,copy };
 
   const logos = [ionLogo, toneLogo, legionLogo, scorchLogo, roninLogo, northstarLogo] as const;
   const fallbackLogo = logos[0];
+  const classLogos = {
+    demoman: demomanLogo,
+    engineer: engineerLogo,
+    heavyweapons: heavyweaponsLogo,
+    medic: medicLogo,
+    pyro: pyroLogo,
+    scout: scoutLogo,
+    sniper: sniperLogo,
+    soldier: soldierLogo,
+    spy: spyLogo
+  } as const;
 
 
 </script>
@@ -21,6 +41,13 @@
         <img  src={logos[randomnumber%logos.length]} height={64} width={64} alt="" />
       </a>
     </div>
+{/snippet}
+
+{#snippet ClassLogo(name: string)}
+  {@const logo = classLogos[name.replace(/\.png$/, "").toLowerCase() as keyof typeof classLogos]}
+  {#if logo}
+    <img  style="height: 100%; width: 100%; object-fit:contain" src={logo} height={64} width={64} alt={name.replace(/\.png$/, "")} />
+  {/if}
 {/snippet}
 
 

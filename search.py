@@ -412,10 +412,11 @@ def contextsearch(matchid,index):
         #     print(stuff[0],"\n",stuff[1])
         captureat = 7
         # print(index)
-        for i,message in enumerate(stuff[0][max(index-captureat,0):index+3]):
-            messages.append({**message,"message":message["msg"],"original":i == min(captureat,index),"team":(getpriority(stuff[1],(message["steamid"],"team"),nofind = "neutral").lower())})
+        for i,message in enumerate(stuff[0][max(index-captureat,0):index+4]):
+            messages.append({**message,"message":message["msg"],"original":i == min(captureat,index),"team":(getpriority(stuff[1],(message["steamid"],"team"),nofind = "neutral").lower()), "classes":list(filter(lambda x: x,map(lambda x:{"class":x.get("type"),"time":x.get("total_time")}, sorted(getpriority(stuff[1],(message["steamid"],"class_stats"),nofind = []),key = lambda x: x.get("total_time",0),reverse = True))))})
         # if matchid == 4056403:
         #     print(messages)
+        # print(messages[0]["classes"])
         return messages,200
         
         

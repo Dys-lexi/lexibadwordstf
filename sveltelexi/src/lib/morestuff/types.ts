@@ -33,7 +33,13 @@ export type Badmessage = {
     index?: number
     team?: string,
     original?: boolean
+    classes?: Array<classstat>
     
+}
+
+export type classstat = {
+    class: string
+    time: number
 }
 
 export type ProfileResponse = {
