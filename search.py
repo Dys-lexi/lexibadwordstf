@@ -237,7 +237,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
         if moreinfo:
             moreinfodict["stats"] = {}
             # query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
-            moreinfodict["stats"]["badwords"] = f"{ moreinfodict["badwords"]} bad words"
+            moreinfodict["stats"]["badwords"] = f"{ moreinfodict["badwords"]} bad word{ not(moreinfodict["badwords"] -1) and " " or "s"}"
             query.execute("""SELECT SUM(cardinality(ids)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             moreinfodict["stats"]["logs"] = query.fetchone()
             moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} logs"
