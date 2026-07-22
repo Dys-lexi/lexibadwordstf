@@ -66,9 +66,7 @@
 	</div> -->
 </div>
 <svelte:head>
-	<title>LexiSlurs</title>
 
-	<link rel="icon" href={faviconUrl} />
 
 	{#if statuscode == 200}
 		<meta

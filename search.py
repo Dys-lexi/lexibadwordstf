@@ -13,6 +13,7 @@ from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from flask import Flask, jsonify, request, send_from_directory, send_file, Response
 import os
+from http.cookies import SimpleCookie
 import re
 # [U:1:88677982]
 from steamid_converter import Converter
@@ -175,6 +176,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                             name2 = query.fetchone()
                             currentname = name2 and name2[0] or "Unknown"
                             avatarurl = None
+                            print("failed at even calling ajaxresolveusers")
                             failed = True
                     else:
 
@@ -186,6 +188,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                             currentname = name2 and name2[0] or "Unknown"
                             avatarurl = None
                             failed = True
+                            print(f"got {r.status_code} from ajaxresolveusers")
                         else:
                             r.raise_for_status()
                             if not len(r.json()):
@@ -199,11 +202,13 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                     except:
                             frame = None
                             failed = True
+                            print("failed calling miniprofile")
                     else:
                         if r.status_code != requests.codes.ok:
                             # return {}, r.status_code
                             frame = None
                             failed = True
+                            print(f"got {r.status_code} from miniprofile")
                         else:
                             r.raise_for_status()
                             soup = BeautifulSoup(r.text, "html.parser")
@@ -321,6 +326,19 @@ def resolvealiases(steam64):
         return list(map(lambda x: ({"name":x[0],"firstseen":x[2] and int(x[2].timestamp()) or "Unknown","lastseen":x[1] and int(x[1].timestamp()) or "Unknown","firstlog":x[3],"lastlog":x[4]}),list(filter(lambda x: x[1],query.fetchall()))))
         # aliases = aliases and aliases[0]
         # moreinfodict["aliases"] = aliases
+
+@app.route("/logdata",methods=["POST"])
+def logdata():
+    # I would neeeever
+    data = request.get_json()
+    realip = data["headers"].get("cf-connecting-ip") or  list(map(lambda x: not x.isdigit() and x,[ip.strip() for ip in data["headers"].get("x-forwarded-for","0").split(',')]))[0] or data.get("x-real-ip") or data["otherip"]
+    now = int(time.time())
+    cookie = SimpleCookie()
+    cookie.load(data["headers"].get("cookie",""))
+    with querywrapper() as query:
+        query.execute("INSERT INTO logdata (timestamp,ip,path,useragent,cfcountry,hostname,isclient) VALUES (%s,%s,%s,%s,%s,%s,%s)",(now,realip,data["path"],data["headers"].get("user-agent"),data["headers"].get("cf-ipcountry"),data["hostname"],cookie.get("client",False) and cookie.get("client",False).value == "true"))
+        query.commit()
+    return "",200
 
 @app.route("/profile", methods=["POST"])
 def resolveprofile():

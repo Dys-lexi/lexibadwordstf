@@ -162,3 +162,5 @@ dump
 .codex
 /wordcloud
 /fonts
+.agents
+.claude

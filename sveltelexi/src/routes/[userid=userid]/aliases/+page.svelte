@@ -45,24 +45,24 @@
 			property="og:description"
 			content={`Aliases for ${personresults.currentusername}`}
 		/>
-		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta property="og:image" content={`/${personresults.steam64}/wordcloud`} />
 		<meta
 			name="twitter:description"
 			content={`Aliases for ${personresults.currentusername}`}
 		/>
-		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta name="twitter:image" content={`/${personresults.steam64}/wordcloud`} />
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
 		<meta property="og:description" content="User not found" />
-		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta property="og:image" content={`/${personresults.steam64}/wordcloud`} />
 		<meta name="twitter:description" content="User not found" />
-		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta name="twitter:image" content={`/${personresults.steam64}/wordcloud`} />
 	{:else}
 		<meta name="description" content="Error finding information" />
 		<meta property="og:description" content="Error finding information" />
-		<meta property="og:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta property="og:image" content={`/${personresults.steam64}/wordcloud`} />
 		<meta name="twitter:description" content="Error finding information" />
-		<meta name="twitter:image" content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`} />
+		<meta name="twitter:image" content={`/${personresults.steam64}/wordcloud`} />
 	{/if}
 
 	<meta property="og:type" content="website" />

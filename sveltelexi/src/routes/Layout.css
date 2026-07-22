@@ -21,6 +21,7 @@ body {  margin: 0;
   font-family: "Whitney", sans-serif !important;
   color: #eee;
   background-color: rgb(11, 11, 11);
+    overflow-y: scroll; 
   /* box-shadow: 0px 0px 100px 0px red; */
    /* background-color: red; */
    /* scrollbar-width: none !important; */
@@ -68,6 +69,7 @@ body.page-transition #page-content {
 }
 
 .mainthing {
+  
    font-family: "Whitney", sans-serif !important;
   color: #eee;
   display: flex;

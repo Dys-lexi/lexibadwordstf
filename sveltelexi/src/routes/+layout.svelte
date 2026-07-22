@@ -2,6 +2,7 @@
 
 	import { page, navigating } from '$app/state';
 	import './Layout.css';
+  import faviconUrl from '$lib/images/logosmall.png';
   	import { onMount } from 'svelte';
 	import { Logo } from "$lib/morestuff/const.svelte";
 	let { children ,data} = $props();
@@ -43,4 +44,8 @@
 				{/await}
 
 
-  
+  <svelte:head>
+	<title>LexiSlurs</title>
+
+	  <link rel="icon" href={faviconUrl} />
+  </svelte:head>

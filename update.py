@@ -410,8 +410,8 @@ def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WI
             output1 = list(map(lambda x: x[0], query.fetchall()))
             if not output1:
                 print("pulling names thinks it is done")
-                query.execute("SELECT * FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
-                print(query.fetchall())
+                # query.execute("SELECT * FROM usernames AS l LEFT JOIN currentthings AS r ON l.steamid = r.steamid WHERE r.timestampcurrentname IS NULL OR r.timestampcurrentname < %s GROUP BY l.steamid ORDER BY SUM(cardinality(l.ids)) DESC LIMIT 1",(604800*10,))
+                # print(query.fetchall())
                 time.sleep(3600)
                 continue
             for output in output1:

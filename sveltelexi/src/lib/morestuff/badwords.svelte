@@ -2,11 +2,13 @@
 	import './profile.css';
 	import type { BadWordsResponse, Userdetails, Badmessage } from '$lib/morestuff/types';
 	import Hover from '$lib/morestuff/followingmouse.svelte';
-    import { ClassLogo } from '$lib/morestuff/const.svelte';
+	import { ClassLogo } from '$lib/morestuff/const.svelte';
 	import { playedwithdetails, nonowords, getprofile, getbadcontext } from '$lib/remote/data.remote';
 	import { Logo } from './const.svelte';
 	import { getsteamurl } from './config';
+     import { onDestroy } from 'svelte';
 
+        let leaveTimer: ReturnType<typeof setTimeout> | undefined;
 	let { personresults, rendermore = (true && personresults.steam64 != '0') as boolean } = $props();
 
 	//   let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number} = $derived(things)
@@ -24,7 +26,9 @@
 	function updaterenderhover(thing: number, value: boolean) {
 		// console.log(thing);
 		renderhover[thing] = value;
-		newest = thing;
+		if (value) {
+			newest = thing;
+		}
 	}
 </script>
 
@@ -48,87 +52,89 @@
 		{#if badwords.length}
 			<!-- {console.log( personresults.badwords,"PANTS")} -->
 			{#each badwords as badword, index (index)}
-				
-					{#if renderhover[index] && rendermore && newest == index && badword.index != null}
-						<Hover>
-							<div class="contexthoverholder">
-								{#await getbadcontext({ matchid: badword.matchid, index: badword.index })}
-									<div class="skellyTheskeleton contents">
-										{@render nonowordssnip(
-											(await nonowords('0')).badwords.nonowords.slice(0, 11),
-											personresults,
-											false,
-											true
-										)}
-									</div>
-								{:then stuff}
-									{@render nonowordssnip(stuff.context.nonowords, personresults, false, true)}
-								{/await}
-							</div>
-						</Hover>
-					{/if}
-					<div
-						class="nonowordbox"
-						style={badword.original ? 'background-color:rgba(255,180,180,0.2)' : ''}
-					>
-						{#if !smol}
-							<a
-								class="nonowordtimestamp loglink"
-								target="_blank"
-								href={`https://logs.tf/${badword.matchid}`}
-							>
-								log
-							</a>
-							<div class="nonowordtimestamp">
-								{new Date(badword.timestamp * 1000).toLocaleDateString()}{' '}
-								<div class="nonowordname">
-									{new Date(badword.timestamp * 1000).toLocaleTimeString()}
+				{#if renderhover[index] && rendermore && newest == index && badword.index != null}
+					<Hover>
+						<div class="contexthoverholder">
+							{#await getbadcontext({ matchid: badword.matchid, index: badword.index })}
+								<div class="skellyTheskeleton contents">
+									{@render nonowordssnip(
+										(await nonowords('0')).badwords.nonowords.slice(0, 11),
+										personresults,
+										false,
+										true
+									)}
 								</div>
+							{:then stuff}
+								{@render nonowordssnip(stuff.context.nonowords, personresults, false, true)}
+							{/await}
+						</div>
+					</Hover>
+				{/if}
+				<div
+					class="nonowordbox"
+					style={badword.original ? 'background-color:rgba(255,180,180,0.2)' : ''}
+				>
+					{#if !smol}
+						<a
+						style = "z-index: 11"
+							class="nonowordtimestamp loglink"
+							target="_blank"
+							href={`https://logs.tf/${badword.matchid}`}
+						>
+							log
+						</a>
+						<div class="nonowordtimestamp">
+							{new Date(badword.timestamp * 1000).toLocaleDateString()}{' '}
+							<div class="nonowordname">
+								{new Date(badword.timestamp * 1000).toLocaleTimeString()}
 							</div>
-						{/if}
-                        {#if badword.classes?.length}
-                            <!-- {@const biggestclassplaytime = Math.max(
+						</div>
+					{/if}
+					{#if badword.classes?.length}
+						<!-- {@const biggestclassplaytime = Math.max(
                                 1,
                                 ...badword.classes.map((classinfo) => classinfo.time)
                             )} -->
-							{@const biggestclassplaytime = badword.classes.reduce(
-    (total, classinfo) => total + classinfo.time,
-    0
-  )}
+						{@const biggestclassplaytime = badword.classes.reduce(
+							(total, classinfo) => total + classinfo.time,
+							0
+						)}
 
-                            <div class="classholder">
-                                {#each badword.classes as classinfo, index (index)}
-                                    <div class="woag">
-                                        {@render ClassLogo(classinfo.class)}
-										<div class ="woag" style = "align-items: flex-end;background-color:black">
-                                        <div
-                                            class="playedaspercent"
-                                            style={`height: ${(classinfo.time * 100) / biggestclassplaytime}%`}
-                                        ></div>
-										</div>
-										
-                                    </div>
-                                {/each}
-                            </div>
-                        {/if}
+						<div class="classholder">
+							{#each badword.classes as classinfo, index (index)}
+								<div class="woag">
+									{@render ClassLogo(classinfo.class)}
+									<div class="woag" style="align-items: flex-end;background-color:black">
+										<div
+											class="playedaspercent"
+											style={`height: ${(classinfo.time * 100) / biggestclassplaytime}%`}
+										></div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
 
-						{' '}
-						<div class="nonowordname" style={getteam(badword.team)}>
-							{badword.name}
-							<span class="loglinkwhite">:</span>
-						</div>
-						{' '}
-						<div class="nonowordmessage">
-							{badword.message}
-						</div>
-						<div    
-					role="presentation"
-                    class = "hoverplease"
-					onmouseenter={() => (updaterenderhover (index, true))}
-					onmouseleave={() => (updaterenderhover (index,false ))}
-				></div>
+					{' '}
+					<div class="nonowordname" style={getteam(badword.team)}>
+						{badword.name}
+						<span class="loglinkwhite">:</span>
 					</div>
-				
+					{' '}
+					<div class="nonowordmessage">
+						{badword.message}
+					</div>
+					<div
+						role="presentation"
+						class="hoverplease"
+						onmouseenter={() => updaterenderhover(index, true)}
+						onmouseleave={() =>
+							leaveTimer = setTimeout(() => {
+								updaterenderhover(index, false);
+							}, 100)}
+							
+					></div>
+				</div>
 			{/each}
 		{:else if rendermore}
 			<h2>No bad words found for {personresults.currentusername}</h2>

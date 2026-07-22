@@ -22,8 +22,8 @@ async function getTemp(
 	}
 }
 
-export const load: LayoutServerLoad = ({ fetch, cookies }) => {
-	
+export const load: LayoutServerLoad = ({ fetch, cookies, request }) => {
+	// console.log("Meow",request)
 	return {
 		temp: getTemp(fetch),
 		randomnumber: Math.floor(Math.random() * 1000)

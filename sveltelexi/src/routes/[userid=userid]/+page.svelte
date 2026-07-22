@@ -40,7 +40,7 @@
 		/>
 		<meta
 			property="og:image"
-			content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`}
+			content={`/${personresults.steam64}/wordcloud`}
 		/>
 		<meta
 			name="twitter:description"
@@ -48,7 +48,7 @@
 		/>
 		<meta
 			name="twitter:image"
-			content={`${page.url.origin}/api/wordcloud/${personresults.steam64}`}
+			content={`/${personresults.steam64}/wordcloud`}
 		/>
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
