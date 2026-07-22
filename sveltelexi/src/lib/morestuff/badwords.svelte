@@ -70,13 +70,23 @@
 						</div>
 					</Hover>
 				{/if}
-				<div
+				<div 
+				role="presentation"
+				 onmouseenter={() => {
+                if (leaveTimer) clearTimeout(leaveTimer);
+                updaterenderhover(index, true);
+        }}
+        onmouseleave={() => {
+                leaveTimer = setTimeout(() => {
+                        updaterenderhover(index, false);
+                }, 100);
+        }}
 					class="nonowordbox"
 					style={badword.original ? 'background-color:rgba(255,180,180,0.2)' : ''}
 				>
 					{#if !smol}
 						<a
-						style = "z-index: 11"
+						// style = "z-index: 11"
 							class="nonowordtimestamp loglink"
 							target="_blank"
 							href={`https://logs.tf/${badword.matchid}`}
@@ -124,7 +134,7 @@
 					<div class="nonowordmessage">
 						{badword.message}
 					</div>
-					<div
+					<!-- <div
 						role="presentation"
 						class="hoverplease"
 						onmouseenter={() => updaterenderhover(index, true)}
@@ -133,7 +143,7 @@
 								updaterenderhover(index, false);
 							}, 100)}
 							
-					></div>
+					></div> -->
 				</div>
 			{/each}
 		{:else if rendermore}
