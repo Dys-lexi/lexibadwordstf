@@ -126,6 +126,7 @@ def init():
             useragent TEXT,
             cfcountry TEXT,
             isclient BOOLEAN,
+            cfray TEXT,
             hostname TEXT
         )"""
     )

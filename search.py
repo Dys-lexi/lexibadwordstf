@@ -336,7 +336,7 @@ def logdata():
     cookie = SimpleCookie()
     cookie.load(data["headers"].get("cookie",""))
     with querywrapper() as query:
-        query.execute("INSERT INTO logdata (timestamp,ip,path,useragent,cfcountry,hostname,isclient) VALUES (%s,%s,%s,%s,%s,%s,%s)",(now,realip,data["path"],data["headers"].get("user-agent"),data["headers"].get("cf-ipcountry"),data["hostname"],cookie.get("client",False) and cookie.get("client",False).value == "true"))
+        query.execute("INSERT INTO logdata (timestamp,ip,path,useragent,cfcountry,hostname,isclient,cfray) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",(now,realip,data["path"],data["headers"].get("user-agent"),data["headers"].get("cf-ipcountry"),data["hostname"],cookie.get("client",False) and cookie.get("client",False).value == "true",data["headers"].get("cf-ray")))
         query.commit()
     return "",200
 
