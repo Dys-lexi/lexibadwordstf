@@ -36,7 +36,14 @@
  {" "}
 				{:then temp}
         {#if temp.statuscode == 200}
-        <a class="Iwantthisinthetopright" href = "https://sans.xixya.com">
+        
+        <a
+          class="Iwantthisinthetopright"
+          href="https://sans.xixya.com"
+          title={temp.lastupdate
+            ? `Last updated at ${new Date(Number(temp.lastupdate) * 1000).toLocaleString()}`
+            : undefined}
+        >
         It is {temp.temp.toLocaleString()}°C in Allusive's room</a>
         {/if}
         	{:catch error}

@@ -229,3 +229,26 @@ export const getbadcontext = query(
 		return { context, statuscode: status };
 	}
 );
+
+
+export const getlucky = query(
+	async () => {
+		let steam64 = "0"
+		// console.log(profile)
+
+		try {
+			 const response = await fetch(`${API_URL}/lucky`, {
+				method: 'GET',
+			});
+
+			if (response.ok) {
+				steam64 = await response.text();
+			}
+
+		} catch {
+			
+		}
+
+		return steam64 ;
+	}
+);

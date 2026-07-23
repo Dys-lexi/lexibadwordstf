@@ -1,5 +1,6 @@
 export type temp = {
     statuscode: number
-    temp: string
+    temp: number
+    lastupdate?: number
 
 };

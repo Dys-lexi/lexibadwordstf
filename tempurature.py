@@ -1,13 +1,13 @@
 import requests
 import threading
 import time
-temp = "pants" , 500
+temp = {"temp":0,"lastupdate":0} , 500
 lock = threading.Lock()
 
 def tempreading():
     re = requests.get("https://allusive.me/temp/",timeout = 30)
     if re.ok:
-        return f"{float(re.text):.2f}",200
+        return {"temp":float(f"{float(re.text):.2f}"),"lastupdate":int(time.time())} ,200
     else:
         return None
 

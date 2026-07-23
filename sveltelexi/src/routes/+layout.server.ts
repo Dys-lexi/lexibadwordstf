@@ -9,15 +9,16 @@ async function getTemp(
 ): Promise<Temp> {
 	try {
 		const response = await f(`${API_URL}/temp`, { method: "GET" });
-
+			const stuff = await response.json()
 		return {
 			statuscode: response.status,
-			temp: await response.text()
+			temp: (stuff).temp,
+			lastupdate: (stuff).lastupdate
 		};
 	} catch {
 		return {
 			statuscode: 500,
-			temp: ''
+			temp: 0
 		};
 	}
 }

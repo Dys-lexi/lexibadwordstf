@@ -6,6 +6,7 @@ import sys
 import functools
 import time
 import schedule
+import random
 import threading
 import requests
 from datetime import datetime, timezone, timedelta
@@ -34,7 +35,11 @@ lock = threading.Lock()
 
 lastratelimittime = 0
 dailywordcloud = {}
+nextlucky = {"running":False,"lucky":[]}
 updatetime = "07"
+
+
+
 def wocotd():
     global dailywordcloud
     today = int(datetime.now(timezone.utc).replace(hour=int(updatetime), minute=0, second=0, microsecond=0).timestamp())
@@ -60,7 +65,8 @@ def wocotd():
 
 def woctodwrapper():
     threading.Thread(target=wocotd, daemon=True).start()
-woctodwrapper()
+    threading.Thread(target=cachestats, daemon=True).start()
+threading.Thread(target=wocotd, daemon=True).start()
 schedule.every().day.at(f"{updatetime}:00", "Etc/UTC").do(woctodwrapper)
 def cachestats():
     print("caching stats")
@@ -150,7 +156,7 @@ def stats_cache():
     if os.path.exists("./statscache.json"):
         with open("./statscache.json", "r") as f:
             stats = json.load(f)
-    if not stats or now - 86400 > stats["timestampcached"]:
+    if not stats or now - 86500 > stats["timestampcached"]:
         threading.Thread(target=cachestats, daemon=True).start()
     if not stats: return {}
     if "timestampcached" in stats:
@@ -385,6 +391,35 @@ def logdata():
         query.execute("INSERT INTO logdata (timestamp,ip,path,useragent,cfcountry,hostname,isclient,cfray) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",(now,realip,data["path"],data["headers"].get("user-agent"),data["headers"].get("cf-ipcountry"),data["hostname"],cookie.get("client",False) and cookie.get("client",False).value == "true",data["headers"].get("cf-ray")))
         query.commit()
     return "",200
+
+
+def getnextlucky():
+    global nextlucky
+    with lock:
+        if nextlucky["running"]:
+            return
+        nextlucky["running"] = True
+    with querywrapper() as query:
+        query.execute("SELECT steamid, SUM(cardinality(ids)) FROM usernames GROUP BY steamid")
+        stuff = query.fetchall()
+    # total = functools.map(lambda b: min(b[1],100),stuff)
+    who = random.choices(stuff,list(map(lambda b: min(b[1],100),stuff)),k=10-len(nextlucky))
+    with lock:
+
+        nextlucky["lucky"].extend(list(map(lambda x: x[0],who)))
+        nextlucky["running"] = False
+getnextlucky()
+@app.route("/lucky",methods=["GET"])
+def lucky():
+    with lock:
+        # print(bool(nextlucky["lucky"]),nextlucky["lucky"])
+        threading.Thread(target=getnextlucky, daemon=True).start()
+        return str(nextlucky["lucky"].pop(0)), 200
+    getnextlucky()
+    with lock:
+        return str(nextlucky["lucky"].pop(0)), 200
+    
+        
 
 @app.route("/profile", methods=["POST"])
 def resolveprofile():

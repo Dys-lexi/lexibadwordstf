@@ -5,7 +5,10 @@
 	import type { Userdetails, BadWordsResponse, PlayedWithResponse } from '$lib/morestuff/types';
 	import Miniprofile from '$lib/morestuff/miniprofile.svelte';
 	import { playedwithdetails, nonowords, getprofile, getbadcontext } from '$lib/remote/data.remote';
-
+	let { personresults: skellyresults, statuscode: skellycode } = await getprofile({
+		steam64: '0',
+		recall: 3600
+	});
 	import './Page.css';
 	import { getsteamurl } from '$lib/morestuff/config';
 	let { data } = $props();
@@ -13,10 +16,7 @@
 	let { personresults, statuscode } = $derived(
 		!data.promise ? await data.profile : { personresults: {} as Userdetails, statuscode: 0 }
 	);
-	let { personresults: skellyresults, statuscode: skellycode } = await getprofile({
-		steam64: '0',
-		recall: 3600
-	});
+
 </script>
 
 {#await output}

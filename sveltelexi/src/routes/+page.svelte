@@ -7,10 +7,13 @@
 	const utcDate = new Date('2026-07-23T08:00:00Z');
 	import { getwordclouddaily } from '$lib/remote/data.remote';
 	import Search from '$lib/morestuff/Search.svelte';
-	const localTime = utcDate.toLocaleTimeString(undefined, {
-		hour: 'numeric',
-		minute: '2-digit'
-	});
+	const localTime = utcDate.toLocaleString()
+	// 	undefined, {
+	// 	hour: 'numeric',
+	// 	minute: '2-digit',
+
+	// 	day: 'numeric'
+	// });
 
 	let blurradius = $state(23)
 
@@ -67,16 +70,13 @@
 		</u>
 		on discord
 	</div>
-	{#if stats.badrecentmessages && false}
+	{#if stats.badrecentmessages}
 	<div class = "flexbox worddailybox"  role="presentation" onmouseenter={() => {blurradius = 0}}  onmouseleave={() => {blurradius = 23}}>
 		<div class="stat"> <div class="statsname">Bad words sent yesterday: </div><div class="statsstat"> {stats.badrecentmessages.toLocaleString() }</div> </div>
 	{#await getwordclouddaily("big")}
 	<img style = {`filter: blur(${blurradius}px)`} src={(await getwordclouddaily("smol")).profile} class="wordcloudimage" alt="wordcloud" />
 	{:then {profile}}
-	
-		<img src={profile} class="wordcloudimage" alt="wordcloud" style = {`filter: blur(${blurradius}px)`}/>
-	
-
+		<img src={profile} title={`last updated at ${localTime} this morning`} class="wordcloudimage" alt="wordcloud" style = {`filter: blur(${blurradius}px)`}/>
 	{/await}
 	</div>
 	{/if}

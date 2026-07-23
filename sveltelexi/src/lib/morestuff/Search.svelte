@@ -3,8 +3,9 @@
   import { usewsstore } from './websocketsearch';
   import '../../routes/Layout.css';
 	import { onMount } from 'svelte';
-  import {getsteamurl} from '$lib/morestuff/config'
+  import {getlucky} from '$lib/remote/data.remote';
 
+  import {lucky} from './const.svelte';
   let { classNameform = '', classNameinput = '', classnamebutton = '' } = $props();
 
   const { connect, disconnect, sendsearch } = usewsstore.getState();
@@ -18,7 +19,9 @@
  let steam64: string | null = null;
   let searchsuggestionholder: HTMLDivElement
   $effect(() => usewsstore.subscribe((s) => (matches = s.matches)));
-
+ function getsteamurl(steamid: string,includefirstslash= true as boolean) {
+return `${includefirstslash &&"/"|| ""  }${encodeURIComponent(steamid)}`
+ }
   async function onSubmit(e: SubmitEvent) {
     e.preventDefault();
     inputRef?.blur();
@@ -57,6 +60,7 @@ function blurred(event: FocusEvent) {
 <div class = "flexstuff" style = "width:100%">
 <div class="flexstuff flexsearchthing" onfocusout={blurred}>
   <form class={classNameform} onsubmit={onSubmit}   bind:this={form}>
+  <div class = "owqdkwqdq">
     <input
       bind:this={inputRef}
       autocorrect="off"
@@ -68,6 +72,9 @@ function blurred(event: FocusEvent) {
       onfocus={(e) => { focused(); e.currentTarget.select(); sendsearch(e.currentTarget.value); }}
       oninput={(e) => { focused(); sendsearch(e.currentTarget.value); }}
     />
+    <button type="button" class = "lucky" title = "I'm feeling lucky" onclick={async () => {  await goto(getsteamurl(await getlucky()));}}>
+    {@render lucky()} 
+    </button></div>
     <button type="submit" class={classnamebutton}>Search</button>
   </form>
   <div bind:this={searchsuggestionholder} style="position: relative; width: 100%" >
