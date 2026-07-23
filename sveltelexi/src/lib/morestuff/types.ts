@@ -76,10 +76,4 @@ export type PlayedWithResponse = {
     totalplayedwith: number
 }
 
-export type Stats = {
-    totalmatches: number
-    totalmessages: number
-    badmessages: number
-    uniquepeople: number
-    flaggedplayers: number
-}
+export type Stats = Record<string,number>

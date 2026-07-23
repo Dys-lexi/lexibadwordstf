@@ -36,9 +36,13 @@ def load_image_from_url(url, size=IMAGE_SIZE):
 
 
 
-def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE):
-    base_image = load_image_from_url(url, image_size)
-    base_colors = np.array(base_image)
+def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE, *rescales):
+    if url is None:
+        base_image = Image.new("RGBA", image_size, (255, 255, 255, 0))
+        base_colors = np.full((*image_size[::-1], 3), 255, dtype=np.uint8)
+    else:
+        base_image = load_image_from_url(url, image_size)
+        base_colors = np.array(base_image)
 
     mask = np.zeros(base_colors.shape[:2], dtype=np.uint32)
     mask[base_colors.sum(axis=2) == 0] = 256
@@ -46,7 +50,7 @@ def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE):
     if frequencies:
         wc = WordCloud(
             # font_path=random.choice(list(map(lambda x: f"./fonts/{x}",(os.listdir("./fonts"))))),
-            font_path= os.path.exists( "./fonts")and os.listdir("./fonts") and sorted(list(map(lambda x: f"./fonts/{x}",(os.listdir("./fonts")))),key = lambda x: os.path.getctime(x), reverse = True)[0] or None,
+            # font_path= os.path.exists( "./fonts")and os.listdir("./fonts") and sorted(list(map(lambda x: f"./fonts/{x}",(os.listdir("./fonts")))),key = lambda x: os.path.getctime(x), reverse = True)[0] or None,
 
             max_words=100,
             mask=mask,
@@ -66,7 +70,12 @@ def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE):
             np.uint8
         )
         wc.recolor(color_func=ImageColorGenerator(inverted_colors))
-        # wc.recolor(color_func=lambda *args, **kwargs: f"rgb({random.randint(254,255)},{random.randint(0,3)},{random.randint(200,255)})")
+        if url is None:
+            potentialchannels = 200,255,150
+            colours = []
+            for i in range(500):
+                colours.append(f"rgb({random.choice(potentialchannels)},{random.choice(potentialchannels)},{random.choice(potentialchannels)})")
+            wc.recolor(color_func=lambda *args, **kwargs: random.choice(colours))
         word_layer = wc.to_image().convert("RGBA")
         
         result.alpha_composite(word_layer)
@@ -74,9 +83,15 @@ def makewordcloud(url, frequencies, output_path=None, image_size=IMAGE_SIZE):
     if output_path:
         result.save(output_path)
 
-    buffer = BytesIO()
-    result.save(buffer, format="PNG")
-    buffer.seek(0)
+    images = [result]
+    images.extend(
+        result.resize(size, Image.Resampling.LANCZOS) for size in rescales
+    )
 
-    return buffer.getvalue()
+    encoded_images = []
+    for image in images:
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+        encoded_images.append(buffer.getvalue())
 
+    return tuple(encoded_images)

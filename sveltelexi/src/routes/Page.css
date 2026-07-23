@@ -79,3 +79,27 @@
    display: flex;
    gap:5px
 }
+
+.wordcloudimage{
+
+   
+     display: block;
+      width: 500px;
+      max-width: 90vw;
+      height: auto;
+      
+    /* min-width: min(80% , 400px); */
+    
+}
+
+.worddailybox{
+    /* width: 100%; */
+   overflow: hidden;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color:rgba(255,255,255,0.03) ;
+    border-style: solid;
+    padding:5px;
+    /* background-color: rgba(255,255,255,0.01); */
+    gap:30px;
+}

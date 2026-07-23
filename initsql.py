@@ -23,6 +23,8 @@ def getbadwords():
 def getpriority(ditionary, *priority, **kwargs):
     """Gets dictionary value using priority-based key lookup with fallbacks"""
     for route in priority:
+        if not route:
+            continue
         output = ditionary.copy()
         if isinstance(route, str):
             route = [route]
@@ -210,6 +212,7 @@ def init():
     # c.execute("DROP INDEX idx_messages_flagged")
     c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flagged ON messages(sender) WHERE flagged = true AND trusted IS NOT false")
     c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flaggedstuff ON messages (flagged)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_messages_time ON messages (time)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_messages_flaggedtrusted ON messages (trusted)")
     # print("veee")
 

@@ -3,11 +3,20 @@
 	// import Search from '$lib/morestuff/Search.svelte';
 	import { page } from '$app/state';
 	import faviconUrl from '$lib/images/logosmall.png';
-	import type { PageData} from './$types';
+	import type { PageData } from './$types';
+	const utcDate = new Date('2026-07-23T08:00:00Z');
+	import { getwordclouddaily } from '$lib/remote/data.remote';
+	import Search from '$lib/morestuff/Search.svelte';
+	const localTime = utcDate.toLocaleTimeString(undefined, {
+		hour: 'numeric',
+		minute: '2-digit'
+	});
+
+	let blurradius = $state(23)
 
 	let { data }: { data: PageData } = $props();
 	const { stats, statuscode } = $derived(data);
-  import Search from "$lib/morestuff/Search.svelte";
+
 	const prettynames: Record<string, string> = {
 		uniquepeople: 'Unique Players',
 		totalmessages: 'Total Messages',
@@ -20,16 +29,23 @@
 		return prettynames[name] || name;
 	}
 </script>
-          <Search classNameform="bigsearchform" classNameinput="bigsearchinput" classnamebutton="bigsearchbutton" />
+
+<Search
+	classNameform="bigsearchform"
+	classNameinput="bigsearchinput"
+	classnamebutton="bigsearchbutton"
+/>
 
 <div class="flexbox" style="gap: 30px; margin-top: 30px">
 	<div class="statsholder">
 		{#if statuscode == 200}
 			{#each Object.entries(stats) as [stat, val]}
+			{#if prettynames[stat]}
 				<div class="stat">
 					<div class="statsname">{getstatprettyname(stat)}:</div>
 					<div class="statsstat">{val.toLocaleString()}</div>
 				</div>
+			{/if}
 			{/each}
 		{:else}
 			<div class="stat" style="color: red">
@@ -51,6 +67,19 @@
 		</u>
 		on discord
 	</div>
+	{#if stats.badrecentmessages && false}
+	<div class = "flexbox worddailybox"  role="presentation" onmouseenter={() => {blurradius = 0}}  onmouseleave={() => {blurradius = 23}}>
+		<div class="stat"> <div class="statsname">Bad words sent yesterday: </div><div class="statsstat"> {stats.badrecentmessages.toLocaleString() }</div> </div>
+	{#await getwordclouddaily("big")}
+	<img style = {`filter: blur(${blurradius}px)`} src={(await getwordclouddaily("smol")).profile} class="wordcloudimage" alt="wordcloud" />
+	{:then {profile}}
+	
+		<img src={profile} class="wordcloudimage" alt="wordcloud" style = {`filter: blur(${blurradius}px)`}/>
+	
+
+	{/await}
+	</div>
+	{/if}
 	<!-- <div class="whomadethisshowthingy">
 		Support on
 		<u style="text-decoration-color: rgba(255,180,200,0.8)">
@@ -66,8 +95,6 @@
 	</div> -->
 </div>
 <svelte:head>
-
-
 	{#if statuscode == 200}
 		<meta
 			name="description"

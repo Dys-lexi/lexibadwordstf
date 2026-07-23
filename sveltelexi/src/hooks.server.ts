@@ -15,7 +15,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 async function sendcooldata(event: RequestEvent) {
 	try {
-		const response = await fetch(`${API_URL}/logdata`, {
+		await fetch(`${API_URL}/logdata`, {
 				method: 'POST',
 				body: JSON.stringify({ path: event.url.pathname,headers: Object.fromEntries(event.request.headers), otherip: event.getClientAddress(),hostname: event.url.hostname }),
 				headers: { 'Content-Type': 'application/json' }

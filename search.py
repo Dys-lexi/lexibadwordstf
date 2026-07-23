@@ -3,12 +3,12 @@ monkey.patch_all()
 
 import json
 import sys
-from datetime import datetime
-import datetime as pants
 import functools
 import time
+import schedule
 import threading
 import requests
+from datetime import datetime, timezone, timedelta
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from flask import Flask, jsonify, request, send_from_directory, send_file, Response
@@ -32,13 +32,39 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
 lock = threading.Lock()
 
-
 lastratelimittime = 0
-    
+dailywordcloud = {}
+updatetime = "07"
+def wocotd():
+    global dailywordcloud
+    today = int(datetime.now(timezone.utc).replace(hour=int(updatetime), minute=0, second=0, microsecond=0).timestamp())
+    yesterday = int((datetime.now(timezone.utc).replace(hour=int(updatetime), minute=0, second=0, microsecond=0) - timedelta(days=1)).timestamp())
+    pattern = getbadwords()
+    with querywrapper() as query:
+        query.execute("""SELECT message FROM messages WHERE (time > %s AND time < %s) AND flagged = true AND trusted IS NOT FALSE""",(yesterday,today))
+        output = {}
+        for message in list(map(lambda x: x[0].lower(),query.fetchall())):
+            # print("meow")
+            while thing := re.search(pattern, message, re.IGNORECASE):
+                match = thing.group()
+                message = message.replace(match,"")
+                output.setdefault(match,0)
+                output[match] += 1
+    wordcloud = makewordcloud(
+        None, output, "./xyz.png", (1000, 500), (200, 100)
+    )
+    with lock:
+        dailywordcloud["big"] = wordcloud[0]
+        dailywordcloud["smol"] = wordcloud[1]
+    # return wordcloud[0]
 
+def woctodwrapper():
+    threading.Thread(target=wocotd, daemon=True).start()
+woctodwrapper()
+schedule.every().day.at(f"{updatetime}:00", "Etc/UTC").do(woctodwrapper)
 def cachestats():
     print("caching stats")
-    stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"flaggedplayers":0,"timestampcached":int(time.time())}
+    stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"flaggedplayers":0,"badrecentmessages":0,"timestampcached":int(time.time())}
     if os.path.exists("./statscache.json"):
         with open("./statscache.json", "r") as f:
             stats = json.load(f)
@@ -46,6 +72,14 @@ def cachestats():
     with open("./statscache.json", "w") as f:
         f.write(json.dumps(stats,indent=4))
     with querywrapper() as query:
+        today = int(datetime.now(timezone.utc).replace(hour=int(updatetime), minute=0, second=0, microsecond=0).timestamp())
+        yesterday = int((datetime.now(timezone.utc).replace(hour=int(updatetime), minute=0, second=0, microsecond=0) - timedelta(days=1)).timestamp())
+        query.execute("""SELECT COUNT(*) FROM messages WHERE (time > %s AND time < %s) AND flagged = true AND trusted IS NOT FALSE""",(yesterday,today))
+        if output := query.fetchone():
+            print("meow")
+            stats["badrecentmessages"] = output[0]
+        else:
+            print("sad")
         query.execute("SELECT COUNT(*) FROM logs_raw")
         if output := query.fetchone():
             stats["totalmatches"] = output[0]
@@ -66,6 +100,14 @@ def cachestats():
         f.write(json.dumps(stats,indent=4))
 
 
+@app.route("/dailywordcloud",methods=["GET"])
+def wordclouddaiy():
+    # print("generating a word cloud!")
+    request.args.get('size')
+    with lock:
+        if not dailywordcloud:
+            wocotd()
+        return Response(getpriority(dailywordcloud,request.args.get('size'),"big"),mimetype="image/png")
 
 @app.route("/wordcloud/<steam64>",methods=["GET"])
 def wordcloud(steam64):
@@ -87,7 +129,7 @@ def wordcloudcache(steam64):
                 output.setdefault(match,0)
                 output[match] += 1
         
-        return makewordcloud(f"https://avatars.fastly.steamstatic.com/{resolveavatarandname(steam64)["avatar"]}_full.jpg",output)
+        return makewordcloud(f"https://avatars.fastly.steamstatic.com/{resolveavatarandname(steam64)["avatar"]}_full.jpg",output)[0]
         
 
 
@@ -104,7 +146,7 @@ def stats_cache():
     now = int(time.time())
     
     print("pulling stats at",now)
-    stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"timestampcached":0,"flaggedplayers":0}
+    stats = {"totalmatches":0,"totalmessages":0,"badmessages":0,"uniquepeople":0,"timestampcached":0,"flaggedplayers":0,"badrecentmessages":0}
     if os.path.exists("./statscache.json"):
         with open("./statscache.json", "r") as f:
             stats = json.load(f)
@@ -161,79 +203,83 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
         output = query.fetchone()
         if not output or not all(output) or output[1] < now - (timeout or now):
             with lock:
-                if timeout and lastratelimittime < now-30:
-                    failed = False
-                    currentname = None
-                    frame = None
-                    avatarurl = None
-                    profilevanity = None
-                    try:
-                        r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64},timeout = 1.5)
-                    except:
+                ratelimittime = lastratelimittime
+            if timeout and ratelimittime < now-30:
+                failed = False
+                currentname = None
+                frame = None
+                avatarurl = None
+                profilevanity = None
+                try:
+                    r = requests.get("https://steamcommunity.com/actions/ajaxresolveusers",params = {"steamids":steam64},timeout = 1.5)
+                except:
+                        with lock:
                             lastratelimittime = now
-                            # print("I GOT RATE LIMITED")
-                            query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
-                            name2 = query.fetchone()
-                            currentname = name2 and name2[0] or "Unknown"
-                            avatarurl = None
-                            print("failed at even calling ajaxresolveusers")
-                            failed = True
-                    else:
-
-                        if r.status_code != requests.codes.ok:
-                            lastratelimittime = now
-                            # print("I GOT RATE LIMITED")
-                            query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
-                            name2 = query.fetchone()
-                            currentname = name2 and name2[0] or "Unknown"
-                            avatarurl = None
-                            failed = True
-                            print(f"got {r.status_code} from ajaxresolveusers")
-                        else:
-                            r.raise_for_status()
-                            if not len(r.json()):
-                                query.rollback()
-                                return {}  , 404
-                            currentname = r.json()[0]["persona_name"]
-                            avatarurl = r.json()[0]["avatar_url"]
-                            profilevanity = r.json()[0]["profile_url"]
-                    try:
-                        r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"},timeout = 1.5)
-                    except:
-                            frame = None
-                            failed = True
-                            print("failed calling miniprofile")
-                    else:
-                        if r.status_code != requests.codes.ok:
-                            # return {}, r.status_code
-                            frame = None
-                            failed = True
-                            print(f"got {r.status_code} from miniprofile")
-                        else:
-                            r.raise_for_status()
-                            soup = BeautifulSoup(r.text, "html.parser")
-                            
-                            frame = soup.select_one(".playersection_avatar_frame img")
-                            if frame: frame = frame.get("src")
-                    if not failed:
-                        query.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame,vanity) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame, vanity = EXCLUDED.vanity",(currentname,avatarurl,now,steam64,frame,profilevanity or None))
-                        query.commit()
-                    elif output:
-                        lastratelimittime = now
-                        
-                        currentname = currentname or output[0]
-                        avatarurl = avatarurl or output[2]
-                        frame = frame or output[3]
-                    if failed:
-                        print("rate limited searching for",currentname)
-                
+                        # print("I GOT RATE LIMITED")
+                        query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
+                        name2 = query.fetchone()
+                        currentname = name2 and name2[0] or "Unknown"
+                        avatarurl = None
+                        print("failed at even calling ajaxresolveusers")
+                        failed = True
                 else:
-                    query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
-                    # query.execute("SELECT  name  FROM usernames WHERE steamid = %s ORDER BY ", (steam64,) )
-                    othername = query.fetchone()
-                    currentname =  (output and output[0]) or (othername and othername[0] or "Unknown")
-                    avatarurl = (output and output[2]) or "0"
-                    frame = (output and output[3]) or None
+
+                    if r.status_code != requests.codes.ok:
+                        with lock:
+                            lastratelimittime = now
+                        # print("I GOT RATE LIMITED")
+                        query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
+                        name2 = query.fetchone()
+                        currentname = name2 and name2[0] or "Unknown"
+                        avatarurl = None
+                        failed = True
+                        print(f"got {r.status_code} from ajaxresolveusers")
+                    else:
+                        r.raise_for_status()
+                        if not len(r.json()):
+                            query.rollback()
+                            return {}  , 404
+                        currentname = r.json()[0]["persona_name"]
+                        avatarurl = r.json()[0]["avatar_url"]
+                        profilevanity = r.json()[0]["profile_url"]
+                try:
+                    r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"},timeout = 1.5)
+                except:
+                        frame = None
+                        failed = True
+                        print("failed calling miniprofile")
+                else:
+                    if r.status_code != requests.codes.ok:
+                        # return {}, r.status_code
+                        frame = None
+                        failed = True
+                        print(f"got {r.status_code} from miniprofile")
+                    else:
+                        r.raise_for_status()
+                        soup = BeautifulSoup(r.text, "html.parser")
+                        
+                        frame = soup.select_one(".playersection_avatar_frame img")
+                        if frame: frame = frame.get("src")
+                if not failed:
+                    query.execute("INSERT INTO currentthings (currentname,avatar,timestampcurrentname,steamid,frame,vanity) VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (steamid) DO UPDATE SET currentname = EXCLUDED.currentname, timestampcurrentname = EXCLUDED.timestampcurrentname, avatar = EXCLUDED.avatar, frame = EXCLUDED.frame, vanity = EXCLUDED.vanity",(currentname,avatarurl,now,steam64,frame,profilevanity or None))
+                    query.commit()
+                elif output:
+                    with lock:
+                        lastratelimittime = now
+                    
+                    currentname = currentname or output[0]
+                    avatarurl = avatarurl or output[2]
+                    frame = frame or output[3]
+                if failed:
+                    print("rate limited searching for",currentname)
+            
+            else:
+                query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
+                # query.execute("SELECT  name  FROM usernames WHERE steamid = %s ORDER BY ", (steam64,) )
+                othername = query.fetchone()
+                currentname =  (output and output[0]) or (othername and othername[0] or "Unknown")
+                avatarurl = (output and output[2]) or "0"
+                frame = (output and output[3]) or None
         else:
             # print("HERE")
             currentname = output[0]
@@ -547,5 +593,4 @@ CORS(app, resources={r"/*": {"origins": [os.getenv("WEBSITEURLFORCORS").split(",
 
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=3440, debug=False, allow_unsafe_werkzeug=True)
-
 

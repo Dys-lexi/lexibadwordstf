@@ -81,6 +81,38 @@ export const getwordcloud = query(
 );
 
 
+export const getwordclouddaily = query(
+	v.string(),
+	async (size) => {
+		let status = 500;
+
+		try {
+			const response = await fetch(`${API_URL}/dailywordcloud?size=${size}`, {
+				method: 'GET'
+			});
+
+			status = response.status;
+
+			if (!response.ok) {
+				return { profile: '', statuscode: status };
+			}
+
+			const contentType = response.headers.get('content-type') ?? 'image/png';
+			const bytes = new Uint8Array(await response.arrayBuffer());
+			let binary = '';
+
+			for (const byte of bytes) {
+				binary += String.fromCharCode(byte);
+			}
+
+			return { profile: `data:${contentType};base64,${btoa(binary)}`, statuscode: status };
+		} catch {
+			return { profile: '', statuscode: status };
+		}
+	}
+);
+
+
 export const getaliases = query(
 	v.string(),
 	async (steam64) => {
