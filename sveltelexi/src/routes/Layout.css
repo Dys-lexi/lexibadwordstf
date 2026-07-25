@@ -178,7 +178,7 @@ body.page-transition #page-content {
   position: absolute;
   right: 5px;
   top:0px;
-  height: 50%;
+  height: 60%;
   top:50%;
   transform: translate(0,-50%);
   display: flex;

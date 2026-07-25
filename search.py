@@ -297,7 +297,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             moreinfodict["stats"]["badwords"] = f"{ moreinfodict["badwords"]} bad word{ not(moreinfodict["badwords"] -1) and " " or "s"}"
             query.execute("""SELECT SUM(cardinality(ids)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             moreinfodict["stats"]["logs"] = query.fetchone()
-            moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} logs"
+            moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} log{ not(moreinfodict["stats"]["logs"][0] -1) and " " or "s"}"
             query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             aliases = query.fetchone()
             aliases = aliases and aliases[0]
@@ -402,10 +402,8 @@ def getnextlucky():
     with querywrapper() as query:
         query.execute("SELECT steamid, SUM(cardinality(ids)) FROM usernames GROUP BY steamid")
         stuff = query.fetchall()
-    # total = functools.map(lambda b: min(b[1],100),stuff)
     who = random.choices(stuff,list(map(lambda b: min(b[1],100),stuff)),k=10-len(nextlucky))
     with lock:
-
         nextlucky["lucky"].extend(list(map(lambda x: x[0],who)))
         nextlucky["running"] = False
 getnextlucky()

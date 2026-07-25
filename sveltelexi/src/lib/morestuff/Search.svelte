@@ -72,7 +72,11 @@ function blurred(event: FocusEvent) {
       onfocus={(e) => { focused(); e.currentTarget.select(); sendsearch(e.currentTarget.value); }}
       oninput={(e) => { focused(); sendsearch(e.currentTarget.value); }}
     />
-    <button type="button" class = "lucky" title = "I'm feeling lucky" onclick={async () => {  await goto(getsteamurl(await getlucky()));}}>
+    <button type="button" class = "lucky" title = "I'm feeling lucky" onclick={async () => {
+   const lucky = getlucky();
+        await lucky.refresh();
+        await goto(getsteamurl(await lucky));
+    }}>
     {@render lucky()} 
     </button></div>
     <button type="submit" class={classnamebutton}>Search</button>
