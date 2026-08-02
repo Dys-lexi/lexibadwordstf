@@ -183,6 +183,7 @@ def redothatmaterialview():
 
     finally:
         pgpool.putconn(conn)
+    print("removed less good logs")
 
 
 
@@ -401,6 +402,22 @@ def biglogsdedupe(all = True):
 #     print("done")
 
 
+def removedupesfrommessages():
+    conn = pgpool.getconn()
+    c = conn.cursor()
+    print("removing messages from duplicate logs")
+    c.execute("""
+        DELETE FROM messages m
+        USING logs_raw l
+        WHERE m.id = l.id
+          AND l.isduplicate IS TRUE
+    """)
+    print(f"removed {c.rowcount} message rows")
+    conn.commit()
+    pgpool.putconn(conn)
+    print("done")
+
+# removedupesfrommessages()
 def slowlypullpeoplesavatars(): # DO NOT INCREASE LIMIT, FUNC NO LONGER WORKS WITHOUT IT (also the steam api no support)
     laststatuses = 0
     while True:

@@ -32,11 +32,11 @@
 	{#if statuscode === 200}
 		<meta
 			name="description"
-			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? "" : "s"}`}
 		/>
 		<meta
 			property="og:description"
-			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? "" : "s"}`}
 		/>
 		<meta
 			property="og:image"
@@ -44,7 +44,7 @@
 		/>
 		<meta
 			name="twitter:description"
-			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad words`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? "" : "s"}`}
 		/>
 		<meta
 			name="twitter:image"
