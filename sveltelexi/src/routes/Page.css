@@ -82,7 +82,7 @@
 
 .wordcloudimage{
 
-   
+    transition-duration: 0.1s;
      display: block;
       width: 500px;
       max-width: 90vw;
@@ -102,4 +102,13 @@
     padding:5px;
     /* background-color: rgba(255,255,255,0.01); */
     gap:30px;
+    position: relative;
+}
+
+.blurnotify{
+    color: #aaa;
+    position: absolute;
+    left:50%;
+    top:50%;
+    transform: translate(-50%,-50%);
 }

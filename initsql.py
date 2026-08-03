@@ -3,11 +3,121 @@ from psycopg2 import pool
 from cachetools import cached, LRUCache, TTLCache
 import os
 import re
+import inspect
+import random
+import threading
+from datetime import datetime
 try:
     pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
 except:
     pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
 chatfilterroot = "./chatfilters/"
+
+def threadedprint(*args):
+  
+    threading.Thread(target=threadedprintreal, args = args, kwargs = {"line": str(inspect.currentframe().f_back.f_lineno),"func": str(inspect.currentframe().f_back.f_code.co_name)}, daemon=True).start()
+
+def threadedprintreal(*args,**kwargs):
+    output = []
+    for arg in args:
+        if isinstance(arg, list) or  isinstance(arg, tuple):
+            # print(arg["func"](*arg.get("args",[])))
+            # print("meow",arg[0](*arg[1:]))
+            output.append(str(arg[0](*arg[1:])))
+        else:
+            output.append(str(arg))
+    print(" ".join(output),function=kwargs["func"],line=kwargs["line"])
+class returningthread(threading.Thread):
+    
+    def __init__(self, group=None, target=None, name=None,
+                 args=(), kwargs={}, Verbose=None):
+        threading.Thread.__init__(self, group, target, name, args, kwargs)
+        self._return = None
+
+    def run(self):
+        if self._target is not None:
+            self._return = self._target(*self._args,
+                                                **self._kwargs)
+    def join(self, *args):
+        threading.Thread.join(self, *args)
+        return self._return
+
+realprint = print
+linecolours = {}
+lastfuncline = ""
+def print(*message, end="\033[0m\n",function = None,line=None):
+    global linecolours, lastfuncline
+    message = (
+        " ".join([str(i) for i in message])
+        .replace("[110m", "[38;2;200;200;200m")
+        .replace("[111m", "[38;2;80;229;255m")
+        .replace("[112m", "[38;2;213;80;16m")
+    )
+
+
+    function = function or  str(inspect.currentframe().f_back.f_code.co_name)
+    line = line or str(inspect.currentframe().f_back.f_lineno)
+    if line not in linecolours:
+        while True:
+            colour = random.randint(0, 255)
+            if colour not in DISALLOWED_COLOURS:
+                break
+        linecolours[line] = colour
+    currentfuncline = f"{line},{function}"
+    if False:
+        realprint(
+            f"[0m{(('[' + function[:9].ljust(9) + ']') if currentfuncline != lastfuncline else '⯈'.ljust(11))}{('[' + line.ljust(3) + ']')}[{datetime.now().strftime('%H:%M:%S %d/%m')}] {message}"
+        )
+    else:
+        realprint(
+            f"[38;2;215;22;105m{(('[' + function[:9].ljust(9) + ']') if currentfuncline != lastfuncline else '⯈'.ljust(11))}[38;2;126;89;140m{('[' + line.ljust(3) + ']')}[38;2;27;64;152m[{datetime.now().strftime('%H:%M:%S %d/%m')}][38;5;{linecolours[line]}m {(message)}",
+            end=end,
+        )
+    lastfuncline = currentfuncline
+
+
+DISALLOWED_COLOURS = (
+    0,
+    52,
+    16,
+    18,
+    17,
+    20,
+    23,
+    25,
+    24,
+    59,
+    60,
+    62,
+    61,
+    58,
+    65,
+    95,
+    61,
+    54,
+    92,
+    102,
+    101,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    57,
+    56,
+    19,
+    91,
+    89,
+    90,
+    88,
+    96,
+    53
+)
+
 
 @cached(cache=TTLCache(maxsize=10, ttl=600))
 def getbadwords():

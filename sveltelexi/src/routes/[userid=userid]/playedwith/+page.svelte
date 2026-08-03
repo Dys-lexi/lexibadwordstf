@@ -37,7 +37,7 @@
 		
 		{@render playedwithsnippet(playedwithdata,personresults)}
 		{:catch error}
-			<h2>realy weird error loading data: {error.message}</h2>
+			<h2>realy weird error loading playedwith: {error.body.message}</h2>
 		{/await}
 	</div>
 {:else}

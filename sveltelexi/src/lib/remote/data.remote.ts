@@ -11,6 +11,7 @@ import type {
 	PlayedWithResponse,
 	Userdetails
 } from '$lib/morestuff/types';
+import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 
 export const getprofile = query(
@@ -35,13 +36,16 @@ export const getprofile = query(
 				body: JSON.stringify({ url: data.steam64, expand: true, timeout: data.recall }),
 				headers: { 'Content-Type': 'application/json' }
 			});
-
+status = response.status
 			if (response.ok) {
 				profile = await response.json();
 			}
-			status = response.status
-		} catch {
+			else{
+				error(500)
+			}
 			
+		} catch {
+			// error(500, { message:status.toString()})
 		}
 
 		return {personresults: profile, statuscode: status };
@@ -125,13 +129,16 @@ export const getaliases = query(
 				body: JSON.stringify({ url: steam64 }),
 				headers: { 'Content-Type': 'application/json' }
 			});
-
+	status = response.status
 			if (response.ok) {
 				aliases = await response.json();
 			}
-			status = response.status
+			else {
+				error(500)
+			}
+		
 		} catch {
-			
+			error(500, { message:status.toString()})
 		}
 
 		return { aliases, statuscode: status };
@@ -155,13 +162,17 @@ export const nonowords = query(
 				body: JSON.stringify({ url: steam64 }),
 				headers: { 'Content-Type': 'application/json' }
 			});
-
+			status = response.status
 			if (response.ok) {
 				badwords = await response.json();
 			}
-			status = response.status
-		} catch {
+			else {
+				error(500)
+			}
 			
+
+		} catch {
+			error(500, { message:status.toString()})
 		}
 
 		return { badwords, statuscode: status };
@@ -187,13 +198,17 @@ export const playedwithdetails = query(
 				body: JSON.stringify({ url: data.steam64, expand:data.more }),
 				headers: { 'Content-Type': 'application/json' }
 			});
-
+				status = response.status
 			if (response.ok) {
 				playedwithdata = await response.json();
 			}
-			status = response.status
-		} catch {
+			else {
+				error(500)
+			}
 			
+		} catch {
+
+			error(500, { message:status.toString()})
 		}
 
 		return { playedwithdata, statuscode: status };

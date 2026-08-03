@@ -39,7 +39,7 @@
 {:then { badwords }}
 	{@render nonowordssnip(badwords.nonowords, personresults, true)}
 {:catch error}
-	could not load bad words
+	could not load bad words {error.body.message}
 {/await}
 
 {#snippet nonowordssnip(

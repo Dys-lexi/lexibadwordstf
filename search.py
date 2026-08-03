@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()
-from initsql import querywrapper, getbadwords, getpriority
+from initsql import querywrapper, getbadwords, getpriority, print,returningthread,threadedprint
 from tempurature import recalltemp
 from cachetools import cached, LRUCache, TTLCache
 from slurcloud import makewordcloud
@@ -118,8 +118,11 @@ def wordclouddaiy():
 @app.route("/wordcloud/<steam64>",methods=["GET"])
 def wordcloud(steam64):
     # print("generating a word cloud!")
-    return Response(wordcloudcache(int(steam64)),mimetype="image/png")
-
+    timer = time.time()
+    output =  Response(wordcloudcache(int(steam64)),mimetype="image/png")
+    threadedprint(f"Made a wordcloud for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",steam64], f"in {time.time()-timer:.4f}s" )
+  
+    return output
 @cached(cache=TTLCache(maxsize=10, ttl=600))
 def wordcloudcache(steam64):
     pattern = getbadwords()
@@ -168,7 +171,11 @@ def stats_cache():
 def playedwithwrapper():
     # print(request.get_json())
     # print(f"playedwith {int(time.time()):,}")
-    return playedwith(int(request.get_json()["url"]),request.get_json().get("expand"))
+    timer = time.time()
+    output = playedwith(int(request.get_json()["url"]),request.get_json().get("expand"))
+    threadedprint(f"pulled {(output["totalplayedwith"])} people playedwith for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s",f"(expand = {request.get_json().get("expand")})" )
+
+    return output
 
 @cached(cache=TTLCache(maxsize=10, ttl=900))
 def playedwith(steam64,expand):
@@ -197,14 +204,26 @@ def playedwith(steam64,expand):
 
 
 @cached(cache=TTLCache(maxsize=1024, ttl=900))
+def badwordcounter(steam64):
+    now = time.time()
+    with querywrapper() as query:
+        query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
+        # print(time.time()-now)
+        return  query.fetchone()[0]
+    
+
+@cached(cache=TTLCache(maxsize=1024, ttl=900))
 def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
     global lastratelimittime
     # print(steam64)
+    badwordcounterthink = returningthread(target=badwordcounter, args=(steam64,))
+    badwordcounterthink.daemon = True
+    badwordcounterthink.start()
     moreinfodict = {}
     now = int(time.time())
     with querywrapper() as query:
-        query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
-        moreinfodict["badwords"] = query.fetchone()[0]
+        # query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
+        
         query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
         output = query.fetchone()
         if not output or not all(output) or output[1] < now - (timeout or now):
@@ -259,7 +278,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                         # return {}, r.status_code
                         frame = None
                         failed = True
-                        print(f"got {r.status_code} from miniprofile")
+                        # print(f"got {r.status_code} from miniprofile")
                     else:
                         r.raise_for_status()
                         soup = BeautifulSoup(r.text, "html.parser")
@@ -277,7 +296,8 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                     avatarurl = avatarurl or output[2]
                     frame = frame or output[3]
                 if failed:
-                    print("rate limited searching for",currentname)
+                    pass
+                    # print("rate limited searching for",currentname)
             
             else:
                 query.execute("SELECT  (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid",(steam64,))
@@ -291,6 +311,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             currentname = output[0]
             avatarurl = output[2]
             frame = output[3]
+        moreinfodict["badwords"] = badwordcounterthink.join()
         if moreinfo:
             moreinfodict["stats"] = {}
             # query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
@@ -325,6 +346,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
         avatarurl = avatarurl
     # if avatarurl == "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb":
     #     print("pants")
+    # moreinfodict["badwords"] = badwordcounterthink.join()
     return {"avatar":avatarurl,"frame":frame,"currentusername":currentname,**moreinfodict}
 
 # @cached(cache=TTLCache(maxsize=30, ttl=900))
@@ -430,8 +452,12 @@ def resolveprofile():
 
 @app.route("/aliases", methods=["POST"])
 def aliases():
+    timer = time.time()
     # print(resolvealiases(int(request.get_json()["url"])))
-    return  resolvealiases(int(request.get_json()["url"])) ,  200 
+    output = resolvealiases(int(request.get_json()["url"])) ,  200 
+    threadedprint(f"pulled {len(output)} Aliases for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
+
+    return  output
 
 
 @app.after_request
@@ -443,13 +469,19 @@ def bleh(response):
 
 @app.route("/badwords", methods=["POST"])
 def resolvename():
-    return badwordsandsuch(request.get_json()["url"])
+    timer = time.time()
+    output = badwordsandsuch(request.get_json()["url"])
+    threadedprint(f"pulled {len(output[0]["nonowords"])} badwords for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
+    return output
+
+
 
 @cached(cache=TTLCache(maxsize=1024, ttl=900))
 def badwordsandsuch(userid):
     now = int(time.time())
-    print("pulling a user at",now,userid )
-    timer = time.time()
+
+    # threadedprint("pulling badwords for", [lambda x: resolveavatarandname(x,timeout=0)["currentusername"],userid] )
+    
     steam64 = userid #resolveamessyinputtoaprofile(userid)
 
     with querywrapper() as query:
@@ -473,7 +505,7 @@ def badwordsandsuch(userid):
             if shouldreturn:
                 continue
             reallogs.append(log)
-        print("this took",time.time()-timer)
+        # print("this took",time.time()-timer)
         # print(resolveavatarandname(steam64))
         return  {"nonowords":reallogs} , 200
 
@@ -523,7 +555,7 @@ def contextsearch(matchid,index):
 def handledefaultsearch(data):
     now = time.time()
     emit("m",[data,defaultthing()])
-    print(time.time()-now)
+    print(f"{"".ljust(11)}{time.time()-now:.4f} defaultsearch")
 @cached(cache=TTLCache(maxsize=1024, ttl=86400))
 def defaultthing():
     top_players_query = ("""
@@ -548,8 +580,10 @@ def defaultthing():
 def handle_search(data):
     now = time.time()
     # print("PANTS",data)
-    emit("m",[data[1],handle_search_helper(data[0])])
-    print(data[0].ljust(10), time.time()-now)
+    output = handle_search_helper(data[0])
+    emit("m",[data[1],output])
+    # print(output)
+    threadedprint(f"{data[0].ljust(11)}{time.time()-now:.4f}",[lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",output and output[0]["id"]])
 @cached(cache=TTLCache(maxsize=1000, ttl=3600))
 def handle_search_helper(data):
     now = int(time.time())

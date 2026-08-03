@@ -74,8 +74,14 @@
 	<div class = "flexbox worddailybox"  role="presentation" onmouseenter={() => {blurradius = 0}}  onmouseleave={() => {blurradius = 23}}>
 		<div class="stat"> <div class="statsname">Bad words sent yesterday: </div><div class="statsstat"> {stats.badrecentmessages.toLocaleString() }</div> </div>
 	{#await getwordclouddaily("big")}
+			{#if blurradius}
+		<div class="blurnotify">Hover or tap to unblur</div>
+		{/if}
 	<img style = {`filter: blur(${blurradius}px)`} src={(await getwordclouddaily("smol")).profile} class="wordcloudimage" alt="wordcloud" />
 	{:then {profile}}
+		{#if blurradius}
+		<div class="blurnotify">Hover or tap to unblur</div>
+		{/if}
 		<img src={profile} title={`last updated at ${localTime} this morning`} class="wordcloudimage" alt="wordcloud" style = {`filter: blur(${blurradius}px)`}/>
 	{/await}
 	</div>

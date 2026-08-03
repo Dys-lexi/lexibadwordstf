@@ -28,6 +28,8 @@
 				{alias.name}
 			</div>
 		{/each}
+	{:catch error}
+	could not load bad aliases {error.body.message}
 	{/await}
 </div>
 {:else}
