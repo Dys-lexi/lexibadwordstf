@@ -2,9 +2,9 @@
 	import { page } from '$app/state';
 	import Profile from '$lib/morestuff/profile.svelte';
 	import Badwordsbox from '$lib/morestuff/badwords.svelte';
-	import type { Userdetails, BadWordsResponse, PlayedWithResponse } from '$lib/morestuff/types';
+	import type { Userdetails, PlayedWithResponse } from '$lib/morestuff/types';
 	import Miniprofile from '$lib/morestuff/miniprofile.svelte';
-	import { playedwithdetails, nonowords, getprofile, getbadcontext } from '$lib/remote/data.remote';
+	import { playedwithdetails, getprofile } from '$lib/remote/data.remote';
 	let { personresults: skellyresults, statuscode: skellycode } = await getprofile({
 		steam64: '0',
 		recall: 3600

@@ -444,11 +444,14 @@ def lucky():
 @app.route("/profile", methods=["POST"])
 def resolveprofile():
     # time.sleep(30)
+    timer = time.time()
     steam64 = resolveamessyinputtoaprofile(request.get_json()["url"])
     if not steam64:
         return {}, 404
-    return {**resolveavatarandname(steam64,request.get_json().get("expand",False),request.get_json().get("timeout",3600)),"steam64":steam64}, 200
+    output =  {**resolveavatarandname(steam64,request.get_json().get("expand",False),request.get_json().get("timeout",3600)),"steam64":steam64}, 200
+    threadedprint(f"pulled profile for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s", request.get_json().get("expand",False),request.get_json().get("timeout",3600) )
 
+    return output
 
 @app.route("/aliases", methods=["POST"])
 def aliases():

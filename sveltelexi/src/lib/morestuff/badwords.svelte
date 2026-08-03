@@ -66,6 +66,8 @@
 								</div>
 							{:then stuff}
 								{@render nonowordssnip(stuff.context.nonowords, personresults, false, true)}
+							{:catch error}
+							<h2>realy weird error loading messagecontext: {error.body.message}</h2>
 							{/await}
 						</div>
 					</Hover>

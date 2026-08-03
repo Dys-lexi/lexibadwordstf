@@ -232,13 +232,16 @@ export const getbadcontext = query(
 				body: JSON.stringify( data ),
 				headers: { 'Content-Type': 'application/json' }
 			});
-
+	status = response.status
 			if (response.ok) {
 				context.nonowords = await response.json();
 			}
-			status = response.status
+			else {
+				error (500)
+			}
+		
 		} catch {
-			
+			error(500, { message:status.toString()})
 		}
 
 		return { context, statuscode: status };
