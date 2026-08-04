@@ -17,6 +17,7 @@
 <div class="nonoresultsholder">
 	<Profile steam64={params.userid} profiledefault={personresults} />
 	{#await aliases then { aliases }}
+	<div class = "nonowordsholder">
 		{#each aliases as alias, index (index)}
 			<div class="nonowordbox">
 			<div class="dateholder">	<a class="nonowordtimestamp" href={`https://logs.tf/${alias.firstlog}`}>
@@ -28,6 +29,7 @@
 				{alias.name}
 			</div>
 		{/each}
+		</div>
 	{:catch error}
 	could not load bad aliases {error.body.message}
 	{/await}

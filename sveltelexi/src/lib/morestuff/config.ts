@@ -6,9 +6,6 @@ import type {
 
 
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3440";
-export function getsteamurl(steamid: string,includefirstslash= true as boolean) {
-return `${includefirstslash &&"/"|| ""  }${encodeURIComponent(steamid)}`//?asyncload=1`
-}
 
 
 export const profileResponse: ProfileResponse = {
@@ -32,175 +29,175 @@ export const badwordsResponse: BadWordsResponse = {
             "matchid": Number("0000000"),
             "message": "lorem i",
             "name": "lore",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1685052644")
         },
         {
             "matchid": Number("0000000"),
             "message": "lore",
             "name": "lorem ipsum dolor",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1520727299")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum do",
             "name": "lorem ipsum do",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1681641680")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit ame",
             "name": "lorem ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1473988529")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit amet conse",
             "name": "lorem ips",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1709275714")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit",
             "name": "lorem ipsum ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1455833112")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ip",
             "name": "lor",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1716586984")
         },
         {
             "matchid": Number("0000000"),
             "message": "elit lorem ipsum",
             "name": "lorem ipsum dolo",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1566390880")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolo",
             "name": "lorem ipsum ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1471116308")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit amet consec",
             "name": "lorem ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1521295089")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolo",
             "name": "lorem ipsum",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1511390819")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit amet",
             "name": "lorem ipsum ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1493521524")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ip",
             "name": "lorem ipsum ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1547543427")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit amet",
             "name": "lorem ipsum ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1620697428")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit a",
             "name": "lorem ipsum ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1532196065")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor ",
             "name": "lorem i",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1733971756")
         },
         {
             "matchid": Number("0000000"),
             "message": "lor",
             "name": "lorem i",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1511479038")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum",
             "name": "lorem i",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1769772355")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum do",
             "name": "lorem ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1550294234")
         },
         {
             "matchid": Number("0000000"),
             "message": "lore",
             "name": "lorem ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1519891387")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ips",
             "name": "lorem ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1771462751")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum d",
             "name": "lorem i",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1455537554")
         },
         {
             "matchid": Number("0000000"),
             "message": "lor",
             "name": "lorem ipsu",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1646585485")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit amet conse",
             "name": "lorem ",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1667582162")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum ",
             "name": "lorem ipsum dolor s",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1540497112")
         },
         {
             "matchid": Number("0000000"),
             "message": "I eat pizza with my feet",
             "name": "lorem ipsum dolor s",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1515863486")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor sit amet consecte",
             "name": "lorem ipsum dolor s",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1639957507")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolor ",
             "name": "lorem ipsum dolor s",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1619897378")
         },
         {
             "matchid": Number("0000000"),
             "message": "lorem ipsum dolo",
             "name": "lorem ip",
-            "timestamp": Number("0000000000")
+            "timestamp": Number("1696126870")
         }
     ]
 }

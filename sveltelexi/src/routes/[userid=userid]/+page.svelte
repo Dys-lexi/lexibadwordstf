@@ -2,54 +2,56 @@
 	import { page } from '$app/state';
 	import Profile from '$lib/morestuff/profile.svelte';
 	import Badwordsbox from '$lib/morestuff/badwords.svelte';
-	import type { Userdetails, PlayedWithResponse } from '$lib/morestuff/types';
-	import Miniprofile from '$lib/morestuff/miniprofile.svelte';
-	import { playedwithdetails, getprofile } from '$lib/remote/data.remote';
-	let { personresults: skellyresults, statuscode: skellycode } = await getprofile({
+	import type { Userdetails } from '$lib/morestuff/types';
+	import Playedwith from '$lib/morestuff/playedwith.svelte';
+	import { onMount } from 'svelte';
+	import { getprofile } from '$lib/remote/data.remote';
+	let { personresults: skeltemp, statuscode: skelcodetemp } = await getprofile({
 		steam64: '0',
 		recall: 3600
 	});
+	let skellyresults = $state({ personresults: skeltemp, statuscode: skelcodetemp, loading: true });
 	import './Page.css';
-	import { getsteamurl } from '$lib/morestuff/config';
+	import { getsteamurl } from '$lib/morestuff/getstemurl';
 	let { data } = $props();
 	let output = $derived(data.profile);
 	let { personresults, statuscode } = $derived(
 		!data.promise ? await data.profile : { personresults: {} as Userdetails, statuscode: 0 }
 	);
 
+	onMount(() => {
+		Promise.resolve(output).then((result) => {
+			console.log(personresults);
+			skellyresults = {
+				personresults: result.personresults,
+				statuscode: result.statuscode,
+				loading: false
+			};
+		});
+	});
 </script>
 
-{#await output}
-	{@render mainstuff(skellyresults, skellycode, true)}
-{:then { personresults, statuscode }}
-	{@render mainstuff(personresults, statuscode, false)}
-{:catch error}
-	pants
-{/await}
+<!-- {skellyresults.personresults.steam64} -->
+{@render mainstuff(skellyresults)}
+
 <svelte:head>
 	<title>{statuscode === 200 ? personresults.currentusername : 'LexiSlurs'}</title>
 
 	{#if statuscode === 200}
 		<meta
 			name="description"
-			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? "" : "s"}`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? '' : 's'}`}
 		/>
 		<meta
 			property="og:description"
-			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? "" : "s"}`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? '' : 's'}`}
 		/>
-		<meta
-			property="og:image"
-			content={`/${personresults.steam64}/wordcloud`}
-		/>
+		<meta property="og:image" content={`/${personresults.steam64}/wordcloud`} />
 		<meta
 			name="twitter:description"
-			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? "" : "s"}`}
+			content={`${personresults.currentusername} has sent ${personresults.badwords || 'no'} bad word${!(personresults.badwords - 1) ? '' : 's'}`}
 		/>
-		<meta
-			name="twitter:image"
-			content={`/${personresults.steam64}/wordcloud`}
-		/>
+		<meta name="twitter:image" content={`/${personresults.steam64}/wordcloud`} />
 	{:else if statuscode === 404}
 		<meta name="description" content="User not found" />
 		<meta property="og:description" content="User not found" />
@@ -75,9 +77,18 @@
 	<meta name="twitter:title" content="LexiSlurs" />
 </svelte:head>
 
-{#snippet mainstuff(personresults: Userdetails, statuscode: number, loading = false)}
+{#snippet mainstuff({
+	personresults,
+	statuscode,
+	loading = false
+}: {
+	personresults: Userdetails;
+	statuscode: number;
+	loading?: boolean;
+})}
 	{#if statuscode == 200}
 		<div class={`nonoresultsholder ${loading && 'skellyTheskeleton'}`}>
+			<!-- {personresults.steam64} -->
 			<Profile steam64={personresults.steam64} profiledefault={personresults} />
 
 			<!-- <div class="playedwithperson playedwithpersonpersonal">
@@ -132,20 +143,10 @@
 					target="_blank">RGL</a
 				>
 			</div>
-			{#if loading}
-				{@render playedwithsnippet((await playedwithdetails({ steam64: personresults.steam64, more: false })).playedwithdata,personresults)}
-			{:else}
-				{#await playedwithdetails({ steam64: personresults.steam64, more: false })}
-				<div class="skellyTheskeleton contents">
-					{@render playedwithsnippet((await playedwithdetails({ steam64: "0", more: false })).playedwithdata,personresults)}
-				</div>
-					{:then { playedwithdata }}
-					{@render playedwithsnippet(playedwithdata,personresults)}
-				{:catch error}
-					<h2>realy weird error loading playedwith: {error.body.message}</h2>
-				{/await}
-			{/if}
-			<Badwordsbox personresults={personresults} rendermore={false}/>
+			
+				<Playedwith personresults={personresults} more={false} />
+			
+			<Badwordsbox {personresults} rendermore={false} />
 		</div>
 	{:else if statuscode == 404}
 		<h2>could not find user "{page.params.userid}"</h2>
@@ -154,21 +155,4 @@
 	{:else}
 		<h2>the server broke (or is down), sorry :(</h2>
 	{/if}
-{/snippet}
-
-
-{#snippet playedwithsnippet(playedwithdata: PlayedWithResponse,personresults:Userdetails)}
-	{#if playedwithdata.playedwith.length}
-		<div class="playedwithholderholder">
-			<div class="playedwithinfo">
-				<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}/playedwith`}>
-					{personresults.currentusername} has played with {playedwithdata.totalplayedwith} people
-				</a>
-			</div>
-			<div class="playedwithholder">
-				{#each playedwithdata.playedwith as data, index (index)}
-					<Miniprofile {data} biggestplayedwith={playedwithdata.biggestplayedwith} />
-				{/each}
-			</div>
-		</div>{/if}
 {/snippet}

@@ -5,11 +5,12 @@
 	import { ClassLogo } from '$lib/morestuff/const.svelte';
 	import { playedwithdetails, nonowords, getprofile, getbadcontext } from '$lib/remote/data.remote';
 	import { Logo } from './const.svelte';
-	import { getsteamurl } from './config';
+	import { getsteamurl } from './getstemurl';
      import { onDestroy } from 'svelte';
+	import Timelinesnippet from '$lib/morestuff/badtimeline.svelte'
 
         let leaveTimer: ReturnType<typeof setTimeout> | undefined;
-	let { personresults, rendermore = (true && personresults.steam64 != '0') as boolean } = $props();
+	let { personresults, rendermore = (true && personresults.steam64 != '00000000000000000') as boolean } = $props();
 
 	//   let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number} = $derived(things)
 	function getteam(team?: string) {
@@ -18,7 +19,19 @@
 		if (team === 'blue') return 'color:rgb(100,100,200)';
 		return '';
 	}
-	let badwords = $derived(nonowords(personresults.steam64));
+	let loading = $state(true)
+	let errorcode = $state(null)
+
+	let badwords =  $derived(personresults.steam64 == "00000000000000000" ?  null :  nonowords(personresults.steam64)  );
+		$effect(() => {
+	
+		Promise.resolve(badwords).then((result) => {
+			if (result === null) {return}
+			badwordstuff = result.badwords.nonowords
+			loading = false
+		}).catch((error) => {errorcode = error});
+	});
+	
 	// let profilestuff: Userdetails}
 	// const coords =  mousePosition()
 	let renderhover = $state({} as Record<number, boolean>);
@@ -30,18 +43,30 @@
 			newest = thing;
 		}
 	}
+	let badwordstuff = $state((await nonowords('0')).badwords.nonowords)
 </script>
 
-{#await badwords}
-	<div class="skellyTheskeleton contents">
-		{@render nonowordssnip((await nonowords('0')).badwords.nonowords, personresults, false)}
-	</div>
-{:then { badwords }}
-	{@render nonowordssnip(badwords.nonowords, personresults, true)}
-{:catch error}
-	could not load bad words {error.body.message}
-{/await}
+<div class = "outlinethingy">
+{#if errorcode == null}
 
+	<div class={loading ? "skellyTheskeleton contents"  : "contents"}>
+	<div style = "width: fit-content">{badwordstuff.length} bad word{(badwordstuff.length -1)  && "s" || ""} for {personresults.currentusername}</div>
+		{@render timelinesnippet(badwordstuff, personresults)}
+		{@render nonowordssnip(badwordstuff, personresults, false)}
+	</div>
+{:else}
+failed to load bad messages {errorcode}
+{/if}
+</div>
+
+{#snippet timelinesnippet(
+	badwords: Array<Badmessage>,
+	personresults: Userdetails,
+)}
+	{#if badwords.length}
+	<Timelinesnippet badwords={badwords} personresults={personresults}/>
+	{/if}
+{/snippet}
 {#snippet nonowordssnip(
 	badwords: Array<Badmessage>,
 	personresults: Userdetails,
@@ -52,7 +77,7 @@
 		{#if badwords.length}
 			<!-- {console.log( personresults.badwords,"PANTS")} -->
 			{#each badwords as badword, index (index)}
-				{#if renderhover[index] && rendermore && newest == index && badword.index != null}
+				{#if renderhover[index]  && newest == index && badword.index != null}
 					<Hover>
 						<div class="contexthoverholder">
 							{#await getbadcontext({ matchid: badword.matchid, index: badword.index })}

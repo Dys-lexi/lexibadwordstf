@@ -120,7 +120,7 @@ def wordcloud(steam64):
     # print("generating a word cloud!")
     timer = time.time()
     output =  Response(wordcloudcache(int(steam64)),mimetype="image/png")
-    threadedprint(f"Made a wordcloud for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",steam64], f"in {time.time()-timer:.4f}s" )
+    threadedprint(f"Made a wordcloud for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",steam64], f"in {time.time()-timer:.4f}s" )
   
     return output
 @cached(cache=TTLCache(maxsize=10, ttl=600))
@@ -173,7 +173,7 @@ def playedwithwrapper():
     # print(f"playedwith {int(time.time()):,}")
     timer = time.time()
     output = playedwith(int(request.get_json()["url"]),request.get_json().get("expand"))
-    threadedprint(f"pulled {(output["totalplayedwith"])} people playedwith for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s",f"(expand = {request.get_json().get("expand")})" )
+    threadedprint(f"pulled {(output["totalplayedwith"])} people playedwith for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s",f"(expand = {request.get_json().get("expand")})" )
 
     return output
 
@@ -220,6 +220,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
     badwordcounterthink.daemon = True
     badwordcounterthink.start()
     moreinfodict = {}
+    lastcachednamestuff = 0
     now = int(time.time())
     with querywrapper() as query:
         # query.execute("""SELECT COUNT(*) FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE""",(Converter.to_steamID3(steam64),Converter.to_steamID(steam64)))
@@ -267,6 +268,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                         currentname = r.json()[0]["persona_name"]
                         avatarurl = r.json()[0]["avatar_url"]
                         profilevanity = r.json()[0]["profile_url"]
+                        lastcachednamestuff = now
                 try:
                     r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"},timeout = 1.5)
                 except:
@@ -347,7 +349,7 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
     # if avatarurl == "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb":
     #     print("pants")
     # moreinfodict["badwords"] = badwordcounterthink.join()
-    return {"avatar":avatarurl,"frame":frame,"currentusername":currentname,**moreinfodict}
+    return {"avatar":avatarurl,"frame":frame,"currentusername":currentname,**moreinfodict} #,"cacheinfo":{"data":now,"steamdata":lastcachednamestuff or (output and  all(output) and output[1]) or 0}}
 
 # @cached(cache=TTLCache(maxsize=30, ttl=900))
 def resolvelotsofavatars(steam64s):
@@ -449,7 +451,7 @@ def resolveprofile():
     if not steam64:
         return {}, 404
     output =  {**resolveavatarandname(steam64,request.get_json().get("expand",False),request.get_json().get("timeout",3600)),"steam64":steam64}, 200
-    threadedprint(f"pulled profile for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s", request.get_json().get("expand",False),request.get_json().get("timeout",3600) )
+    # threadedprint(f"pulled profile for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s", "expand:",request.get_json().get("expand",False),"rereq:",request.get_json().get("timeout",3600) )
 
     return output
 
@@ -458,7 +460,7 @@ def aliases():
     timer = time.time()
     # print(resolvealiases(int(request.get_json()["url"])))
     output = resolvealiases(int(request.get_json()["url"])) ,  200 
-    threadedprint(f"pulled {len(output)} Aliases for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
+    threadedprint(f"pulled {len(output)} Aliases for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
 
     return  output
 
@@ -474,7 +476,7 @@ def bleh(response):
 def resolvename():
     timer = time.time()
     output = badwordsandsuch(request.get_json()["url"])
-    threadedprint(f"pulled {len(output[0]["nonowords"])} badwords for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
+    threadedprint(f"pulled {len(output[0]["nonowords"])} badwords for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
     return output
 
 
@@ -483,7 +485,7 @@ def resolvename():
 def badwordsandsuch(userid):
     now = int(time.time())
 
-    # threadedprint("pulling badwords for", [lambda x: resolveavatarandname(x,timeout=0)["currentusername"],userid] )
+    # threadedprint("pulling badwords for", [lambda x: resolveavatarandname(x,timeout=0)["currentusername"].ljust(15),userid] )
     
     steam64 = userid #resolveamessyinputtoaprofile(userid)
 
@@ -501,10 +503,10 @@ def badwordsandsuch(userid):
         reallogs = []
         for log in output:
             shouldreturn = False
-            for logdupe in reallogs:
-                if abs(log["timestamp"] - logdupe["timestamp"]) < 600 and abs(logdupe["matchid"] - log["matchid"]) < 10 and log["message"] == logdupe["message"] and logdupe["name"] == log["name"]:
-                    shouldreturn = True
-                    break
+            # for logdupe in reallogs:
+            #     if abs(log["timestamp"] - logdupe["timestamp"]) < 600 and abs(logdupe["matchid"] - log["matchid"]) < 10 and log["message"] == logdupe["message"] and logdupe["name"] == log["name"]:
+            #         shouldreturn = True
+            #         break
             if shouldreturn:
                 continue
             reallogs.append(log)
@@ -586,7 +588,7 @@ def handle_search(data):
     output = handle_search_helper(data[0])
     emit("m",[data[1],output])
     # print(output)
-    threadedprint(f"{data[0].ljust(11)}{time.time()-now:.4f}",[lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"]}",output and output[0]["id"]])
+    threadedprint(f"{data[0].ljust(11)}{time.time()-now:.4f}",[lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",output and output[0]["id"]])
 @cached(cache=TTLCache(maxsize=1000, ttl=3600))
 def handle_search_helper(data):
     now = int(time.time())

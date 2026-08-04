@@ -19,7 +19,9 @@
       >
 
           <Search classNameform="bigsearchform" classNameinput="bigsearchinput" classnamebutton="bigsearchbutton" />
+    {#key page.params.userid}
         {@render children()}
+  {/key}
       </div>
  
 

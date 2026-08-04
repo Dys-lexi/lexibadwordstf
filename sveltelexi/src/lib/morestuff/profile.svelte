@@ -5,7 +5,7 @@
 	import { copy } from './const.svelte';
 	import { page } from '$app/state';
 	import { getprofile } from '$lib/remote/data.remote';
-	import { getsteamurl } from '$lib/morestuff/config';
+	import { getsteamurl } from '$lib/morestuff/getstemurl';
 
 	// let {steam64:string,profiledefault = {} as Userdetails} = $props();
 	// import { mousePosition } from './store.js';
@@ -102,7 +102,7 @@
 						{#if data && index == 0}
 							<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
 						{:else if data && index == 1}
-							<a class="badwordcounterw underlineme" href={getsteamurl(steam64)}>{data}</a>
+							<a class="badwordcounterw underlineme" href={"getsteamurl(steam64)"}>{data}</a>
 						{:else if data}
 							<div class="badwordcounterw">{data}</div>
 						{/if}

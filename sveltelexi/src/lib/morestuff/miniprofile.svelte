@@ -5,7 +5,7 @@
 
 	import { page } from '$app/state';
 	import Hoverprofile from '$lib/morestuff/hoverprofile.svelte';
-		  import {getsteamurl} from '$lib/morestuff/config'
+		  import {getsteamurl} from '$lib/morestuff/getstemurl'
 
 	// let {steam64:string,profiledefault = {} as Userdetails} = $props();
 	// import { mousePosition } from './store.js';

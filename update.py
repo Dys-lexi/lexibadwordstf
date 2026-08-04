@@ -10,7 +10,7 @@ import os
 import re
 import requests
 from steamid_converter import Converter
-from initsql import querywrapper, getbadwords, getpriority
+from initsql import querywrapper, getbadwords, getpriority, print
 import threading
 import itertools
 

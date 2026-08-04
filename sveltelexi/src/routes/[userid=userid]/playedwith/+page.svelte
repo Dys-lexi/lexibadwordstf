@@ -1,23 +1,19 @@
 <script lang="ts">
-	import type { Userdetails, PlayedWithResponse } from '$lib/morestuff/types';
-
 	import { page } from '$app/state';
-	import Profile from '$lib/morestuff/profile.svelte'
+	import Profile from '$lib/morestuff/profile.svelte';
+	import Playedwith from '$lib/morestuff/playedwith.svelte';
 	import '../Page.css';
 	import './Page.css';
 
-	import Miniprofile from '$lib/morestuff/miniprofile.svelte'
-	import { playedwithdetails } from '$lib/remote/data.remote';
 	let { data } = $props();
 	let { personresults, statuscode } = $derived(await data.profile);
 </script>
 
 {#if statuscode == 200}
 	<div class="nonoresultsholder">
-
-			<!-- {@render Profile(personresults.steam64)} -->
-			<Profile steam64={personresults.steam64} profiledefault={personresults}/>
-			<!-- <div class="playedwithperson playedwithpersonpersonal">
+		<!-- {@render Profile(personresults.steam64)} -->
+		<Profile steam64={personresults.steam64} profiledefault={personresults} />
+		<!-- <div class="playedwithperson playedwithpersonpersonal">
 							
 								<img
 									class="playedwithphoto"
@@ -26,24 +22,14 @@
 								/>
 								<div class = "playedwithname" >Plays With</div>
 							</div> -->
-	
-		{#await playedwithdetails({steam64: personresults.steam64, more: true})}
-		<div class="skellyTheskeleton contents">
-				{@render playedwithsnippet((await playedwithdetails({steam64: "0", more: true})).playedwithdata,personresults)}
+		<div class="outlinethingy">
+		<Playedwith personresults={personresults} more={true} />
 		</div>
-		
-				{:then {playedwithdata}}
-
-		
-		{@render playedwithsnippet(playedwithdata,personresults)}
-		{:catch error}
-			<h2>realy weird error loading playedwith: {error.body.message}</h2>
-		{/await}
 	</div>
 {:else}
-<h1  style="color: red">
-				Something went wrong :( {statuscode}
-			</h1>
+	<h1 style="color: red">
+		Something went wrong :( {statuscode}
+	</h1>
 {/if}
 
 <svelte:head>
@@ -85,23 +71,3 @@
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="LexiSlurs" />
 </svelte:head>
-
-
-{#snippet playedwithsnippet(playedwithdata: PlayedWithResponse,personresults:Userdetails)}
-
-					{#if playedwithdata.playedwith.length}
-						<div class="playedwithholderholder">
-							<div class="playedwithinfo">
-								<a class="nonowordtimestamp loglink" href={`/${personresults.steam64}`}>
-									{personresults.currentusername} has played with {playedwithdata.totalplayedwith} people
-								</a>
-							</div>
-							<div class="playedwithholderbig playedwithholder">
-								{#each playedwithdata.playedwith as data, index (index)}
-								<Miniprofile data={data} biggestplayedwith={playedwithdata.biggestplayedwith}/>
-								
-								{/each}
-							</div>
-						</div>
-					{/if}
-{/snippet}
