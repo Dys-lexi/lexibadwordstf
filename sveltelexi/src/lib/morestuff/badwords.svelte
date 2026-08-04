@@ -50,7 +50,7 @@
 {#if errorcode == null}
 
 	<div class={loading ? "skellyTheskeleton contents"  : "contents"}>
-	<div style = "width: fit-content">{badwordstuff.length} bad word{(badwordstuff.length -1)  && "s" || ""} for {personresults.currentusername}</div>
+	<div class="nonowordtimestamp" style = "width: fit-content">Bad word{(badwordstuff.length -1)  && "s" || ""} for {personresults.currentusername}</div>
 		{@render timelinesnippet(badwordstuff, personresults)}
 		{@render nonowordssnip(badwordstuff, personresults, false)}
 	</div>
