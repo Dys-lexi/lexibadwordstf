@@ -50,9 +50,9 @@
 {#if errorcode == null}
 
 	<div class={loading ? "skellyTheskeleton contents"  : "contents"}>
-	<div class="nonowordtimestamp" style = "width: fit-content">Bad word{(badwordstuff.length -1)  && "s" || ""} for {personresults.currentusername}</div>
+	
 		{@render timelinesnippet(badwordstuff, personresults)}
-		{@render nonowordssnip(badwordstuff, personresults, false)}
+		{@render nonowordssnip(badwordstuff, personresults, true)}
 	</div>
 {:else}
 failed to load bad messages {errorcode}
@@ -64,6 +64,7 @@ failed to load bad messages {errorcode}
 	personresults: Userdetails,
 )}
 	{#if badwords.length}
+	<div class="nonowordtimestamp" style = "width: fit-content">Bad word{(badwordstuff.length -1)  && "s" || ""} for {personresults.currentusername}</div>
 	<Timelinesnippet badwords={badwords} personresults={personresults}/>
 	{/if}
 {/snippet}
@@ -80,6 +81,7 @@ failed to load bad messages {errorcode}
 				{#if renderhover[index]  && newest == index && badword.index != null}
 					<Hover>
 						<div class="contexthoverholder">
+						<div class="nonowordtimestamp loadingtext" style = "width: fit-content">Logid: {badword.matchid}</div>
 							{#await getbadcontext({ matchid: badword.matchid, index: badword.index })}
 								<div class="skellyTheskeleton contents">
 									{@render nonowordssnip(

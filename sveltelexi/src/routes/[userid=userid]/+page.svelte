@@ -21,7 +21,7 @@
 
 	onMount(() => {
 		Promise.resolve(output).then((result) => {
-			console.log(personresults);
+			// console.log(personresults);
 			skellyresults = {
 				personresults: result.personresults,
 				statuscode: result.statuscode,

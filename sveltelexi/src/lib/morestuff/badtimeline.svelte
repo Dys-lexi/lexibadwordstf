@@ -1,30 +1,71 @@
 <script lang="ts">
 	import './profile.css';
-	import type { BadWordsResponse, Userdetails, Badmessage } from '$lib/morestuff/types';
-	import { string } from 'valibot';
+	import type { Userdetails, Badmessage } from '$lib/morestuff/types';
+
+	import { logtimeline } from '$lib/remote/data.remote';
 	import Hover from '$lib/morestuff/followingmouse.svelte';
 	let { badwords, personresults }: { badwords: Array<Badmessage>; personresults: Userdetails } =
 		$props();
 
-	//   let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number} = $derived(things)
-	const { binnings, barheight } = $derived.by(() => {
-		const binnings: Record<number, Badmessage[]> = {};
-		let biggestnumber = 0;
-		let smallestnumber = 0;
+	const logtimelinedetails = $derived(
+		personresults.steam64 == '00000000000000000' ? null : logtimeline(personresults.steam64)
+	);
+	let logtimestamps = $state<Array<number> | null>(null);
+
+	$effect(() => {
+		const request = logtimelinedetails;
+		let cancelled = false;
+
+		logtimestamps = null;
+		if (request === null) return;
+
+		Promise.resolve(request)
+			.then((timestamps) => {
+				if (!cancelled) logtimestamps = timestamps;
+			})
+			.catch(() => {
+				if (!cancelled) logtimestamps = [];
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	const { binnings, barheight, logbarheight } = $derived.by(() => {
+		const binnings: Record<number, { badmessages: Badmessage[]; logmessages: number | null }> = {};
 		let barheight = 10;
+		let logbarheight = 10;
+		const logsLoaded = logtimestamps !== null;
+
 		for (const badword of badwords) {
-			const year: number = new Date(badword.timestamp * 1000).getFullYear() % 100;
+			const year: number = new Date(badword.timestamp * 1000).getFullYear();
 
-			(binnings[year] ??= []).push(badword);
-			biggestnumber = Math.max(biggestnumber, year);
-			smallestnumber = (smallestnumber && Math.min(year, smallestnumber)) || biggestnumber;
-		}
-		for (let i = smallestnumber; i <= new Date().getFullYear() % 100; i++) {
-			binnings[i] ??= [];
-			barheight = Math.max(barheight, binnings[i].length);
+			(binnings[year] ??= { badmessages: [], logmessages: logsLoaded ? 0 : null }).badmessages.push(
+				badword
+			);
+			barheight = Math.max(barheight, binnings[year].badmessages.length);
 		}
 
-		return { binnings, barheight };
+		if (logtimestamps !== null) {
+			for (const timestamp of logtimestamps) {
+				const year = new Date(timestamp * 1000).getFullYear();
+				const bin = (binnings[year] ??= { badmessages: [], logmessages: 0 });
+				bin.logmessages = (bin.logmessages ?? 0) + 1;
+				logbarheight = Math.max(logbarheight, bin.logmessages);
+			}
+		}
+
+		const populatedYears = Object.keys(binnings).map(Number);
+		if (populatedYears.length > 0) {
+			const firstYear = Math.min(...populatedYears);
+			const lastYear = Math.max(new Date().getFullYear(), ...populatedYears);
+			for (let year = firstYear; year <= lastYear; year++) {
+				binnings[year] ??= { badmessages: [], logmessages: logsLoaded ? 0 : null };
+			}
+		}
+
+		return { binnings, barheight, logbarheight };
 	});
 
 	let renderhover = $state(null as number | null);
@@ -43,7 +84,7 @@
 		</div>
 	</div>
 	<div class="timelinetimelineholder">
-		{#each Object.entries(binnings) as [year, stuff], index (index)}
+		{#each Object.entries(binnings).sort(([a], [b]) => Number(a) - Number(b)) as [year, { badmessages: stuff, logmessages }], index (year)}
 			<div
 				class="yearholder"
 				role="presentation"
@@ -55,19 +96,35 @@
 				}}
 			>
 				<div class="barholder">
-					<div class="bar" style={`height: ${(stuff.length * 100) / barheight}%; background-color: rgb(${(stuff.length * 150) / barheight+100},100,100)`}></div>
+					<div
+						class="bar"
+						style={`height: ${(stuff.length * 100) / barheight}%; background-color: rgb(${(stuff.length * 150) / barheight + 100},50,50)`}
+					></div>
+					<div
+						class="bar"
+						style={`height: ${((logmessages ?? 1) * 100) / logbarheight}%; background-color: rgb(50,50,${logmessages? (stuff.length * 150) / barheight + 100 : 70})`}
+					></div>
 				</div>
-				{year}
+				{Number(year) % 100}
 			</div>
 			{#if renderhover == index}
 				<Hover>
-					{stuff.length} bad word{(stuff.length - 1 && 's') || ''}
+					{stuff.length} bad word{(stuff.length - 1 && 's') || ''}{#if logmessages != null}, {logmessages}
+						log{(logmessages - 1 && 's') || ''}{/if}
 				</Hover>
 			{/if}
 		{/each}
 		{@render bar(Math.floor(barheight * 0.34), barheight)}
 		{@render bar(Math.floor(barheight * 0.67), barheight)}
 		{@render bar(Math.floor(barheight * 1), barheight)}
+	</div>
+	<div class={`${logtimestamps !== null ? "" :"skellyTheskeleton"} barlabelholder logbarlabelholder`} aria-label="Log count scale">
+		<span class="barlabelsizer" aria-hidden="true">{logbarheight}</span>
+		<div class="barlabelplot">
+			{@render barlabel(Math.floor(logbarheight * 0.34), logbarheight)}
+			{@render barlabel(Math.floor(logbarheight * 0.67), logbarheight)}
+			{@render barlabel(Math.floor(logbarheight), logbarheight)}
+		</div>
 	</div>
 </div>
 

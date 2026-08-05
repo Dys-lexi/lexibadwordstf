@@ -55,6 +55,22 @@ function blurred(event: FocusEvent) {
 
     isFocused = false;
 }
+let luckyid = null
+ onMount( async() => {
+ const lucky = getlucky();
+   let response = "0"
+   try{
+        await lucky.refresh();
+        
+         luckyid = await lucky
+         
+             
+
+        }catch{
+      
+            // console.log("pants")
+          alert(`lucky is not working ${lucky.error}`);}
+ })
 
 </script>
 <div class = "flexstuff" style = "width:100%">
@@ -74,8 +90,18 @@ function blurred(event: FocusEvent) {
     />
     <button type="button" class = "lucky" title = "I'm feeling lucky" onclick={async () => {
    const lucky = getlucky();
+   let response = "0"
+   try{
         await lucky.refresh();
-        await goto(getsteamurl(await lucky));
+        
+         response = await lucky
+                 await goto(getsteamurl(response));
+
+        }catch{
+      
+            // console.log("pants")
+          alert(`lucky is not working ${lucky.error}`);}
+        
     }}>
     {@render lucky()} 
     </button></div>

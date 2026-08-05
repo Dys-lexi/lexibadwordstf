@@ -479,11 +479,23 @@ def resolvename():
     threadedprint(f"pulled {len(output[0]["nonowords"])} badwords for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
     return output
 
-
+@app.route("/logtimeline", methods=["POST"])
+def logtimeline():
+    # time.sleep(5)
+    timer = time.time()
+    output = logtimetlineandsuch(request.get_json()["url"])
+    threadedprint(f"pulled {len(output)} logtimestamps for", [lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",request.get_json()["url"]], f"in {time.time()-timer:.4f}s" )
+    return output, 200
 
 @cached(cache=TTLCache(maxsize=1024, ttl=900))
+def logtimetlineandsuch(userid):
+    with querywrapper() as query:
+        query.execute("SELECT   (json->'info'->>'date')::BIGINT  FROM logs_raw l JOIN (SELECT unnest(ids) AS id FROM usernames WHERE steamid = %s) u ON l.id = u.id WHERE l.empty IS FALSE AND l.isduplicate IS NOT TRUE ORDER BY l.time;", (userid,))
+        return (list(map(lambda x: int(x[0]), query.fetchall())))
+
+# print(logtimetlineandsuch(76561198048943710))
+
 def badwordsandsuch(userid):
-    now = int(time.time())
 
     # threadedprint("pulling badwords for", [lambda x: resolveavatarandname(x,timeout=0)["currentusername"].ljust(15),userid] )
     
