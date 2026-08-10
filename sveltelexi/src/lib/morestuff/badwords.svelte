@@ -65,8 +65,8 @@ failed to load bad messages {errorcode}
 )}
 	{#if badwords.length}
 	<div class="nonowordtimestamp" style = "width: fit-content">Bad word{(badwordstuff.length -1)  && "s" || ""} for {personresults.currentusername}</div>
-	<Timelinesnippet badwords={badwords} personresults={personresults}/>
-	{/if}
+		{/if}<Timelinesnippet badwords={badwords} personresults={personresults}/>
+
 {/snippet}
 {#snippet nonowordssnip(
 	badwords: Array<Badmessage>,
@@ -176,7 +176,7 @@ failed to load bad messages {errorcode}
 				</div>
 			{/each}
 		{:else if rendermore}
-			<h2>No bad words found for {personresults.currentusername}</h2>
+			<h2 class="nonowordtimestamp">No bad words found for {personresults.currentusername} :)</h2>
 		{/if}
 	</div>
 {/snippet}

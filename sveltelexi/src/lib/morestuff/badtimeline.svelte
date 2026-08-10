@@ -113,12 +113,16 @@
 			</div>
 			{#if renderhover == index}
 				<Hover>
-					<span class="badwordhovercount">
+				<div class="" style = "padding:3px">
+				<span class="loadingtext"> {Number(year) }: {'\u00A0'}
+					
+					</span>
+					<span class="badwordhovercount"> 
 						{stuff.length} bad word{(stuff.length - 1 && 's') || ''}
 					</span>
 					{#if logmessages != null}<span class="loghovercount">
 							, {logmessages} log{(logmessages - 1 && 's') || ''}
-						</span>{/if}
+						</span>{/if}</div>
 				</Hover>
 			{/if}
 		{/each}
