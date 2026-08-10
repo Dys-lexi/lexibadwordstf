@@ -18,7 +18,9 @@
 		recall = 3600 as number,
 		showcopy = true as boolean
 	} = $props();
-	let profilestuff = $derived(!profiledefault.stats ? getprofile({ steam64, recall }) : undefined);
+	let profilestuff = $derived(
+		!profiledefault.stats ? getprofile({ steam64, recall, expand: true }) : undefined
+	);
 	//   let {steam64, profiledefault = {} as Userdetails, recall = 3600 as number} = $derived(things)
 
 	// let profilestuff: Userdetails}
@@ -98,12 +100,13 @@
 				{#await profilestuff}
 					<div class="badwordcounterw">Loading stats</div>
 				{:then { personresults, statuscode }}
+					<!-- {JSON.stringify(personresults)} -->
 					{#each Object.values(personresults.stats) as data, index (index)}
 						{#if data && index == 0}
 							<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
 						{:else if data && index == 1}
-							<a class="badwordcounterw underlineme" href={"getsteamurl(steam64)"}>{data}</a>
-						{:else if data}
+							<a class="badwordcounterw underlineme" href={'getsteamurl(steam64)'}>{data}</a>
+						{:else}
 							<div class="badwordcounterw">{data}</div>
 						{/if}
 					{/each}
@@ -133,11 +136,11 @@
 					<!-- could not load profile for {steam64} {error.message} -->
 				{/await}
 			{:else}
-			{#if profiledefault.mostrecentmatchtimestamp}
-				<div class="badwordcounterw">
-					Last seen
-					{new Date(profiledefault.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
-				</div>
+				{#if profiledefault.mostrecentmatchtimestamp}
+					<div class="badwordcounterw">
+						Last seen
+						{new Date(profiledefault.mostrecentmatchtimestamp * 1000).toLocaleDateString()}
+					</div>
 				{/if}
 			{/if}
 		</div>

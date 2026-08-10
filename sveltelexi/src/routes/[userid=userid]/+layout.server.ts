@@ -13,10 +13,10 @@ export const load: LayoutServerLoad = async ({ params, fetch, url, cookies }) =>
 	// console.log(url.searchParams)
 
 	if (cookies.get('client')) {
-		return { profile: getprofile({ steam64: decodeURIComponent(params.userid), recall: 3600 }), promise: true }
+		return { profile: getprofile({ steam64: decodeURIComponent(params.userid), recall: 3600 , expand: false}), promise: true }
 		
 	}
-		return   {profile: await getprofile({ steam64: decodeURIComponent(params.userid), recall: 3600 }),promise:false}
+		return   {profile: await getprofile({ steam64: decodeURIComponent(params.userid), recall: 3600 ,expand:false}),promise:false}
 
 	
 };

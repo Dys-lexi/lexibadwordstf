@@ -56,21 +56,21 @@ function blurred(event: FocusEvent) {
     isFocused = false;
 }
 let luckyid = null
- onMount( async() => {
- const lucky = getlucky();
-   let response = "0"
-   try{
-        await lucky.refresh();
+//  onMount( async() => {
+//  const lucky = getlucky();
+//    let response = "0"
+//    try{
+//         await lucky.refresh();
         
-         luckyid = await lucky
+//          luckyid = await lucky
          
              
 
-        }catch{
+//         }catch{
       
-            // console.log("pants")
-          alert(`lucky is not working ${lucky.error}`);}
- })
+//             // console.log("pants")
+//           alert(`lucky is not working ${lucky.error}`);}
+//  })
 
 </script>
 <div class = "flexstuff" style = "width:100%">

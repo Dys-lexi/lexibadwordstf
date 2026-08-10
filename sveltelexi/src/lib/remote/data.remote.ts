@@ -17,7 +17,8 @@ import * as v from 'valibot';
 export const getprofile = query(
 	v.object({
 		steam64: v.string(),
-		recall: v.number()
+		recall: v.number(),
+		expand: v.boolean()
 	}),
 	async (data) => {
 		if (data.steam64 === '0' || data.steam64 === '00000000000000000') {
@@ -33,7 +34,7 @@ export const getprofile = query(
 		try {
 			const response = await fetch(`${API_URL}/profile`, {
 				method: 'POST',
-				body: JSON.stringify({ url: data.steam64, expand: true, timeout: data.recall }),
+				body: JSON.stringify({ url: data.steam64, expand: data.expand, timeout: data.recall }),
 				headers: { 'Content-Type': 'application/json' }
 			});
 			status = response.status;

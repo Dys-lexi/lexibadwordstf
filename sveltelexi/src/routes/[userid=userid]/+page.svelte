@@ -8,7 +8,8 @@
 	import { getprofile } from '$lib/remote/data.remote';
 	let { personresults: skeltemp, statuscode: skelcodetemp } = await getprofile({
 		steam64: '0',
-		recall: 3600
+		recall: 3600,
+		expand:false
 	});
 	let skellyresults = $state({ personresults: skeltemp, statuscode: skelcodetemp, loading: true });
 	import './Page.css';

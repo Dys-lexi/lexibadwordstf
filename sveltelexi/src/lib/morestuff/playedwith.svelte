@@ -21,8 +21,9 @@ $effect(() => {
 		}).catch((error) => {errorcode = error});
 	});
 </script>
-
+{#if playedwithdata.playedwithdata.playedwith.length}
 <div class="outlinethingy">
+
 {#if errorcode == null}
 <div class={loading ? "skellyTheskeleton contents"  : "contents"}>
 		{@render playedWithList(playedwithdata.playedwithdata)}
@@ -31,7 +32,7 @@ $effect(() => {
 failed to load playedwith {errorcode}
 {/if}
 </div>
-
+{/if}
 
 
 {#snippet playedWithList(playedwithdata: PlayedWithResponse)}

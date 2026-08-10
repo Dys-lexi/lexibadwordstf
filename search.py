@@ -320,12 +320,13 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             moreinfodict["stats"]["badwords"] = f"{ moreinfodict["badwords"]} bad word{ not(moreinfodict["badwords"] -1) and " " or "s"}"
             query.execute("""SELECT SUM(cardinality(ids)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             moreinfodict["stats"]["logs"] = query.fetchone()
-            moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} log{ not(moreinfodict["stats"]["logs"][0] -1) and " " or "s"}"
+            # print(moreinfodict["stats"]["logs"] , bool(moreinfodict["stats"]["logs"] ))
+            moreinfodict["stats"]["logs"] = moreinfodict["stats"]["logs"] and f"{moreinfodict["stats"]["logs"][0]} log{ not(moreinfodict["stats"]["logs"][0] -1) and " " or "s"}" or "No logs" 
             query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC)) FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
             aliases = query.fetchone()
             aliases = aliases and aliases[0]
             # moreinfodict["aliases"] = aliases
-            moreinfodict["stats"]["aliases"] = aliases and f"{len(aliases)} alias{not(len(aliases) - 1) and " " or "es"}"
+            moreinfodict["stats"]["aliases"] = aliases and f"{len(aliases)} alias{not(len(aliases) - 1) and " " or "es"}"  or   "No found aliases"
 
             query.execute("""SELECT l.time FROM logs_raw l WHERE l.id = (SELECT MAX(x) FROM usernames u, unnest(u.ids) AS x WHERE u.steamid = %s);
             """,(steam64,))
@@ -333,6 +334,8 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
             # print(mostrecentmatch)
             if mostrecentmatch and (mostrecentmatch := mostrecentmatch[0]):
                 moreinfodict["mostrecentmatchtimestamp"] = int(mostrecentmatch.timestamp())
+            else:
+                moreinfodict["stats"]["recentseen"] = "Never seen"
                 # print("meow")
                 
                 # print("date and time:",date_time)	

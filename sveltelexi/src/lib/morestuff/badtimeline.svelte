@@ -73,6 +73,7 @@
 	// let profilestuff: Userdetails}
 	// const coords =  mousePosition()
 </script>
+{#if logtimestamps === null || logtimestamps.length}
 <div class="wdqdqdwqdwq">
 <div class="timelineholder">
 	<div class="barlabelholder">
@@ -160,7 +161,7 @@
 		</div>
 	</div>
 </div>
-
+{/if}
 {#snippet barlabel(index: number, barheight: number)}
 	<span class="barlabel" style={`bottom: calc(${(index * 100) / barheight}% - 10px)`}>
 		{index}
