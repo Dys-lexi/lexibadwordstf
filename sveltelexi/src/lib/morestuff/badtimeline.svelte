@@ -6,7 +6,7 @@
 	import Hover from '$lib/morestuff/followingmouse.svelte';
 	let { badwords, personresults }: { badwords: Array<Badmessage>; personresults: Userdetails } =
 		$props();
-		let leaveTimer: ReturnType<typeof setTimeout> | undefined;
+	let leaveTimer: ReturnType<typeof setTimeout> | undefined;
 	const logtimelinedetails = $derived(
 		personresults.steam64 == '00000000000000000' ? null : logtimeline(personresults.steam64)
 	);
@@ -73,7 +73,7 @@
 	// let profilestuff: Userdetails}
 	// const coords =  mousePosition()
 </script>
-
+<div class="wdqdqdwqdwq">
 <div class="timelineholder">
 	<div class="barlabelholder">
 		<span class="barlabelsizer" aria-hidden="true">{barheight}</span>
@@ -83,23 +83,22 @@
 			{@render barlabel(Math.floor(barheight), barheight)}
 		</div>
 	</div>
+
 	<div class="timelinetimelineholder">
 		{#each Object.entries(binnings).sort(([a], [b]) => Number(a) - Number(b)) as [year, { badmessages: stuff, logmessages }], index (year)}
 			<div
 				class="yearholder"
 				role="presentation"
 				onmouseenter={() => {
-					    if (leaveTimer) clearTimeout(leaveTimer);
+					if (leaveTimer) clearTimeout(leaveTimer);
 					renderhover = index;
 				}}
 				onmouseleave={() => {
-				leaveTimer = 	setTimeout(() => {
-                       renderhover = null;
-                }, 100);
-					
+					leaveTimer = setTimeout(() => {
+						renderhover = null;
+					}, 100);
 				}}
 			>
-			
 				<div class="barholder">
 					<div
 						class="bar"
@@ -127,6 +126,7 @@
 		{@render bar(Math.floor(barheight * 0.67), barheight)}
 		{@render bar(Math.floor(barheight * 1), barheight)}
 	</div>
+
 	<div
 		class={`${logtimestamps !== null ? '' : 'skellyTheskeleton'} barlabelholder logbarlabelholder`}
 		aria-label="Log count scale"
@@ -136,6 +136,23 @@
 			{@render barlabel(Math.floor(logbarheight * 0.34), logbarheight)}
 			{@render barlabel(Math.floor(logbarheight * 0.67), logbarheight)}
 			{@render barlabel(Math.floor(logbarheight), logbarheight)}
+		</div>
+	</div>
+	
+</div>
+<div class="keyboxbar">
+		<div class="keybar badwordhovercount">
+			<div class="keybox" style="background-color: rgb(200, 80, 80);"></div>
+			Bad words
+		</div>
+		<div class="keybar loghovercount" style={` color:  ${logtimestamps ? "rgb(100,100,200" :  "rgb(50,50,70"}`}>
+			<div class="keybox"style={` background-color:  ${logtimestamps ? "rgb(100,100,200" :  "rgb(50,50,70"}`}></div>
+			Logs
+		</div>
+
+		<div class="keybar loadingtext">
+			<div class="keybox" style="background-color: #aaa;"></div>
+			Year
 		</div>
 	</div>
 </div>
