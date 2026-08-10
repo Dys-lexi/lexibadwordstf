@@ -490,8 +490,8 @@ def logtimeline():
 @cached(cache=TTLCache(maxsize=1024, ttl=900))
 def logtimetlineandsuch(userid):
     with querywrapper() as query:
-        query.execute("SELECT   (json->'info'->>'date')::BIGINT  FROM logs_raw l JOIN (SELECT unnest(ids) AS id FROM usernames WHERE steamid = %s) u ON l.id = u.id WHERE l.empty IS FALSE AND l.isduplicate IS NOT TRUE ORDER BY l.time;", (userid,))
-        return (list(map(lambda x: int(x[0]), query.fetchall())))
+        query.execute("SELECT   time  FROM logs_raw l JOIN (SELECT unnest(ids) AS id FROM usernames WHERE steamid = %s) u ON l.id = u.id WHERE l.empty IS FALSE AND l.isduplicate IS NOT TRUE ORDER BY l.time;", (userid,))
+        return (list(map(lambda x: int(x[0].timestamp()), query.fetchall())))
 
 # print(logtimetlineandsuch(76561198048943710))
 
@@ -591,7 +591,7 @@ def defaultthing():
         output = list(map(lambda x: {**x,"a":avatars.get(int(x["id"]))},output))
     # print(output)
     return output
-
+threading.Thread(target=defaultthing, daemon=True).start()
 
 @socketio.on('s')
 def handle_search(data):
@@ -600,7 +600,7 @@ def handle_search(data):
     output = handle_search_helper(data[0])
     emit("m",[data[1],output])
     # print(output)
-    threadedprint(f"{data[0].ljust(11)}{time.time()-now:.4f}",[lambda x: f"({x}) {resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",output and output[0]["id"]])
+    threadedprint(f"{data[0].ljust(11)}{time.time()-now:.4f}",[lambda x: f"({x}) {x and resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",output and output[0]["id"]])
 @cached(cache=TTLCache(maxsize=1000, ttl=3600))
 def handle_search_helper(data):
     now = int(time.time())

@@ -6,7 +6,7 @@
 	import Hover from '$lib/morestuff/followingmouse.svelte';
 	let { badwords, personresults }: { badwords: Array<Badmessage>; personresults: Userdetails } =
 		$props();
-
+		let leaveTimer: ReturnType<typeof setTimeout> | undefined;
 	const logtimelinedetails = $derived(
 		personresults.steam64 == '00000000000000000' ? null : logtimeline(personresults.steam64)
 	);
@@ -89,12 +89,17 @@
 				class="yearholder"
 				role="presentation"
 				onmouseenter={() => {
+					    if (leaveTimer) clearTimeout(leaveTimer);
 					renderhover = index;
 				}}
 				onmouseleave={() => {
-					renderhover = null;
+				leaveTimer = 	setTimeout(() => {
+                       renderhover = null;
+                }, 100);
+					
 				}}
 			>
+			
 				<div class="barholder">
 					<div
 						class="bar"
@@ -102,15 +107,19 @@
 					></div>
 					<div
 						class="bar"
-						style={`height: ${((logmessages ?? 1) * 100) / logbarheight}%; background-color: rgb(50,50,${logmessages? (stuff.length * 150) / barheight + 100 : 70})`}
+						style={`height: ${((logmessages ?? 1) * 100) / logbarheight}%; background-color: rgb(50,50,${logmessages ? (logmessages * 150) / logbarheight + 100 : 70})`}
 					></div>
 				</div>
 				{Number(year) % 100}
 			</div>
 			{#if renderhover == index}
 				<Hover>
-					{stuff.length} bad word{(stuff.length - 1 && 's') || ''}{#if logmessages != null}, {logmessages}
-						log{(logmessages - 1 && 's') || ''}{/if}
+					<span class="badwordhovercount">
+						{stuff.length} bad word{(stuff.length - 1 && 's') || ''}
+					</span>
+					{#if logmessages != null}<span class="loghovercount">
+							, {logmessages} log{(logmessages - 1 && 's') || ''}
+						</span>{/if}
 				</Hover>
 			{/if}
 		{/each}
@@ -118,7 +127,10 @@
 		{@render bar(Math.floor(barheight * 0.67), barheight)}
 		{@render bar(Math.floor(barheight * 1), barheight)}
 	</div>
-	<div class={`${logtimestamps !== null ? "" :"skellyTheskeleton"} barlabelholder logbarlabelholder`} aria-label="Log count scale">
+	<div
+		class={`${logtimestamps !== null ? '' : 'skellyTheskeleton'} barlabelholder logbarlabelholder`}
+		aria-label="Log count scale"
+	>
 		<span class="barlabelsizer" aria-hidden="true">{logbarheight}</span>
 		<div class="barlabelplot">
 			{@render barlabel(Math.floor(logbarheight * 0.34), logbarheight)}

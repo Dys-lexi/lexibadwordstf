@@ -95,6 +95,22 @@ def dumploadsofthings():
     pgpool.putconn(conn)
 
 
+def updatelogtimestamps():
+    """Replace every logs_raw timestamp with the date stored in its JSON."""
+    print("meow")
+    with querywrapper() as query:
+        query.execute("""
+            UPDATE logs_raw
+            SET time = to_timestamp(
+                (json->'info'->>'date')::DOUBLE PRECISION
+            ) WHERE empty = FALSE
+        """)
+        updated_logs = query.c.rowcount
+
+    print(f"updated timestamps for {updated_logs:,} logs")
+    return updated_logs
+
+updatelogtimestamps()
 # dumploadsofthings()
 
 def redothatmaterialview():

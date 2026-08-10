@@ -331,7 +331,7 @@
 .barlabel {
 	position: absolute;
 	right: 50%;
-	transform: translate(50%,0px);
+	transform: translate(50%, 0px);
 	height: 2px;
 	display: flex;
 	align-items: center;
@@ -342,6 +342,14 @@
 	/* right: auto; */
 	/* left: 0; */
 	color: rgb(100, 100, 200);
+}
+
+.badwordhovercount {
+	color: rgb(230, 120, 120);
+}
+
+.loghovercount {
+	color: rgb(120, 120, 250);
 }
 
 .verticalstuff {
