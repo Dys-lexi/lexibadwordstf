@@ -263,12 +263,17 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
                     else:
                         r.raise_for_status()
                         if not len(r.json()):
-                            query.rollback()
-                            return {}  , 404
-                        currentname = r.json()[0]["persona_name"]
-                        avatarurl = r.json()[0]["avatar_url"]
-                        profilevanity = r.json()[0]["profile_url"]
-                        lastcachednamestuff = now
+                            failed = True
+                            query.execute("""SELECT (array_agg(name ORDER BY (SELECT MAX(x) FROM unnest(ids) AS x) DESC))[1] FROM usernames WHERE steamid = %s GROUP BY steamid""",(steam64,))
+                            name2 = query.fetchone()
+                            currentname = name2 and name2[0] or "Unknown"
+                            avatarurl = None
+                        else:
+                            # return {} 
+                            currentname = r.json()[0]["persona_name"]
+                            avatarurl = r.json()[0]["avatar_url"]
+                            profilevanity = r.json()[0]["profile_url"]
+                            lastcachednamestuff = now
                 try:
                     r = requests.get(f"https://steamcommunity.com/miniprofile/{int(steam64) - 76561197960265728}",headers = {"User-Agent": "Mozilla/5.0"},timeout = 1.5)
                 except:
@@ -368,8 +373,8 @@ def resolvelotsofavatars(steam64s):
 def resolveamessyinputtoaprofile(userid):
     now = int(time.time())
     with querywrapper() as query:
-        if userid.startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
-            userid = userid.rsplit("?",1)[0]
+        if userid.strip().startswith("https://steamcommunity.com/id/") or userid.startswith("steamcommunity.com/id/"):
+            userid = userid.strip().rsplit("?",1)[0]
             vanity =(userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1]
             query.execute("SELECT vanity,steamid,lastcheckedtimestamp FROM vanityurls WHERE vanity = %s",(vanity,))
             output = query.fetchone()
@@ -387,8 +392,8 @@ def resolveamessyinputtoaprofile(userid):
                 query.execute("INSERT INTO vanityurls (vanity,steamid,lastcheckedtimestamp) VALUES (%s,%s,%s) ON CONFLICT (vanity) DO UPDATE SET steamid = EXCLUDED.steamid, lastcheckedtimestamp = EXCLUDED.lastcheckedtimestamp",(vanity,r.json()["response"]["steamid"],now))
                 query.commit()
 
-        elif userid.startswith("https://steamcommunity.com/profiles/") or userid.startswith("steamcommunity.com/profiles/"):
-            steam3 =  Converter.to_steamID3((userid.endswith("/") and userid[:-1] or userid).rsplit("/",1)[1])
+        elif userid.strip().startswith("https://steamcommunity.com/profiles/") or userid.startswith("steamcommunity.com/profiles/"):
+            steam3 =  Converter.to_steamID3((userid.strip().endswith("/") and userid.strip()[:-1] or userid.strip()).rsplit("/",1)[1])
             
         else:
             # print(userid,"pants")
@@ -503,13 +508,15 @@ def badwordsandsuch(userid):
     # threadedprint("pulling badwords for", [lambda x: resolveavatarandname(x,timeout=0)["currentusername"].ljust(15),userid] )
     
     steam64 = userid #resolveamessyinputtoaprofile(userid)
-
+    # time.sleep(30)
     with querywrapper() as query:
         
         if not steam64:
             return {},404
         steam3 = Converter.to_steamID3(steam64)
-
+        # query.execute("""SELECT name, message,time,id, idwithinlogs FROM messages WHERE (sender = %s OR sender = %s) AND trusted IS NOT FALSE ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))
+        # output = list(map(lambda x: {"name":x[0],"timestamp":x[2],"message":x[1],"matchid":x[3],"index":x[4]},query.fetchall()))
+        # print("wee",len(output))
         
         
         query.execute("""SELECT name, message,time,id, idwithinlogs FROM messages WHERE (sender = %s OR sender = %s) AND flagged = true AND trusted IS NOT FALSE ORDER BY time DESC""",(steam3,Converter.to_steamID(steam3)))

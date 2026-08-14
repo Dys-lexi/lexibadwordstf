@@ -24,7 +24,7 @@
 
 	let badwords =  $derived(personresults.steam64 == "00000000000000000" ?  null :  nonowords(personresults.steam64)  );
 		$effect(() => {
-	
+				// console.log(personresults)
 		Promise.resolve(badwords).then((result) => {
 			if (result === null) {return}
 			badwordstuff = result.badwords.nonowords
@@ -48,11 +48,11 @@
 
 <div class = "outlinethingy">
 {#if errorcode == null}
-
+	<!-- {personresults.badwords} -->
 	<div class={loading ? "skellyTheskeleton contents"  : "contents"}>
 	
-		{@render timelinesnippet(badwordstuff, personresults)}
-		{@render nonowordssnip(badwordstuff, personresults, true)}
+		{@render timelinesnippet(badwordstuff.slice(0,personresults.badwords || 999), personresults)}
+		{@render nonowordssnip(badwordstuff.slice(0,personresults.badwords || 999), personresults, true)}
 	</div>
 {:else}
 failed to load bad messages {errorcode}
