@@ -82,7 +82,6 @@ def cachestats():
         yesterday = int((datetime.now(timezone.utc).replace(hour=int(updatetime), minute=0, second=0, microsecond=0) - timedelta(days=1)).timestamp())
         query.execute("""SELECT COUNT(*) FROM messages WHERE (time > %s AND time < %s) AND flagged = true AND trusted IS NOT FALSE""",(yesterday,today))
         if output := query.fetchone():
-            print("meow")
             stats["badrecentmessages"] = output[0]
         else:
             print("sad")
@@ -227,7 +226,9 @@ def resolveavatarandname(steam64,moreinfo = False,timeout = 3600):
         
         query.execute("SELECT currentname,timestampcurrentname,avatar,frame FROM currentthings WHERE steamid = %s",(steam64,))
         output = query.fetchone()
+        # print( not output , not all(output) , output[1] < now - (timeout or now),timeout,output[1] ,now)
         if not output or not all(output) or output[1] < now - (timeout or now):
+            # print("HERE")
             with lock:
                 ratelimittime = lastratelimittime
             if timeout and ratelimittime < now-30:
@@ -453,7 +454,7 @@ def lucky():
 
 @app.route("/profile", methods=["POST"])
 def resolveprofile():
-    # time.sleep(30)
+    # time.sleep(5)
     timer = time.time()
     steam64 = resolveamessyinputtoaprofile(request.get_json()["url"])
     if not steam64:
@@ -475,7 +476,7 @@ def aliases():
 
 @app.after_request
 def bleh(response):
-    # time.sleep(2)
+    # time.sleep(5)
     # print("woag \n")
     # print(json.dumps(response.json,indent=4))
     return response

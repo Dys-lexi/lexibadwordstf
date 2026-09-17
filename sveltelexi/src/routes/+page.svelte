@@ -60,7 +60,7 @@
 		Made by
 		<u style="text-decoration-color: rgba(255,180,200,0.8)">
 			<a
-				href="https://discord.gg/uR7KwhedfK"
+				href="https://discord.gg/yVyqgeSeTr"
 				target="_blank"
 				rel="noopener noreferrer"
 				style="color: rgba(255,180,200,1)"

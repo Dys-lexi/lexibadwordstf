@@ -110,7 +110,7 @@ def updatelogtimestamps():
     print(f"updated timestamps for {updated_logs:,} logs")
     return updated_logs
 
-updatelogtimestamps()
+# updatelogtimestamps()
 # dumploadsofthings()
 
 def redothatmaterialview():

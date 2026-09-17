@@ -8,9 +8,9 @@ import random
 import threading
 from datetime import datetime
 try:
-    pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
+    pgpool = pool.ThreadedConnectionPool(5, 300, dsn="postgresql://pguserm:hiddenpassword@postgres:3452/realdb")
 except:
-    pgpool = pool.ThreadedConnectionPool(20, 20, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
+    pgpool = pool.ThreadedConnectionPool(5, 300, dsn="postgresql://pguserm:hiddenpassword@localhost:3449/realdb")
 chatfilterroot = "./chatfilters/"
 
 def threadedprint(*args):
