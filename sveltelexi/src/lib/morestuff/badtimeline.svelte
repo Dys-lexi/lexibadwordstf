@@ -32,10 +32,11 @@
 		};
 	});
 
-	const { binnings, barheight, logbarheight } = $derived.by(() => {
+	const { binnings, barheight, logbarheight,minlogbarheight } = $derived.by(() => {
 		const binnings: Record<number, { badmessages: Badmessage[]; logmessages: number | null }> = {};
 		let barheight = 10;
 		let logbarheight = 10;
+		let minlogbarheight = 0.03
 		const logsLoaded = logtimestamps !== null;
 
 		for (const badword of badwords) {
@@ -53,6 +54,9 @@
 				const bin = (binnings[year] ??= { badmessages: [], logmessages: 0 });
 				bin.logmessages = (bin.logmessages ?? 0) + 1;
 				logbarheight = Math.max(logbarheight, bin.logmessages);
+				
+
+				// console.log(minlogbarheight,"wee", bin.badmessages.length,)
 			}
 		}
 
@@ -62,10 +66,11 @@
 			const lastYear = Math.max(new Date().getFullYear(), ...populatedYears);
 			for (let year = firstYear; year <= lastYear; year++) {
 				binnings[year] ??= { badmessages: [], logmessages: logsLoaded ? 0 : null };
+				minlogbarheight = Math.max(minlogbarheight,  binnings[year].badmessages.length/( Math.max(binnings[year].logmessages ?? 1,1)))
 			}
 		}
 
-		return { binnings, barheight, logbarheight };
+		return { binnings, barheight, logbarheight ,minlogbarheight};
 	});
 
 	let renderhover = $state(null as number | null);
@@ -109,6 +114,10 @@
 						class="bar"
 						style={`height: ${((logmessages ?? 1) * 100) / logbarheight}%; background-color: rgb(50,50,${logmessages ? (logmessages * 150) / logbarheight + 100 : 70})`}
 					></div>
+									<div
+						class="bar"
+						style={`height: ${(( stuff.length / (logmessages ?? 1)  ) * 100) / (minlogbarheight)}%; background-color: rgb(50,${logmessages ? (( stuff.length / (logmessages ?? 1)  ) * 150) / (minlogbarheight) + 100 : 70},50)`}
+					></div>
 				</div>
 				{Number(year) % 100}
 			</div>
@@ -123,6 +132,9 @@
 					</span>
 					{#if logmessages != null}<span class="loghovercount">
 							, {logmessages} log{(logmessages - 1 && 's') || ''}
+						</span>{/if}
+								{#if logmessages != null}<span class="loghovercount" style = "color:rgb(100,200,100)">
+							, {Number(  (stuff.length / (logmessages ?? 1)).toPrecision(2) )} Bad words / Log 
 						</span>{/if}</div>
 				</Hover>
 			{/if}
@@ -144,6 +156,7 @@
 		</div>
 	</div>
 	
+	
 </div>
 <div class="keyboxbar">
 		<div class="keybar badwordhovercount">
@@ -154,7 +167,10 @@
 			<div class="keybox"style={` background-color:  ${logtimestamps ? "rgb(100,100,200" :  "rgb(50,50,70"}`}></div>
 			Logs
 		</div>
-
+		<div class="keybar loghovercount" style={` color:  ${logtimestamps ? "rgb(100,200,100" :  "rgb(50,50,70"}`}>
+			<div class="keybox"style={` background-color:  ${logtimestamps ? "rgb(100,200,100" :  "rgb(50,50,70"}`}></div>
+			Bad words / Log
+		</div>
 		<div class="keybar loadingtext">
 			<div class="keybox" style="background-color: #aaa;"></div>
 			Year
