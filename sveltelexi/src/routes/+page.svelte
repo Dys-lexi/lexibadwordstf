@@ -86,6 +86,8 @@
 	{/await}
 	</div>
 	{/if}
+	<div class="statsname" style = "font-size:small">	Word list taken from apex server script leak</div>
+
 	<!-- <div class="whomadethisshowthingy">
 		Support on
 		<u style="text-decoration-color: rgba(255,180,200,0.8)">
