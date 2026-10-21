@@ -134,7 +134,7 @@
 							, {logmessages} log{(logmessages - 1 && 's') || ''}
 						</span>{/if}
 								{#if logmessages != null}<span class="loghovercount" style = "color:rgb(100,200,100)">
-							, {Number(  (stuff.length / (logmessages ?? 1)).toPrecision(2) )} Bad words / Log 
+							, {Number(  (stuff.length / (logmessages ?? 1)).toPrecision(2) ).toLocaleString()} Bad words / Log 
 						</span>{/if}</div>
 				</Hover>
 			{/if}
