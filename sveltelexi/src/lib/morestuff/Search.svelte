@@ -17,7 +17,17 @@
   let inputRef: HTMLInputElement;
   let form: HTMLFormElement;
  let steam64: string | null = null;
+ let luckysteam64 = "0"
+ await luckyfornexttime()
   let searchsuggestionholder: HTMLDivElement
+  async function luckyfornexttime(){
+      try{
+    await getlucky().refresh();
+    luckysteam64 = await getlucky()
+     }catch{
+        alert(`lucky is not working ${getlucky().error}`);}
+        // console.log(luckysteam64)
+  }
   $effect(() => usewsstore.subscribe((s) => (matches = s.matches)));
  function getsteamurl(steamid: string,includefirstslash= true as boolean) {
 return `${includefirstslash &&"/"|| ""  }${encodeURIComponent(steamid)}`
@@ -89,18 +99,18 @@ let luckyid = null
       oninput={(e) => { focused(); sendsearch(e.currentTarget.value); }}
     />
     <button type="button" class = "lucky" title = "I'm feeling lucky" onclick={async () => {
-   const lucky = getlucky();
-   let response = "0"
-   try{
-        await lucky.refresh();
-        
-         response = await lucky
-                 await goto(getsteamurl(response));
+  //  const lucky = getlucky();
+  //  let response = "0"
+   
+        // await lucky.refresh();
+        luckyfornexttime()
+        //  response = await lucky
+                 await goto(getsteamurl(luckysteam64));
 
-        }catch{
+    
       
             // console.log("pants")
-          alert(`lucky is not working ${lucky.error}`);}
+        
         
     }}>
     {@render lucky()} 
