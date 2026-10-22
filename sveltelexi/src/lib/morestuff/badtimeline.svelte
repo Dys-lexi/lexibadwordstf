@@ -128,13 +128,13 @@
 					
 					</span>
 					<span class="badwordhovercount"> 
-						{stuff.length} bad word{(stuff.length - 1 && 's') || ''}
+						{stuff.length}bad word{(stuff.length - 1 && 's') || ''},
 					</span>
 					{#if logmessages != null}<span class="loghovercount">
-							, {logmessages} log{(logmessages - 1 && 's') || ''}
+							{logmessages}log{(logmessages - 1 && 's') || ''},
 						</span>{/if}
 								{#if logmessages != null}<span class="loghovercount" style = "color:rgb(100,200,100)">
-							, {Number(  (stuff.length / (logmessages ?? 1)).toPrecision(2) ).toLocaleString()} Bad words / Log 
+							{Number(  (stuff.length / (logmessages ?? 1)).toPrecision(2) ).toLocaleString()} Bad words / Log 
 						</span>{/if}</div>
 				</Hover>
 			{/if}

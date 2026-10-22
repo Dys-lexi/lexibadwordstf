@@ -105,7 +105,7 @@
 						{#if data && index == 0}
 							<a class="badwordcounterw underlineme" href={`/${steam64}/aliases`}>{data}</a>
 						{:else if data && index == 1}
-							<a class="badwordcounterw underlineme" href={'getsteamurl(steam64)'}>{data}</a>
+							<a class="badwordcounterw underlineme" href={getsteamurl(steam64)}>{data}</a>
 						{:else}
 							<div class="badwordcounterw">{data}</div>
 						{/if}
