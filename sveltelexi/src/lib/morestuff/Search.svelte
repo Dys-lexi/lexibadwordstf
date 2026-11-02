@@ -6,6 +6,7 @@
   import {getlucky} from '$lib/remote/data.remote';
 
   import {lucky} from './const.svelte';
+	import { value } from 'valibot';
   let { classNameform = '', classNameinput = '', classnamebutton = '' } = $props();
 
   const { connect, disconnect, sendsearch } = usewsstore.getState();
@@ -15,7 +16,8 @@
   })
   let isFocused = $state(false);
   let matches = $state(usewsstore.getState().matches);
-  let inputRef= <HTMLInputElement | undefined>$state(undefined);
+  let inputRef: HTMLInputElement
+  // let valuename = $derived(inputRef? inputRef.value : "woa")
   let form: HTMLFormElement;
  let steam64: string | null = null;
  let luckysteam64 = "0"
@@ -146,7 +148,7 @@ let luckyid = null
               alt=""
             />
             <div class="suggestionname">
-              No results found, click to search anyways for {inputRef.value}
+              No results found, click to search anyways
             </div>
             <!-- {#if g != 0}<span class="logcounter">{g == 1 ? '1 Log' : `${g} Logs`}</span>{/if} -->
           </button>
