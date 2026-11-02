@@ -11,10 +11,11 @@
   const { connect, disconnect, sendsearch } = usewsstore.getState();
   onMount(() => {
   connect()
+  sendsearch("")
   })
   let isFocused = $state(false);
   let matches = $state(usewsstore.getState().matches);
-  let inputRef: HTMLInputElement;
+  let inputRef= <HTMLInputElement | undefined>$state(undefined);
   let form: HTMLFormElement;
  let steam64: string | null = null;
  let luckysteam64 = "0"
@@ -118,8 +119,9 @@ let luckyid = null
     <button type="submit" class={classnamebutton}>Search</button>
   </form>
   <div bind:this={searchsuggestionholder} style="position: relative; width: 100%" >
-    {#if isFocused && matches.length}
+    {#if isFocused} 
       <div class="searchsuggestionholder">
+      <!-- {#if matches.length} -->
         {#each matches as { n, id, a, g }, index (index)}
           <button type="button" class="suggestion{!index ? ' importantsuggestion' : ''}" onclick={() => onsuggest(id,n[0])}>
             <img
@@ -133,8 +135,24 @@ let luckyid = null
             {#if g != 0}<span class="logcounter">{g == 1 ? '1 Log' : `${g} Logs`}</span>{/if}
           </button>
         {/each}
-        <div class="notice">Log counts are only for usernames that match the search</div>
+          {#if matches.length}
+                  <div class="notice">Log counts are only for usernames that match the search</div>
+
+          {:else}
+             <button type="button" class="suggestion importantsuggestion" onclick={() => onsuggest(inputRef.value,inputRef.value)}>
+            <img
+              style="height: 100%"
+              src={`https://avatars.fastly.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb.jpg`}
+              alt=""
+            />
+            <div class="suggestionname">
+              No results found, click to search anyways for {inputRef.value}
+            </div>
+            <!-- {#if g != 0}<span class="logcounter">{g == 1 ? '1 Log' : `${g} Logs`}</span>{/if} -->
+          </button>
+          {/if}
       </div>
+      
     {/if}
   </div>
 </div>
