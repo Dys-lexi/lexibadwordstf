@@ -41,8 +41,9 @@ return `${includefirstslash &&"/"|| ""  }${encodeURIComponent(steamid)}`
     disconnect();
     const username = (steam64  || new FormData(e.currentTarget as HTMLFormElement).get('user')) as string;
     steam64 = null
-    const match = matches.length //&& matches[0].n[0].toLocaleLowerCase().includes(username.toLocaleLowerCase()); 
+    const match = matches.length && matches[0].n[0].toLocaleLowerCase().includes(username.toLocaleLowerCase()); 
     // I don't want that check anymore as I like the steamid being the url :)
+    // nvm this check has a use
     const id = match ? matches[0].id : username;
     // console.log(id,"weewqewq",matches[0])
     await goto(getsteamurl(id));

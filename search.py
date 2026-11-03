@@ -609,7 +609,12 @@ def handle_search(data):
     now = time.time()
     # print("PANTS",data)
     output = handle_search_helper(data[0])
+    
     emit("m",[data[1],output])
+    # if data[0]:
+    #     for letter in sorted(list(set("aeiouabcdefghijklmnopqrstuvwxyz"))): 
+    #         print(letter)
+    #         handle_search_helper(data[0]+letter)
     # print(output)
     threadedprint(f"{data[0].ljust(11)}{time.time()-now:.4f}",[lambda x: f"({x}) {x and resolveavatarandname(x,timeout=0)["currentusername"].ljust(15)}",output and output[0]["id"]])
 @cached(cache=TTLCache(maxsize=1000, ttl=3600))
