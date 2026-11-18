@@ -21,7 +21,6 @@ ARG VITE_API_URL=http://localhost:3440
 
 # Set as env var for build
 ENV VITE_API_URL=$VITE_API_URL
-
 RUN npm run build
 
 # Expose the port that the application listens on.

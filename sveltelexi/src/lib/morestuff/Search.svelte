@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { browser } from '$app/environment';
   import { usewsstore } from './websocketsearch';
   import '../../routes/Layout.css';
 	import { onMount } from 'svelte';
@@ -25,10 +26,15 @@
   let searchsuggestionholder: HTMLDivElement
   async function luckyfornexttime(){
       try{
-    await getlucky().refresh();
+    if (browser) await getlucky().refresh();
     luckysteam64 = await getlucky()
-     }catch{
-        alert(`lucky is not working ${getlucky().error}`);}
+     }catch (error){
+        if (browser) {
+          // window.alert(`lucky is not working ${error}`);
+        } else {
+          console.error('Failed to load a lucky profile', error);
+        }
+     }
         // console.log(luckysteam64)
   }
   $effect(() => usewsstore.subscribe((s) => (matches = s.matches)));

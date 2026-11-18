@@ -30,8 +30,8 @@ services:
       POSTGRES_PASSWORD: hiddenpassword
       POSTGRES_DB: realdb
       PGPORT: 3452
-    ports:
-      - "3449:3452"
+    # ports:
+    #   - "3449:3452"
     volumes:
       # - /mnt/bigdrives/tflogs/db:/var/lib/postgresql/data
       - ./db:/var/lib/postgresql/data
